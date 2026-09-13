@@ -1,11 +1,15 @@
 services:
-  missafx-web:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: missafx_landing
-    restart: always
+  missafx:
+    image: node:20-slim
+    container_name: missafx
+    working_dir: /app
+    volumes:
+      - .:/app
+      - /app/node_modules
     ports:
-      - "${PORT:-80}:80"
+      - "5173:5173"
     environment:
-      - NODE_ENV=production
+      - NODE_ENV=development
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+    command: sh -c "yarn dev --host 0.0.0.0"
