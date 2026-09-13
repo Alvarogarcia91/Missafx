@@ -1,0 +1,11 @@
+services:
+  missafx-web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: missafx_landing
+    restart: always
+    ports:
+      - "${PORT:-80}:80"
+    environment:
+      - NODE_ENV=production
