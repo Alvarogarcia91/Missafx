@@ -5,21 +5,13 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-ENV HTTP_PROXY="" \
-    HTTPS_PROXY="" \
-    http_proxy="" \
-    https_proxy=""
+COPY package.json yarn.lock ./
 
-COPY package.json ./
-
-RUN npm config delete proxy && \
-    npm config delete https-proxy && \
-    npm config set registry https://registry.npmjs.org/ && \
-    npm install --no-audit --no-fund
+RUN yarn install --frozen-lockfile
 
 COPY . .
 
-RUN npm run build
+RUN yarn build
 
 # ==========================================
 # Etapa 2: Servidor Nginx Alpine de Producción
