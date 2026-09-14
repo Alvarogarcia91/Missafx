@@ -117,11 +117,6 @@ export const translations = {
       tool2Title: 'Tarjetas de Presentación DJ',
       tool2Desc: 'Crea tarjetas de presentación profesionales a doble cara con código QR dinámico.',
       tool2Status: 'DISPONIBLE',
-      tool3Title: 'Rider & Press Kit Builder',
-      tool3Desc: 'Especificaciones técnicas de audio y stage plot en PDF',
-      tool4Title: 'Stream & Live Hub',
-      tool4Desc: 'Recursos, overlays y enlaces para directos en Kick',
-      statusPlaceholder: 'PRÓXIMAMENTE',
       openTool: 'Abrir Herramienta'
     },
     cardCreator: {
@@ -412,11 +407,6 @@ export const translations = {
       tool2Title: 'DJ Business Cards',
       tool2Desc: 'Create double-sided professional DJ press cards with dynamic scannable QR code.',
       tool2Status: 'AVAILABLE',
-      tool3Title: 'Rider & Press Kit Builder',
-      tool3Desc: 'Technical audio specifications and stage plot PDF generator',
-      tool4Title: 'Stream & Live Hub',
-      tool4Desc: 'Resources, overlays and direct links for Kick streams',
-      statusPlaceholder: 'COMING SOON',
       openTool: 'Open Tool'
     },
     cardCreator: {

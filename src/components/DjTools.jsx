@@ -1,5 +1,5 @@
 import React from 'react';
-import { Image as ImageIcon, QrCode, FileText, Radio, ArrowUpRight, Wrench, Sparkles } from 'lucide-react';
+import { Image as ImageIcon, QrCode, ArrowUpRight, Wrench } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
 export default function DjTools({ onOpenStoryCreator, onOpenCardCreator }) {
@@ -23,24 +23,6 @@ export default function DjTools({ onOpenStoryCreator, onOpenCardCreator }) {
       isAvailable: true,
       status: t.tools.tool2Status,
       action: onOpenCardCreator
-    },
-    {
-      id: 3,
-      title: t.tools.tool3Title,
-      desc: t.tools.tool3Desc,
-      icon: FileText,
-      isAvailable: false,
-      status: t.tools.statusPlaceholder,
-      action: null
-    },
-    {
-      id: 4,
-      title: t.tools.tool4Title,
-      desc: t.tools.tool4Desc,
-      icon: Radio,
-      isAvailable: false,
-      status: t.tools.statusPlaceholder,
-      action: null
     }
   ];
 
@@ -64,12 +46,14 @@ export default function DjTools({ onOpenStoryCreator, onOpenCardCreator }) {
           <p>{t.tools.subtitle}</p>
         </div>
 
-        {/* 4 Tool Cards Grid */}
+        {/* 2 Tool Cards Grid */}
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-            gap: '20px'
+            gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+            gap: '24px',
+            maxWidth: '920px',
+            margin: '0 auto'
           }}
         >
           {toolsList.map((tool) => {
