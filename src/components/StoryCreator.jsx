@@ -409,6 +409,7 @@ export default function StoryCreator({ onBack }) {
   // Masks and layers toggles (on/off)
   const [showRepeatText, setShowRepeatText] = useState(true);
   const [showCyberFrame, setShowCyberFrame] = useState(true);
+  const [frameFitSafeZone, setFrameFitSafeZone] = useState(true); // Default: fit inside safe zone for Story
   const [showTechAccents, setShowTechAccents] = useState(true);
   const [showBadges, setShowBadges] = useState(true);
   const [showAudioSpec, setShowAudioSpec] = useState(true);
@@ -893,18 +894,19 @@ export default function StoryCreator({ onBack }) {
       // 6. Cyberpunk Frame with Neon Glow
       if (showCyberFrame) {
         ctx.save();
-        const inset = 44;
+        const insetX = 44;
+        const insetY = (format === 'story' && frameFitSafeZone) ? 215 : 44;
         const bevel = 36;
 
         ctx.beginPath();
-        ctx.moveTo(inset + bevel, inset);
-        ctx.lineTo(width - inset - bevel, inset);
-        ctx.lineTo(width - inset, inset + bevel);
-        ctx.lineTo(width - inset, height - inset - bevel);
-        ctx.lineTo(width - inset - bevel, height - inset);
-        ctx.lineTo(inset + bevel, height - inset);
-        ctx.lineTo(inset, height - inset - bevel);
-        ctx.lineTo(inset, inset + bevel);
+        ctx.moveTo(insetX + bevel, insetY);
+        ctx.lineTo(width - insetX - bevel, insetY);
+        ctx.lineTo(width - insetX, insetY + bevel);
+        ctx.lineTo(width - insetX, height - insetY - bevel);
+        ctx.lineTo(width - insetX - bevel, height - insetY);
+        ctx.lineTo(insetX + bevel, height - insetY);
+        ctx.lineTo(insetX, height - insetY - bevel);
+        ctx.lineTo(insetX, insetY + bevel);
         ctx.closePath();
 
         ctx.strokeStyle = frameColor;
@@ -915,10 +917,10 @@ export default function StoryCreator({ onBack }) {
 
         ctx.shadowBlur = 0;
         ctx.fillStyle = frameColor;
-        ctx.fillRect(inset + bevel, inset - 4, 30, 8);
-        ctx.fillRect(width - inset - bevel - 30, inset - 4, 30, 8);
-        ctx.fillRect(inset + bevel, height - inset - 4, 30, 8);
-        ctx.fillRect(width - inset - bevel - 30, height - inset - 4, 30, 8);
+        ctx.fillRect(insetX + bevel, insetY - 4, 30, 8);
+        ctx.fillRect(width - insetX - bevel - 30, insetY - 4, 30, 8);
+        ctx.fillRect(insetX + bevel, height - insetY - 4, 30, 8);
+        ctx.fillRect(width - insetX - bevel - 30, height - insetY - 4, 30, 8);
 
         ctx.restore();
       }
@@ -931,8 +933,8 @@ export default function StoryCreator({ onBack }) {
         ctx.letterSpacing = '1px';
 
         const crossSize = 10;
-        const topCornerY = format === 'story' ? 230 : 75;
-        const bottomCornerY = format === 'story' ? height - 230 : height - 75;
+        const topCornerY = (format === 'story' && frameFitSafeZone) ? 230 : 75;
+        const bottomCornerY = (format === 'story' && frameFitSafeZone) ? height - 230 : height - 75;
         const corners = [
           [75, topCornerY],
           [width - 75, topCornerY],
@@ -1431,6 +1433,7 @@ export default function StoryCreator({ onBack }) {
       eqScale,
       showRepeatText,
       showCyberFrame,
+      frameFitSafeZone,
       showTechAccents,
       showBadges,
       showAudioSpec,
@@ -5332,67 +5335,166 @@ export default function StoryCreator({ onBack }) {
                       toggle: () => setShowPhotoLayer(!showPhotoLayer)
                     }
                   ].map((layer) => (
-                    <div
-                      key={layer.id}
-                      onClick={layer.toggle}
-                      style={{
-                        padding: '16px 18px',
-                        borderRadius: '12px',
-                        border: layer.active
-                          ? `1px solid ${hexToRgba(frameColor, 0.4)}`
-                          : '1px solid rgba(255, 255, 255, 0.08)',
-                        background: layer.active
-                          ? hexToRgba(frameColor, 0.06)
-                          : 'rgba(255, 255, 255, 0.02)',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        transition: 'all 0.2s ease'
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        {layer.active ? (
-                          <Eye size={18} color={frameColor} />
-                        ) : (
-                          <EyeOff size={18} color="var(--text-dim)" />
-                        )}
-                        <span
-                          style={{
-                            fontSize: '0.88rem',
-                            fontWeight: 600,
-                            color: layer.active ? '#fff' : 'var(--text-dim)'
-                          }}
-                        >
-                          {layer.label}
-                        </span>
-                      </div>
-
-                      {/* Switch Pill */}
+                    <div key={layer.id} style={{ display: 'flex', flexDirection: 'column' }}>
                       <div
+                        onClick={layer.toggle}
                         style={{
-                          width: '44px',
-                          height: '24px',
-                          borderRadius: '12px',
-                          background: layer.active ? frameColor : 'rgba(255, 255, 255, 0.1)',
-                          position: 'relative',
-                          transition: 'background 0.2s ease'
+                          padding: '16px 18px',
+                          borderRadius: (layer.id === 'cyberFrame' && showCyberFrame && format === 'story')
+                            ? '12px 12px 0 0'
+                            : '12px',
+                          border: layer.active
+                            ? `1px solid ${hexToRgba(frameColor, 0.4)}`
+                            : '1px solid rgba(255, 255, 255, 0.08)',
+                          background: layer.active
+                            ? hexToRgba(frameColor, 0.06)
+                            : 'rgba(255, 255, 255, 0.02)',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          transition: 'all 0.2s ease'
                         }}
                       >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          {layer.active ? (
+                            <Eye size={18} color={frameColor} />
+                          ) : (
+                            <EyeOff size={18} color="var(--text-dim)" />
+                          )}
+                          <span
+                            style={{
+                              fontSize: '0.88rem',
+                              fontWeight: 600,
+                              color: layer.active ? '#fff' : 'var(--text-dim)'
+                            }}
+                          >
+                            {layer.label}
+                          </span>
+                        </div>
+
+                        {/* Switch Pill */}
                         <div
                           style={{
-                            width: '18px',
-                            height: '18px',
-                            borderRadius: '50%',
-                            background: '#FFFFFF',
-                            position: 'absolute',
-                            top: '3px',
-                            left: layer.active ? '23px' : '3px',
-                            transition: 'left 0.2s ease',
-                            boxShadow: '0 2px 4px rgba(0,0,0,0.4)'
+                            width: '44px',
+                            height: '24px',
+                            borderRadius: '12px',
+                            background: layer.active ? frameColor : 'rgba(255, 255, 255, 0.1)',
+                            position: 'relative',
+                            transition: 'background 0.2s ease'
                           }}
-                        />
+                        >
+                          <div
+                            style={{
+                              width: '18px',
+                              height: '18px',
+                              borderRadius: '50%',
+                              background: '#FFFFFF',
+                              position: 'absolute',
+                              top: '3px',
+                              left: layer.active ? '23px' : '3px',
+                              transition: 'left 0.2s ease',
+                              boxShadow: '0 2px 4px rgba(0,0,0,0.4)'
+                            }}
+                          />
+                        </div>
                       </div>
+
+                      {/* Sub-control for Cyberpunk Frame: Safe Zone Fit vs Full Screen */}
+                      {layer.id === 'cyberFrame' && showCyberFrame && format === 'story' && (
+                        <div
+                          style={{
+                            padding: '12px 16px 14px 16px',
+                            background: hexToRgba(frameColor, 0.04),
+                            border: `1px solid ${hexToRgba(frameColor, 0.3)}`,
+                            borderTop: 'none',
+                            borderRadius: '0 0 12px 12px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '10px'
+                          }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+                              {cT.maskCyberFrameFitLabel || 'Ajuste del Marco (Instagram Story):'}
+                            </span>
+                            <span
+                              style={{
+                                fontSize: '0.70rem',
+                                color: frameFitSafeZone ? '#22c55e' : '#94a3b8',
+                                fontWeight: 700,
+                                fontFamily: 'monospace'
+                              }}
+                            >
+                              {frameFitSafeZone ? 'SAFE (215px)' : 'FULL (44px)'}
+                            </span>
+                          </div>
+
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setFrameFitSafeZone(true);
+                              }}
+                              style={{
+                                padding: '8px 10px',
+                                borderRadius: '8px',
+                                border: frameFitSafeZone
+                                  ? `1.5px solid ${frameColor}`
+                                  : '1px solid rgba(255,255,255,0.1)',
+                                background: frameFitSafeZone
+                                  ? hexToRgba(frameColor, 0.22)
+                                  : 'rgba(255,255,255,0.03)',
+                                color: frameFitSafeZone ? '#fff' : 'var(--text-muted)',
+                                fontSize: '0.78rem',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                                transition: 'all 0.15s ease',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '6px'
+                              }}
+                            >
+                              {cT.maskCyberFrameFitSafe || '🛡️ Zona Segura'}
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setFrameFitSafeZone(false);
+                              }}
+                              style={{
+                                padding: '8px 10px',
+                                borderRadius: '8px',
+                                border: !frameFitSafeZone
+                                  ? `1.5px solid ${frameColor}`
+                                  : '1px solid rgba(255,255,255,0.1)',
+                                background: !frameFitSafeZone
+                                  ? hexToRgba(frameColor, 0.22)
+                                  : 'rgba(255,255,255,0.03)',
+                                color: !frameFitSafeZone ? '#fff' : 'var(--text-muted)',
+                                fontSize: '0.78rem',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                                transition: 'all 0.15s ease',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '6px'
+                              }}
+                            >
+                              {cT.maskCyberFrameFitFull || '⬛ Pantalla Completa'}
+                            </button>
+                          </div>
+
+                          <p style={{ fontSize: '0.72rem', color: 'var(--text-dim)', margin: 0, lineHeight: 1.4 }}>
+                            {cT.maskCyberFrameFitHint || 'En Zona Segura el marco queda 100% visible sin ser tapado por historias de Instagram.'}
+                          </p>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
