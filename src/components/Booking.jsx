@@ -239,6 +239,7 @@ export default function Booking() {
                       }}
                     >
                       <option value="club">{t.booking.eventOptions.club}</option>
+                      <option value="restaurantBar">{t.booking.eventOptions.restaurantBar}</option>
                       <option value="festival">{t.booking.eventOptions.festival}</option>
                       <option value="private">{t.booking.eventOptions.private}</option>
                       <option value="rave">{t.booking.eventOptions.rave}</option>

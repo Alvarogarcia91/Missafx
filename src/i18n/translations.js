@@ -98,6 +98,7 @@ export const translations = {
       submitBtn: 'Enviar Cotización a WhatsApp',
       eventOptions: {
         club: 'Club / Antro',
+        restaurantBar: 'Restaurante / Bar',
         festival: 'Festival / Escenario',
         private: 'Fiesta Privada / After',
         rave: 'Rave / Warehouse'
@@ -288,6 +289,7 @@ export const translations = {
       submitBtn: 'Send Quote to WhatsApp',
       eventOptions: {
         club: 'Club / Nightclub',
+        restaurantBar: 'Restaurant / Bar',
         festival: 'Festival / Stage',
         private: 'Private Party / Afterparty',
         rave: 'Rave / Warehouse'
