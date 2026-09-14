@@ -110,7 +110,7 @@ export default function Footer() {
           </p>
         </div>
 
-        {/* Discreet Credit Bar: "bn sordo By Nexora IT LLC wwwitnexora.com" */}
+        {/* Discreet Credit Bar: "bn sordo By Nexora IT LLC www.itnexora.com" */}
         <div
           style={{
             borderTop: '1px solid rgba(255, 255, 255, 0.03)',
@@ -127,7 +127,7 @@ export default function Footer() {
           <span>
             By{' '}
             <a
-              href="https://wwwitnexora.com"
+              href="https://www.itnexora.com"
               target="_blank"
               rel="noreferrer"
               style={{
@@ -143,7 +143,7 @@ export default function Footer() {
             </a>
             {' '}—{' '}
             <a
-              href="https://wwwitnexora.com"
+              href="https://www.itnexora.com"
               target="_blank"
               rel="noreferrer"
               style={{
@@ -154,7 +154,7 @@ export default function Footer() {
               onMouseEnter={(e) => e.target.style.color = '#fff'}
               onMouseLeave={(e) => e.target.style.color = 'rgba(255, 255, 255, 0.32)'}
             >
-              wwwitnexora.com
+              www.itnexora.com
             </a>
           </span>
         </div>
