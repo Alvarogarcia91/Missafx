@@ -1,8 +1,8 @@
 import React from 'react';
-import { UserCheck, Activity, FileText, Radio, ArrowUpRight, Wrench } from 'lucide-react';
+import { Image as ImageIcon, Activity, FileText, Radio, ArrowUpRight, Wrench, Sparkles } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
-export default function DjTools() {
+export default function DjTools({ onOpenStoryCreator }) {
   const { t } = useLanguage();
 
   const toolsList = [
@@ -10,29 +10,37 @@ export default function DjTools() {
       id: 1,
       title: t.tools.tool1Title,
       desc: t.tools.tool1Desc,
-      icon: UserCheck,
-      url: '#' // Ready to assign URL
+      icon: ImageIcon,
+      isAvailable: true,
+      status: t.tools.tool1Status,
+      action: onOpenStoryCreator
     },
     {
       id: 2,
       title: t.tools.tool2Title,
       desc: t.tools.tool2Desc,
       icon: Activity,
-      url: '#' // Ready to assign URL
+      isAvailable: false,
+      status: t.tools.statusPlaceholder,
+      action: null
     },
     {
       id: 3,
       title: t.tools.tool3Title,
       desc: t.tools.tool3Desc,
       icon: FileText,
-      url: '#' // Ready to assign URL
+      isAvailable: false,
+      status: t.tools.statusPlaceholder,
+      action: null
     },
     {
       id: 4,
       title: t.tools.tool4Title,
       desc: t.tools.tool4Desc,
       icon: Radio,
-      url: '#' // Ready to assign URL
+      isAvailable: false,
+      status: t.tools.statusPlaceholder,
+      action: null
     }
   ];
 
@@ -122,14 +130,14 @@ export default function DjTools() {
                         fontSize: '0.68rem',
                         fontWeight: 700,
                         letterSpacing: '0.08em',
-                        color: 'var(--text-dim)',
+                        color: tool.isAvailable ? '#FF003C' : 'var(--text-dim)',
                         padding: '4px 8px',
                         borderRadius: '6px',
-                        background: 'rgba(255, 255, 255, 0.04)',
-                        border: '1px solid rgba(255, 255, 255, 0.06)'
+                        background: tool.isAvailable ? 'rgba(255, 0, 60, 0.12)' : 'rgba(255, 255, 255, 0.04)',
+                        border: tool.isAvailable ? '1px solid rgba(255, 0, 60, 0.3)' : '1px solid rgba(255, 255, 255, 0.06)'
                       }}
                     >
-                      {t.tools.statusPlaceholder}
+                      {tool.status}
                     </span>
                   </div>
 
@@ -159,18 +167,22 @@ export default function DjTools() {
                 <button
                   onClick={(e) => {
                     e.preventDefault();
-                    // Ready to assign custom URL when tools are deployed
+                    if (tool.action) {
+                      tool.action();
+                    }
                   }}
-                  className="btn btn-secondary btn-sm"
+                  disabled={!tool.isAvailable}
+                  className={`btn ${tool.isAvailable ? 'btn-primary' : 'btn-secondary'} btn-sm`}
                   style={{
                     width: '100%',
                     justifyContent: 'space-between',
                     fontSize: '0.82rem',
-                    cursor: 'pointer'
+                    cursor: tool.isAvailable ? 'pointer' : 'not-allowed',
+                    opacity: tool.isAvailable ? 1 : 0.6
                   }}
                 >
-                  <span>Abrir Herramienta</span>
-                  <ArrowUpRight size={15} color="#FF003C" />
+                  <span>{t.tools.openTool || 'Abrir Herramienta'}</span>
+                  <ArrowUpRight size={15} color={tool.isAvailable ? '#fff' : '#FF003C'} />
                 </button>
               </div>
             );
