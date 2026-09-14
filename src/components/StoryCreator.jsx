@@ -499,6 +499,7 @@ export default function StoryCreator({ onBack }) {
   const [isExporting, setIsExporting] = useState(false);
   const [downloadSuccess, setDownloadSuccess] = useState(false);
   const [exportStatusText, setExportStatusText] = useState('');
+  const [lastExportedVideoUrl, setLastExportedVideoUrl] = useState(null);
 
   // Motion FX & Story Animation States
   const [isMotionActive, setIsMotionActive] = useState(true);
@@ -582,8 +583,8 @@ export default function StoryCreator({ onBack }) {
 
   // Main Canvas Render function with Motion FX Time Parameter
   const renderCanvas = useCallback(
-    (time = 0) => {
-      const canvas = canvasRef.current;
+    (time = 0, targetCanvas = null) => {
+      const canvas = targetCanvas || canvasRef.current;
       if (!canvas) return;
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
@@ -1809,10 +1810,10 @@ export default function StoryCreator({ onBack }) {
     ]
   );
 
-  // Animation frame loop for continuous live motion preview
+  // Animation frame loop for continuous live motion preview (pauses completely during export to avoid GPU/canvas race conditions)
   useEffect(() => {
-    if (!isPlaying || !isMotionActive) {
-      renderCanvas(0);
+    if (!isPlaying || !isMotionActive || isExporting) {
+      if (!isExporting) renderCanvas(0);
       return;
     }
 
@@ -1830,7 +1831,7 @@ export default function StoryCreator({ onBack }) {
     return () => {
       cancelAnimationFrame(animationFrameId);
     };
-  }, [isPlaying, isMotionActive, renderCanvas]);
+  }, [isPlaying, isMotionActive, isExporting, renderCanvas]);
 
   // Export 1: High resolution PNG (Static Flyer)
   const handleDownload = () => {
@@ -1874,9 +1875,8 @@ export default function StoryCreator({ onBack }) {
 
   // Export 2: Video Story (True 100% ISO MP4 via WebCodecs + mp4-muxer with MediaRecorder fallback)
   const handleExportVideo = async () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
     setIsExporting(true);
+    setLastExportedVideoUrl(null);
 
     const wasSafeZonesActive = showSafeZones;
     if (wasSafeZonesActive) setShowSafeZones(false);
@@ -1885,12 +1885,17 @@ export default function StoryCreator({ onBack }) {
     const height = FORMATS[format].height;
     const fps = motionFps;
     const totalFrames = Math.round(loopDuration * fps);
-    const targetBitrate = fps === 120 ? 24000000 : (fps === 60 ? 14000000 : 8000000);
+    const targetBitrate = fps === 120 ? 28000000 : (fps === 60 ? 16000000 : 9000000);
+
+    // Dedicated offscreen canvas for export: 100% isolated, zero DOM or preview interference
+    const exportCanvas = document.createElement('canvas');
+    exportCanvas.width = width;
+    exportCanvas.height = height;
 
     // 1. Try modern frame-by-frame WebCodecs VideoEncoder (True CFR MP4, ZERO dropped frames, 100% smooth)
     if (typeof window !== 'undefined' && 'VideoEncoder' in window && 'VideoFrame' in window) {
       try {
-        setExportStatusText(`Iniciando codificador MP4 H.264 @ ${fps} FPS...`);
+        setExportStatusText(`Configurando codificador MP4 H.264 @ ${fps} FPS...`);
 
         const muxer = new Muxer({
           target: new ArrayBufferTarget(),
@@ -1912,21 +1917,37 @@ export default function StoryCreator({ onBack }) {
           }
         });
 
-        // Test supported configuration
-        let chosenCodec = 'avc1.4d002a'; // H.264 Main Profile
-        try {
-          const isSupported = await VideoEncoder.isConfigSupported({
-            codec: chosenCodec,
-            width,
-            height,
-            bitrate: targetBitrate,
-            framerate: fps
-          });
-          if (!isSupported.supported) {
-            chosenCodec = 'avc1.42001f'; // H.264 Baseline Profile
-          }
-        } catch (_) {
-          chosenCodec = 'avc1.42001f';
+        // Test supported codecs in order of highest capability for 1080p high FPS
+        const codecCandidates = [
+          'avc1.640033', // High Profile, Level 5.1 (1080p up to 120 FPS)
+          'avc1.4d0033', // Main Profile, Level 5.1
+          'avc1.640034', // High Profile, Level 5.2
+          'avc1.4d0034', // Main Profile, Level 5.2
+          'avc1.64002a', // High Profile, Level 4.2 (1080p up to 60 FPS)
+          'avc1.4d002a', // Main Profile, Level 4.2
+          'avc1.42002a', // Baseline Profile, Level 4.2
+          'avc1.42001f'  // Baseline Profile, Level 3.1
+        ];
+
+        let chosenCodec = null;
+        for (const cand of codecCandidates) {
+          try {
+            const isSupported = await VideoEncoder.isConfigSupported({
+              codec: cand,
+              width,
+              height,
+              bitrate: targetBitrate,
+              framerate: fps
+            });
+            if (isSupported && isSupported.supported) {
+              chosenCodec = cand;
+              break;
+            }
+          } catch (_) {}
+        }
+
+        if (!chosenCodec) {
+          chosenCodec = fps === 120 ? 'avc1.4d0033' : 'avc1.4d002a';
         }
 
         videoEncoder.configure({
@@ -1943,23 +1964,30 @@ export default function StoryCreator({ onBack }) {
           if (encoderError) throw encoderError;
 
           const frameTime = (i / totalFrames) * loopDuration;
-          renderCanvas(frameTime);
+          renderCanvas(frameTime, exportCanvas);
 
-          const pct = Math.round(((i + 1) / totalFrames) * 100);
-          setExportStatusText(`Renderizando cuadro ${i + 1}/${totalFrames} (${pct}%) @ ${fps} FPS...`);
-
-          // Allow the browser to process UI render every 6 frames
-          if (i % 6 === 0) {
-            await new Promise((resolve) => setTimeout(resolve, 0));
+          // Backpressure: if hardware encoder buffer is getting full, wait for it to catch up
+          while (videoEncoder.encodeQueueSize > 4) {
+            await new Promise((resolve) => setTimeout(resolve, 8));
           }
 
-          const frame = new VideoFrame(canvas, {
+          const frame = new VideoFrame(exportCanvas, {
             timestamp: i * frameIntervalUs,
             duration: frameIntervalUs
           });
 
-          videoEncoder.encode(frame, { keyFrame: i % (fps * 2) === 0 });
+          // Keyframe every 1 second (GOP = fps) for ultra-smooth seek & playback on phones
+          const isKeyFrame = i % fps === 0;
+          videoEncoder.encode(frame, { keyFrame: isKeyFrame });
           frame.close();
+
+          const pct = Math.round(((i + 1) / totalFrames) * 100);
+          setExportStatusText(`Renderizando cuadro ${i + 1}/${totalFrames} (${pct}%) @ ${fps} FPS...`);
+
+          // Allow the browser to process UI render every 8 frames
+          if (i % 8 === 0) {
+            await new Promise((resolve) => setTimeout(resolve, 0));
+          }
         }
 
         setExportStatusText('Empaquetando video MP4 con FastStart...');
@@ -1969,18 +1997,19 @@ export default function StoryCreator({ onBack }) {
 
         const blob = new Blob([muxer.target.buffer], { type: 'video/mp4' });
         const url = URL.createObjectURL(blob);
+        setLastExportedVideoUrl(url);
+
         const a = document.createElement('a');
         a.href = url;
         a.download = `missafx-story-${format}-${width}x${height}-${fps}fps.mp4`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
-        URL.revokeObjectURL(url);
 
         setIsExporting(false);
         setExportStatusText('');
         setDownloadSuccess(true);
-        setTimeout(() => setDownloadSuccess(false), 4000);
+        setTimeout(() => setDownloadSuccess(false), 5000);
         if (wasSafeZonesActive) setShowSafeZones(true);
         return;
       } catch (err) {
@@ -1990,6 +2019,11 @@ export default function StoryCreator({ onBack }) {
 
     // 2. Fallback for legacy browsers without WebCodecs: MediaRecorder
     try {
+      const canvas = canvasRef.current;
+      if (!canvas) {
+        setIsExporting(false);
+        return;
+      }
       setExportStatusText(`Grabando video @ ${fps} FPS (${loopDuration}s)...`);
       const candidateTypes = [
         'video/mp4;codecs=avc1.42E01E,mp4a.40.2',
@@ -2020,6 +2054,7 @@ export default function StoryCreator({ onBack }) {
         const isNativeMp4 = selectedMime.startsWith('video/mp4');
         const blob = new Blob(chunks, { type: isNativeMp4 ? 'video/mp4' : selectedMime });
         const url = URL.createObjectURL(blob);
+        setLastExportedVideoUrl(url);
         const a = document.createElement('a');
         a.href = url;
         const ext = isNativeMp4 ? 'mp4' : 'webm';
@@ -2027,11 +2062,10 @@ export default function StoryCreator({ onBack }) {
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
-        URL.revokeObjectURL(url);
         setIsExporting(false);
         setExportStatusText('');
         setDownloadSuccess(true);
-        setTimeout(() => setDownloadSuccess(false), 4000);
+        setTimeout(() => setDownloadSuccess(false), 5000);
         if (wasSafeZonesActive) setShowSafeZones(true);
       };
 
@@ -6305,6 +6339,56 @@ export default function StoryCreator({ onBack }) {
                   >
                     <CheckCircle2 size={16} />
                     <span>{cT.exportSuccess}</span>
+                  </div>
+                )}
+
+                {/* Instant In-App Video Preview Player */}
+                {lastExportedVideoUrl && (
+                  <div
+                    style={{
+                      marginTop: '16px',
+                      marginBottom: '20px',
+                      background: 'rgba(0, 0, 0, 0.45)',
+                      padding: '16px',
+                      borderRadius: '14px',
+                      border: '1px solid rgba(34, 197, 94, 0.35)',
+                      boxShadow: '0 8px 24px rgba(0,0,0,0.5)'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                      <span style={{ fontSize: '0.84rem', color: '#22c55e', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <Play size={14} /> Reproductor de Video Exportado (Verifica Fluidez):
+                      </span>
+                      <button
+                        onClick={() => {
+                          URL.revokeObjectURL(lastExportedVideoUrl);
+                          setLastExportedVideoUrl(null);
+                        }}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: 'var(--text-dim)',
+                          cursor: 'pointer',
+                          fontSize: '0.74rem'
+                        }}
+                      >
+                        ✕ Cerrar
+                      </button>
+                    </div>
+                    <video
+                      src={lastExportedVideoUrl}
+                      controls
+                      autoPlay
+                      loop
+                      playsInline
+                      style={{
+                        width: '100%',
+                        maxHeight: '320px',
+                        borderRadius: '10px',
+                        background: '#060608',
+                        display: 'block'
+                      }}
+                    />
                   </div>
                 )}
 
