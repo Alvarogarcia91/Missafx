@@ -1,8 +1,8 @@
 import React from 'react';
-import { Image as ImageIcon, Activity, FileText, Radio, ArrowUpRight, Wrench, Sparkles } from 'lucide-react';
+import { Image as ImageIcon, QrCode, FileText, Radio, ArrowUpRight, Wrench, Sparkles } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
-export default function DjTools({ onOpenStoryCreator }) {
+export default function DjTools({ onOpenStoryCreator, onOpenCardCreator }) {
   const { t } = useLanguage();
 
   const toolsList = [
@@ -19,10 +19,10 @@ export default function DjTools({ onOpenStoryCreator }) {
       id: 2,
       title: t.tools.tool2Title,
       desc: t.tools.tool2Desc,
-      icon: Activity,
-      isAvailable: false,
-      status: t.tools.statusPlaceholder,
-      action: null
+      icon: QrCode,
+      isAvailable: true,
+      status: t.tools.tool2Status,
+      action: onOpenCardCreator
     },
     {
       id: 3,
