@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { LanguageProvider } from './context/LanguageContext';
 import Navbar from './components/Navbar.jsx';
 import Hero from './components/Hero.jsx';
@@ -18,9 +18,9 @@ export default function App() {
           <SocialHub />
           <About />
           <Booking />
+          <DjTools />
         </main>
         <Footer />
-        <DjTools />
       </div>
     </LanguageProvider>
   );

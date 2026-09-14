@@ -107,18 +107,18 @@ export const translations = {
       sendAnother: 'Enviar otra consulta'
     },
     tools: {
-      trigger: 'Herramientas DJ',
-      title: 'MISSA STUDIO // TOOLS',
-      subtitle: 'Herramientas y utilidades de producción',
+      tag: 'UTILIDADES & ACCESOS DIRECTOS',
+      title: 'HERRAMIENTAS DJ // MISSAFX',
+      subtitle: 'Módulo de herramientas técnicas, utilidades de cabina y accesos directos para producción y directos.',
       tool1Title: 'Portal Privado DJ',
-      tool1Desc: 'Panel de control y agenda',
+      tool1Desc: 'Panel de control, agenda de fechas y gestión de toquines',
       tool2Title: 'Calculadora BPM & Claves',
-      tool2Desc: 'Armonía y rueda Camelot',
+      tool2Desc: 'Compatibilidad armónica de tracks y rueda Camelot',
       tool3Title: 'Rider & Press Kit Builder',
-      tool3Desc: 'Especificaciones técnicas',
+      tool3Desc: 'Especificaciones técnicas de audio y stage plot en PDF',
       tool4Title: 'Stream & Live Hub',
-      tool4Desc: 'Recursos para directos',
-      statusPlaceholder: 'En desarrollo'
+      tool4Desc: 'Recursos, overlays y enlaces para directos en Kick',
+      statusPlaceholder: 'PRÓXIMAMENTE'
     },
     footer: {
       tagline: 'DJ & Electronic Music Producer',
@@ -234,18 +234,18 @@ export const translations = {
       sendAnother: 'Send another inquiry'
     },
     tools: {
-      trigger: 'DJ Tools',
-      title: 'MISSA STUDIO // TOOLS',
-      subtitle: 'Private DJ utilities & production',
-      tool1Title: 'DJ Private Portal',
-      tool1Desc: 'Control dashboard & schedule',
-      tool2Title: 'BPM & Camelot Wheel',
-      tool2Desc: 'Harmonic mixing calculator',
+      tag: 'UTILITIES & DIRECT ACCESS',
+      title: 'DJ TOOLS // MISSAFX',
+      subtitle: 'Technical booth utilities, DJ tools, and production shortcuts for live sets and streams.',
+      tool1Title: 'Private DJ Portal',
+      tool1Desc: 'Control dashboard, event agenda and show management',
+      tool2Title: 'BPM & Key Calculator',
+      tool2Desc: 'Harmonic mixing compatibility and Camelot wheel finder',
       tool3Title: 'Rider & Press Kit Builder',
-      tool3Desc: 'Technical requirements export',
+      tool3Desc: 'Technical audio specifications and stage plot PDF generator',
       tool4Title: 'Stream & Live Hub',
-      tool4Desc: 'Live broadcast utilities',
-      statusPlaceholder: 'In development'
+      tool4Desc: 'Resources, overlays and direct links for Kick streams',
+      statusPlaceholder: 'COMING SOON'
     },
     footer: {
       tagline: 'DJ & Electronic Music Producer',
