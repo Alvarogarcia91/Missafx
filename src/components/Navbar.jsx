@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Menu, X, Disc3, Sparkles } from 'lucide-react';
+﻿import React, { useState, useEffect } from 'react';
+import { Menu, X, MessageCircle, Sparkles } from 'lucide-react';
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -22,10 +22,10 @@ export default function Navbar() {
         right: 0,
         zIndex: 1000,
         transition: 'all 0.3s ease',
-        background: isScrolled ? 'rgba(7, 7, 11, 0.85)' : 'transparent',
+        background: isScrolled ? 'rgba(6, 6, 8, 0.88)' : 'transparent',
         backdropFilter: isScrolled ? 'blur(16px)' : 'none',
         borderBottom: isScrolled ? '1px solid rgba(255, 255, 255, 0.08)' : 'none',
-        padding: isScrolled ? '14px 0' : '24px 0'
+        padding: isScrolled ? '14px 0' : '22px 0'
       }}
     >
       <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -35,35 +35,20 @@ export default function Navbar() {
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '10px',
-            textDecoration: 'none',
-            color: 'inherit'
+            gap: '12px',
+            textDecoration: 'none'
           }}
         >
-          <div
+          <img
+            src="/missafx-logo.png"
+            alt="MISSAFX"
             style={{
-              width: '38px',
-              height: '38px',
-              borderRadius: '10px',
-              background: 'linear-gradient(135deg, #a855f7 0%, #06b6d4 100%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 0 15px rgba(168, 85, 247, 0.5)'
+              height: '34px',
+              width: 'auto',
+              display: 'block',
+              objectFit: 'contain'
             }}
-          >
-            <Disc3 size={22} color="#fff" style={{ animation: 'spin 12s linear infinite' }} />
-          </div>
-          <span
-            className="font-display"
-            style={{
-              fontSize: '1.5rem',
-              fontWeight: 900,
-              letterSpacing: '0.05em'
-            }}
-          >
-            MISSA<span style={{ color: 'var(--accent-purple)' }}>.FX</span>
-          </span>
+          />
         </a>
 
         {/* Desktop Navigation */}
@@ -75,12 +60,19 @@ export default function Navbar() {
           }}
           className="desktop-nav"
         >
-          <a href="#music" className="nav-link">Música</a>
-          <a href="#tour" className="nav-link">Tour / Fechas</a>
-          <a href="#about" className="nav-link">Biografía</a>
-          <a href="#booking" className="nav-link">Booking</a>
-          <a href="#booking" className="btn btn-primary btn-sm">
-            <Sparkles size={16} /> Contratar
+          <a href="#home" className="nav-link">Inicio</a>
+          <a href="#social-hub" className="nav-link">Redes Oficiales</a>
+          <a href="#music" className="nav-link">Música & Sets</a>
+          <a href="#about" className="nav-link">Bio & Rider</a>
+          <a href="#contact" className="nav-link">Contacto</a>
+          <a
+            href="https://wa.me/5214443570777?text=Hola%20Missa,%20me%20gustar%C3%ADa%20cotizar%20una%20fecha%20o%20evento"
+            target="_blank"
+            rel="noreferrer"
+            className="btn btn-primary btn-sm"
+            style={{ gap: '8px' }}
+          >
+            <MessageCircle size={16} /> WhatsApp Directo
           </a>
         </nav>
 
@@ -105,7 +97,7 @@ export default function Navbar() {
       {mobileMenuOpen && (
         <div
           style={{
-            background: 'rgba(10, 10, 18, 0.98)',
+            background: 'rgba(8, 8, 12, 0.98)',
             backdropFilter: 'blur(20px)',
             borderBottom: '1px solid var(--border-glass)',
             padding: '24px',
@@ -115,20 +107,28 @@ export default function Navbar() {
           }}
         >
           <a
+            href="#home"
+            onClick={() => setMobileMenuOpen(false)}
+            className="nav-link"
+            style={{ fontSize: '1.1rem' }}
+          >
+            Inicio
+          </a>
+          <a
+            href="#social-hub"
+            onClick={() => setMobileMenuOpen(false)}
+            className="nav-link"
+            style={{ fontSize: '1.1rem' }}
+          >
+            Redes Oficiales
+          </a>
+          <a
             href="#music"
             onClick={() => setMobileMenuOpen(false)}
             className="nav-link"
             style={{ fontSize: '1.1rem' }}
           >
-            Música
-          </a>
-          <a
-            href="#tour"
-            onClick={() => setMobileMenuOpen(false)}
-            className="nav-link"
-            style={{ fontSize: '1.1rem' }}
-          >
-            Tour / Fechas
+            Música & Sets
           </a>
           <a
             href="#about"
@@ -136,23 +136,25 @@ export default function Navbar() {
             className="nav-link"
             style={{ fontSize: '1.1rem' }}
           >
-            Biografía
+            Bio & Rider
           </a>
           <a
-            href="#booking"
+            href="#contact"
             onClick={() => setMobileMenuOpen(false)}
             className="nav-link"
             style={{ fontSize: '1.1rem' }}
           >
-            Booking & Contacto
+            Contacto Directo
           </a>
           <a
-            href="#booking"
+            href="https://wa.me/5214443570777?text=Hola%20Missa,%20me%20gustar%C3%ADa%20cotizar%20una%20fecha%20o%20evento"
+            target="_blank"
+            rel="noreferrer"
             onClick={() => setMobileMenuOpen(false)}
             className="btn btn-primary"
             style={{ width: '100%', marginTop: '10px' }}
           >
-            <Sparkles size={18} /> Contrataciones Directas
+            <MessageCircle size={18} /> Contactar por WhatsApp
           </a>
         </div>
       )}
@@ -175,10 +177,6 @@ export default function Navbar() {
           .mobile-toggle {
             display: none !important;
           }
-        }
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
         }
       `}</style>
     </header>

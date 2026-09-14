@@ -1,120 +1,120 @@
-import React from 'react';
-import { Sliders, Headphones, Download, Award, Music2, Radio } from 'lucide-react';
+﻿import React from 'react';
+import { Sliders, Headphones, MessageCircle, Download, CheckCircle, Disc } from 'lucide-react';
 
 export default function About() {
+  const whatsappUrl = "https://wa.me/5214443570777?text=Hola%20Missa,%20me%20gustar%C3%ADa%20solicitar%20el%20Press%20Kit%20completo%20y%20Rider";
+
   return (
-    <section id="about" style={{ padding: '100px 0', position: 'relative' }}>
+    <section id="about" style={{ padding: '90px 0', position: 'relative' }}>
       <div className="container">
         <div
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-            gap: '60px',
+            gap: '50px',
             alignItems: 'center'
           }}
         >
-          {/* Left Column: Visual Highlights */}
+          {/* Left Column: Artist Bio */}
           <div>
-            <div className="section-header" style={{ textAlign: 'left', marginBottom: '30px' }}>
+            <div className="section-header" style={{ textAlign: 'left', marginBottom: '26px' }}>
               <span className="section-tag">SOBRE EL ARTISTA</span>
-              <h2>EL SONIDO DETRÁS DE LA ENERGÍA</h2>
+              <h2>MISSAFX / BIO & TRAYECTORIA</h2>
             </div>
 
-            <p style={{ color: 'var(--text-muted)', fontSize: '1.05rem', marginBottom: '20px', lineHeight: 1.8 }}>
-              Con una visión clara de la música electrónica contemporánea, <strong style={{ color: '#fff' }}>DJ Missa</strong> ha consolidado
-              su identidad a través de sesiones dinámicas caracterizadas por líneas de bajo profundas, percusiones envolventes y una selección
-              precisa de ritmos Tech House y sonidos progresivos.
+            <p style={{ color: 'var(--text-muted)', fontSize: '1.05rem', marginBottom: '18px', lineHeight: 1.8 }}>
+              Con una identidad sonora potente y enfocada en la pista de baile, <strong style={{ color: '#fff' }}>Missafx</strong> fusiona 
+              lo mejor del Tech House contemporáneo con líneas de bajo contundentes y percusiones dinámicas.
             </p>
 
-            <p style={{ color: 'var(--text-muted)', fontSize: '1.05rem', marginBottom: '36px', lineHeight: 1.8 }}>
-              Desde clubs íntimos underground hasta los festivales más vibrantes, cada una de sus presentaciones es un viaje diseñado para
-              mantener a la audiencia conectada de principio a fin.
+            <p style={{ color: 'var(--text-muted)', fontSize: '1.05rem', marginBottom: '32px', lineHeight: 1.8 }}>
+              Sus sets están diseñados para generar alta energía en clubs y escenarios, respaldados por una comunidad activa en plataformas
+              de streaming como Kick, YouTube y SoundCloud.
             </p>
 
-            {/* Feature Cards Grid */}
+            {/* Highlights Grid */}
             <div
               style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
                 gap: '16px',
-                marginBottom: '36px'
+                marginBottom: '32px'
               }}
             >
-              <div className="glass-panel" style={{ padding: '18px 22px' }}>
-                <Headphones size={24} color="var(--accent-cyan)" style={{ marginBottom: '10px' }} />
-                <h4 style={{ fontSize: '1rem', color: '#fff', marginBottom: '4px' }}>Mezcla Enérgica</h4>
-                <p style={{ fontSize: '0.85rem', color: 'var(--text-dim)' }}>Transiciones fluidas y lectura impecable del público.</p>
+              <div className="glass-panel" style={{ padding: '18px 20px' }}>
+                <Headphones size={22} color="#FF003C" style={{ marginBottom: '8px' }} />
+                <h4 style={{ fontSize: '1rem', color: '#fff', marginBottom: '4px' }}>Tech House Sessions</h4>
+                <p style={{ fontSize: '0.82rem', color: 'var(--text-dim)' }}>Mezclas enérgicas y lectura dinámica de pista.</p>
               </div>
 
-              <div className="glass-panel" style={{ padding: '18px 22px' }}>
-                <Sliders size={24} color="var(--accent-purple)" style={{ marginBottom: '10px' }} />
-                <h4 style={{ fontSize: '1rem', color: '#fff', marginBottom: '4px' }}>Producción Propia</h4>
-                <p style={{ fontSize: '0.85rem', color: 'var(--text-dim)' }}>Edits, bootlegs y tracks originales con sonido de vanguardia.</p>
+              <div className="glass-panel" style={{ padding: '18px 20px' }}>
+                <Sliders size={22} color="#FF003C" style={{ marginBottom: '8px' }} />
+                <h4 style={{ fontSize: '1rem', color: '#fff', marginBottom: '4px' }}>Edits & Bootlegs</h4>
+                <p style={{ fontSize: '0.82rem', color: 'var(--text-dim)' }}>Sonido vanguardista y producciones exclusivas.</p>
               </div>
             </div>
 
-            {/* Press Kit CTA */}
-            <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-              <a
-                href="#booking"
-                className="btn btn-secondary"
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '10px' }}
-              >
-                <Download size={18} /> Descargar Press Kit & Bio (PDF)
-              </a>
-            </div>
+            <a
+              href={whatsappUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="btn btn-secondary"
+              style={{ gap: '10px' }}
+            >
+              <MessageCircle size={18} color="#FF003C" /> Solicitar Press Kit Completo
+            </a>
           </div>
 
-          {/* Right Column: Technical Rider / Setup Card */}
+          {/* Right Column: Technical Rider for Event Organizers */}
           <div>
             <div
               className="glass-panel"
               style={{
                 padding: '36px',
                 position: 'relative',
-                background: 'linear-gradient(180deg, rgba(20, 19, 36, 0.9) 0%, rgba(10, 10, 18, 0.95) 100%)',
-                border: '1px solid rgba(6, 182, 212, 0.25)'
+                background: 'linear-gradient(180deg, rgba(20, 18, 24, 0.95) 0%, rgba(10, 10, 14, 0.98) 100%)',
+                border: '1px solid rgba(255, 0, 60, 0.25)'
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '22px' }}>
                 <div
                   style={{
-                    width: '40px',
-                    height: '40px',
+                    width: '42px',
+                    height: '42px',
                     borderRadius: '10px',
-                    background: 'rgba(6, 182, 212, 0.15)',
+                    background: 'rgba(255, 0, 60, 0.12)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    color: 'var(--accent-cyan)'
+                    color: '#FF003C'
                   }}
                 >
                   <Sliders size={22} />
                 </div>
                 <div>
                   <h3 className="font-display" style={{ fontSize: '1.25rem', color: '#fff' }}>
-                    RIDER TÉCNICO BÁSICO
+                    RIDER TÉCNICO SUGERIDO
                   </h3>
-                  <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>Configuración de cabina para promotores</span>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>Equipamiento para clubs y festivales</span>
                 </div>
               </div>
 
-              <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '28px' }}>
-                <li style={{ display: 'flex', alignItems: 'center', gap: '12px', color: 'var(--text-muted)', fontSize: '0.95rem' }}>
-                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--accent-cyan)' }} />
+              <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '26px' }}>
+                <li style={{ display: 'flex', alignItems: 'center', gap: '12px', color: 'var(--text-muted)', fontSize: '0.92rem' }}>
+                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#FF003C' }} />
                   <strong>Reproductores:</strong> 2x Pioneer CDJ-3000 o CDJ-2000NXS2
                 </li>
-                <li style={{ display: 'flex', alignItems: 'center', gap: '12px', color: 'var(--text-muted)', fontSize: '0.95rem' }}>
-                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--accent-purple)' }} />
+                <li style={{ display: 'flex', alignItems: 'center', gap: '12px', color: 'var(--text-muted)', fontSize: '0.92rem' }}>
+                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#FF003C' }} />
                   <strong>Mixer:</strong> Pioneer DJM-A9 o DJM-900NXS2
                 </li>
-                <li style={{ display: 'flex', alignItems: 'center', gap: '12px', color: 'var(--text-muted)', fontSize: '0.95rem' }}>
-                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--accent-pink)' }} />
-                  <strong>Monitoreo:</strong> 2x Monitores de cabina activos estéreo (Booth)
+                <li style={{ display: 'flex', alignItems: 'center', gap: '12px', color: 'var(--text-muted)', fontSize: '0.92rem' }}>
+                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#FF003C' }} />
+                  <strong>Monitores de Cabina:</strong> 2x Booth Monitors estéreo de alta potencia
                 </li>
-                <li style={{ display: 'flex', alignItems: 'center', gap: '12px', color: 'var(--text-muted)', fontSize: '0.95rem' }}>
-                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--accent-violet)' }} />
-                  <strong>Conectividad:</strong> Pro DJ Link Ethernet Switch & AC 110/220V
+                <li style={{ display: 'flex', alignItems: 'center', gap: '12px', color: 'var(--text-muted)', fontSize: '0.92rem' }}>
+                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#FF003C' }} />
+                  <strong>Conectividad:</strong> Red Pro DJ Link Ethernet & Alimentación 110/220V
                 </li>
               </ul>
 
@@ -128,20 +128,22 @@ export default function About() {
                 }}
               >
                 <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                  ¿Necesitas especificaciones técnicas completas o rider de hospitalidad?
+                  ¿Requieres especificaciones para un escenario o evento especial?
                 </span>
                 <a
-                  href="#booking"
+                  href="https://wa.me/5214443570777?text=Hola%20Missa,%20quisiera%20consultar%20detalles%20t%C3%A9cnicos%20para%20un%20evento"
+                  target="_blank"
+                  rel="noreferrer"
                   style={{
                     display: 'block',
-                    color: 'var(--accent-cyan)',
-                    fontWeight: 600,
+                    color: '#FF003C',
+                    fontWeight: 700,
                     fontSize: '0.85rem',
                     marginTop: '6px',
                     textDecoration: 'none'
                   }}
                 >
-                  Solicitar Rider Completo →
+                  Consultar Requerimientos en WhatsApp →
                 </a>
               </div>
             </div>

@@ -1,74 +1,46 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Play, Pause, Disc, ExternalLink, Radio, Flame, Sparkles } from 'lucide-react';
+﻿import React, { useState, useRef, useEffect } from 'react';
+import { Play, Pause, Disc, ExternalLink, Radio, Flame, Sparkles, Volume2 } from 'lucide-react';
 
 const TRACKS = [
   {
     id: 1,
-    title: 'Midnight Velocity (Club Mix)',
+    title: 'Peak Time Velocity (Original Mix)',
     category: 'Original Mixes',
     duration: '05:42',
-    bpm: '126 BPM',
+    bpm: '128 BPM',
     key: 'F#m',
-    tags: ['Tech House', 'Peak Time'],
-    links: {
-      spotify: 'https://spotify.com',
-      soundcloud: 'https://soundcloud.com',
-      beatport: 'https://beatport.com'
-    }
+    tags: ['Tech House', 'Club Mix'],
+    url: 'https://soundcloud.com/missael-arath'
   },
   {
     id: 2,
-    title: 'Euphoria Festival Live Set 2026',
+    title: 'Missafx Live Session 2026',
     category: 'Live Sets',
-    duration: '58:14',
-    bpm: '128 BPM',
-    key: 'Gm',
-    tags: ['Mainstage', 'Festival'],
-    links: {
-      spotify: 'https://spotify.com',
-      soundcloud: 'https://soundcloud.com',
-      youtube: 'https://youtube.com'
-    }
+    duration: '52:10',
+    bpm: '127 BPM',
+    key: 'Am',
+    tags: ['Live Set', 'Underground'],
+    url: 'https://soundcloud.com/missael-arath'
   },
   {
     id: 3,
-    title: 'Sunset Sessions Vol. 04',
-    category: 'Live Sets',
-    duration: '42:30',
-    bpm: '124 BPM',
-    key: 'Am',
-    tags: ['Deep Melodic', 'Sunset'],
-    links: {
-      spotify: 'https://spotify.com',
-      soundcloud: 'https://soundcloud.com',
-      youtube: 'https://youtube.com'
-    }
+    title: 'Dark Horizon (Missa Rework)',
+    category: 'Remixes',
+    duration: '06:18',
+    bpm: '129 BPM',
+    key: 'Dm',
+    tags: ['Bootleg', 'Bass House'],
+    url: 'https://soundcloud.com/missael-arath'
   },
   {
     id: 4,
-    title: 'Neon Pulse (Underground Edit)',
-    category: 'Original Mixes',
-    duration: '06:15',
-    bpm: '127 BPM',
-    key: 'Dm',
-    tags: ['Minimal Techno', 'Club'],
-    links: {
-      spotify: 'https://spotify.com',
-      soundcloud: 'https://soundcloud.com',
-      beatport: 'https://beatport.com'
-    }
-  },
-  {
-    id: 5,
-    title: 'Resonance Rework (Missa Bootleg)',
-    category: 'Remixes',
-    duration: '04:58',
-    bpm: '128 BPM',
-    key: 'Em',
-    tags: ['Bootleg', 'Bassline'],
-    links: {
-      soundcloud: 'https://soundcloud.com'
-    }
+    title: 'Sunset Pulse Live Stream',
+    category: 'Live Sets',
+    duration: '44:25',
+    bpm: '126 BPM',
+    key: 'Gm',
+    tags: ['Tech House', 'Kick Stream'],
+    url: 'https://kick.com/7missa'
   }
 ];
 
@@ -86,40 +58,30 @@ export default function MusicPlayer() {
     ? TRACKS
     : TRACKS.filter(t => t.category === selectedCategory);
 
-  // Web Audio Synth for interactive ambient beat demo
   const togglePlay = (track) => {
     if (currentTrack.id === track.id && isPlaying) {
       setIsPlaying(false);
-      stopAudioSynth();
     } else {
       setCurrentTrack(track);
       setIsPlaying(true);
-      startAudioSynth();
-    }
-  };
-
-  const startAudioSynth = () => {
-    try {
-      if (!audioCtxRef.current) {
-        audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
+      try {
+        if (!audioCtxRef.current) {
+          audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtxRef.current.state === 'suspended') {
+          audioCtxRef.current.resume();
+        }
+      } catch (e) {
+        console.log('AudioContext ready');
       }
-      if (audioCtxRef.current.state === 'suspended') {
-        audioCtxRef.current.resume();
-      }
-    } catch (e) {
-      console.log('AudioContext not allowed yet:', e);
     }
-  };
-
-  const stopAudioSynth = () => {
-    // Keep context alive
   };
 
   useEffect(() => {
     if (isPlaying) {
       intervalRef.current = setInterval(() => {
-        setProgress((prev) => (prev >= 100 ? 0 : prev + 0.5));
-      }, 500);
+        setProgress((prev) => (prev >= 100 ? 0 : prev + 0.6));
+      }, 400);
     } else {
       clearInterval(intervalRef.current);
     }
@@ -127,13 +89,13 @@ export default function MusicPlayer() {
   }, [isPlaying]);
 
   return (
-    <section id="music" style={{ padding: '100px 0', position: 'relative' }}>
+    <section id="music" style={{ padding: '90px 0', position: 'relative' }}>
       <div className="container">
         <div className="section-header">
-          <span className="section-tag">DISCOGRAFÍA & SETS</span>
-          <h2>ÚLTIMOS LANZAMIENTOS</h2>
+          <span className="section-tag">CATÁLOGO & SESIONES</span>
+          <h2>PRODUCCIÓN & MIXES</h2>
           <p>
-            Escucha la selección curada de producciones originales, sets en vivo y remezclas exclusivas de DJ Missa.
+            Escucha una muestra de los tracks y sesiones en vivo disponibles en el SoundCloud y canales oficiales de Missafx.
           </p>
         </div>
 
@@ -144,7 +106,7 @@ export default function MusicPlayer() {
             justifyContent: 'center',
             gap: '12px',
             flexWrap: 'wrap',
-            marginBottom: '40px'
+            marginBottom: '36px'
           }}
         >
           {categories.map((cat) => (
@@ -153,7 +115,7 @@ export default function MusicPlayer() {
               onClick={() => setSelectedCategory(cat)}
               className="btn btn-sm"
               style={{
-                background: selectedCategory === cat ? 'var(--gradient-neon)' : 'rgba(255, 255, 255, 0.05)',
+                background: selectedCategory === cat ? 'var(--gradient-crimson)' : 'rgba(255, 255, 255, 0.05)',
                 color: selectedCategory === cat ? '#fff' : 'var(--text-muted)',
                 border: '1px solid',
                 borderColor: selectedCategory === cat ? 'transparent' : 'var(--border-glass)'
@@ -169,9 +131,9 @@ export default function MusicPlayer() {
           className="glass-panel"
           style={{
             padding: '28px',
-            marginBottom: '40px',
-            border: '1px solid rgba(168, 85, 247, 0.3)',
-            background: 'linear-gradient(90deg, rgba(168, 85, 247, 0.08) 0%, rgba(6, 182, 212, 0.08) 100%)'
+            marginBottom: '36px',
+            border: '1px solid rgba(255, 0, 60, 0.3)',
+            background: 'linear-gradient(90deg, rgba(255, 0, 60, 0.08) 0%, rgba(20, 20, 26, 0.95) 100%)'
           }}
         >
           <div
@@ -188,8 +150,8 @@ export default function MusicPlayer() {
                 onClick={() => togglePlay(currentTrack)}
                 className="btn btn-primary"
                 style={{
-                  width: '60px',
-                  height: '60px',
+                  width: '58px',
+                  height: '58px',
                   padding: 0,
                   borderRadius: '50%',
                   flexShrink: 0
@@ -200,65 +162,72 @@ export default function MusicPlayer() {
               </button>
 
               <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                  <span className="badge" style={{ padding: '2px 8px', fontSize: '0.7rem' }}>
-                    {isPlaying ? 'REPRODUCIENDO PREVIEW' : 'PREVIEW LISTO'}
-                  </span>
-                  <span style={{ fontSize: '0.8rem', color: 'var(--accent-cyan)' }}>
-                    {currentTrack.bpm} • {currentTrack.key}
-                  </span>
-                </div>
-                <h3 className="font-display" style={{ fontSize: '1.25rem', color: '#fff' }}>
+                <span
+                  style={{
+                    fontSize: '0.75rem',
+                    color: '#FF003C',
+                    fontWeight: 700,
+                    letterSpacing: '0.08em',
+                    textTransform: 'uppercase'
+                  }}
+                >
+                  REPRODUCIENDO DEMO • {currentTrack.bpm}
+                </span>
+                <h3
+                  className="font-display"
+                  style={{ fontSize: '1.25rem', color: '#fff', margin: '3px 0' }}
+                >
                   {currentTrack.title}
                 </h3>
+                <span style={{ fontSize: '0.85rem', color: 'var(--text-dim)' }}>
+                  Key: {currentTrack.key} • {currentTrack.duration}
+                </span>
               </div>
             </div>
 
-            {/* Progress Bar & EQ */}
-            <div style={{ flex: '1 1 300px', maxWidth: '450px' }}>
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  fontSize: '0.75rem',
-                  color: 'var(--text-dim)',
-                  marginBottom: '8px'
-                }}
-              >
-                <span>01:45</span>
-                <span>{currentTrack.duration}</span>
-              </div>
+            {/* Waveform / Progress Bar */}
+            <div style={{ flex: '1 1 300px', maxWidth: '460px' }}>
               <div
                 style={{
                   width: '100%',
                   height: '6px',
                   background: 'rgba(255, 255, 255, 0.1)',
-                  borderRadius: '3px',
+                  borderRadius: '4px',
                   overflow: 'hidden',
-                  cursor: 'pointer'
-                }}
-                onClick={(e) => {
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  const clickX = e.clientX - rect.left;
-                  setProgress((clickX / rect.width) * 100);
+                  marginBottom: '8px'
                 }}
               >
                 <div
                   style={{
                     width: `${progress}%`,
                     height: '100%',
-                    background: 'var(--gradient-neon)',
-                    boxShadow: '0 0 10px rgba(236, 72, 153, 0.6)',
+                    background: 'var(--gradient-crimson)',
+                    borderRadius: '4px',
                     transition: 'width 0.2s linear'
                   }}
                 />
               </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-dim)' }}>
+                <span>01:24</span>
+                <span>{currentTrack.duration}</span>
+              </div>
             </div>
+
+            <a
+              href="https://soundcloud.com/missael-arath"
+              target="_blank"
+              rel="noreferrer"
+              className="btn btn-secondary btn-sm"
+              style={{ gap: '8px' }}
+            >
+              <span>Ver en SoundCloud</span>
+              <ExternalLink size={15} />
+            </a>
           </div>
         </div>
 
         {/* Tracks List */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {filteredTracks.map((track, idx) => {
             const isCurrent = currentTrack.id === track.id;
             return (
@@ -266,99 +235,88 @@ export default function MusicPlayer() {
                 key={track.id}
                 className="glass-panel"
                 style={{
-                  padding: '16px 24px',
+                  padding: '16px 20px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  flexWrap: 'wrap',
                   gap: '16px',
-                  borderColor: isCurrent ? 'var(--accent-purple)' : 'var(--border-glass)'
+                  borderColor: isCurrent ? 'rgba(255, 0, 60, 0.4)' : 'var(--border-glass)',
+                  background: isCurrent ? 'rgba(255, 0, 60, 0.04)' : 'var(--bg-card)'
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                   <button
                     onClick={() => togglePlay(track)}
                     style={{
-                      width: '42px',
-                      height: '42px',
+                      width: '38px',
+                      height: '38px',
                       borderRadius: '50%',
-                      background: isCurrent && isPlaying ? 'var(--gradient-neon)' : 'rgba(255, 255, 255, 0.08)',
+                      background: isCurrent && isPlaying ? '#FF003C' : 'rgba(255, 255, 255, 0.08)',
                       border: 'none',
                       color: '#fff',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease'
+                      cursor: 'pointer'
                     }}
                   >
-                    {isCurrent && isPlaying ? (
-                      <Pause size={18} fill="#fff" />
-                    ) : (
-                      <Play size={18} fill="#fff" style={{ marginLeft: '2px' }} />
-                    )}
+                    {isCurrent && isPlaying ? <Pause size={16} fill="#fff" /> : <Play size={16} fill="#fff" style={{ marginLeft: '2px' }} />}
                   </button>
 
                   <div>
-                    <h4 style={{ fontSize: '1rem', fontWeight: 600, color: '#fff', marginBottom: '2px' }}>
+                    <h4 style={{ fontSize: '0.95rem', fontWeight: 600, color: '#fff' }}>
                       {track.title}
                     </h4>
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--accent-cyan)' }}>{track.bpm}</span>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>•</span>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{track.key}</span>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>•</span>
-                      {track.tags.map((tag) => (
-                        <span
-                          key={tag}
-                          style={{
-                            fontSize: '0.7rem',
-                            padding: '2px 8px',
-                            background: 'rgba(255, 255, 255, 0.05)',
-                            borderRadius: '4px',
-                            color: 'var(--text-dim)'
-                          }}
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>
+                      {track.bpm} • {track.key}
+                    </span>
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                  <span style={{ fontSize: '0.9rem', color: 'var(--text-dim)', fontVariantNumeric: 'tabular-nums' }}>
-                    {track.duration}
-                  </span>
-
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    {track.links.spotify && (
-                      <a
-                        href={track.links.spotify}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="btn btn-secondary btn-sm"
-                        style={{ padding: '6px 12px', fontSize: '0.75rem' }}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    {track.tags.map(tag => (
+                      <span
+                        key={tag}
+                        style={{
+                          fontSize: '0.72rem',
+                          background: 'rgba(255, 255, 255, 0.05)',
+                          padding: '3px 8px',
+                          borderRadius: '6px',
+                          color: 'var(--text-muted)'
+                        }}
                       >
-                        Spotify <ExternalLink size={12} />
-                      </a>
-                    )}
-                    {track.links.soundcloud && (
-                      <a
-                        href={track.links.soundcloud}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="btn btn-secondary btn-sm"
-                        style={{ padding: '6px 12px', fontSize: '0.75rem' }}
-                      >
-                        SoundCloud <ExternalLink size={12} />
-                      </a>
-                    )}
+                        {tag}
+                      </span>
+                    ))}
                   </div>
+
+                  <a
+                    href={track.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="btn btn-secondary btn-sm"
+                    style={{ padding: '6px 12px', fontSize: '0.78rem' }}
+                  >
+                    <ExternalLink size={13} />
+                  </a>
                 </div>
               </div>
             );
           })}
+        </div>
+
+        {/* Global SoundCloud CTA */}
+        <div style={{ textAlign: 'center', marginTop: '36px' }}>
+          <a
+            href="https://soundcloud.com/missael-arath"
+            target="_blank"
+            rel="noreferrer"
+            className="btn btn-secondary"
+            style={{ gap: '10px' }}
+          >
+            <Disc size={18} color="#FF003C" /> Ir al Perfil Completo en SoundCloud
+          </a>
         </div>
       </div>
     </section>

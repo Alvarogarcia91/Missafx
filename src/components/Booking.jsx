@@ -1,12 +1,11 @@
-import React, { useState } from 'react';
-import { Send, Mail, Phone, MapPin, CheckCircle, MessageSquare, Sparkles } from 'lucide-react';
+﻿import React, { useState } from 'react';
+import { Send, Phone, MessageCircle, Instagram, CheckCircle, Sparkles } from 'lucide-react';
 
 export default function Booking() {
   const [formData, setFormData] = useState({
     name: '',
-    email: '',
     phone: '',
-    eventType: 'Festival / Gran Escenario',
+    eventType: 'Club / Evento Privado',
     date: '',
     location: '',
     message: ''
@@ -16,25 +15,23 @@ export default function Booking() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Simula envío del formulario
+    const msg = encodeURIComponent(
+      `Hola Missa! Mi nombre es ${formData.name || 'un organizador'}. Quisiera cotizar una fecha para: ${formData.eventType} en ${formData.location || 'mi ciudad'}${formData.date ? ' el día ' + formData.date : ''}. Mensaje: ${formData.message || 'Contacto directo'}`
+    );
+    window.open(`https://wa.me/5214443570777?text=${msg}`, '_blank');
     setSubmitted(true);
-    setTimeout(() => {
-      // Dejar mensaje de confirmación
-    }, 4000);
   };
 
-  const whatsappMessage = encodeURIComponent(
-    `Hola! Quisiera cotizar una fecha para DJ Missa para el evento: ${formData.eventType || 'Evento'} en ${formData.location || 'mi ciudad'}.`
-  );
+  const directWhatsappUrl = "https://wa.me/5214443570777?text=Hola%20Missa,%20me%20gustar%C3%ADa%20cotizar%20una%20fecha%20o%20evento";
 
   return (
-    <section id="booking" style={{ padding: '100px 0', position: 'relative' }}>
+    <section id="contact" style={{ padding: '90px 0', position: 'relative' }}>
       <div className="container">
         <div className="section-header">
-          <span className="section-tag">CONTRATACIONES & FECHAS</span>
-          <h2>RESERVA A DJ MISSA</h2>
+          <span className="section-tag">CONTRATACIONES & CONTACTO</span>
+          <h2>BOOKING DIRECTO</h2>
           <p>
-            Disponible para festivales nacionales e internacionales, clubs de primer nivel y eventos exclusivos.
+            Disponible para fechas en clubs, festivales y eventos en vivo. Contacta directamente vía WhatsApp.
           </p>
         </div>
 
@@ -48,238 +45,257 @@ export default function Booking() {
         >
           {/* Direct Contacts Column */}
           <div>
-            <h3 className="font-display" style={{ fontSize: '1.6rem', color: '#fff', marginBottom: '16px' }}>
-              INFORMACIÓN DIRECTA DE BOOKING
+            <h3 className="font-display" style={{ fontSize: '1.5rem', color: '#fff', marginBottom: '14px' }}>
+              CANALES DE ATENCIÓN DIRECTA
             </h3>
-            <p style={{ color: 'var(--text-muted)', marginBottom: '30px', lineHeight: 1.7 }}>
-              Para cotizaciones urgentes, confirmación de disponibilidad inmediata o consultas de prensa y patrocinio, 
-              puedes contactar a nuestro equipo de management directamente.
+            <p style={{ color: 'var(--text-muted)', marginBottom: '28px', lineHeight: 1.7 }}>
+              Para cotizaciones inmediatas de fechas o consultas sobre riders y requerimientos técnicos, 
+              comunícate de forma directa.
             </p>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '36px' }}>
-              <div
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '32px' }}>
+              {/* WhatsApp Card */}
+              <a
+                href={directWhatsappUrl}
+                target="_blank"
+                rel="noreferrer"
                 className="glass-panel"
-                style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: '16px' }}
+                style={{
+                  padding: '20px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '16px',
+                  textDecoration: 'none',
+                  borderColor: 'rgba(37, 211, 102, 0.3)'
+                }}
               >
                 <div
                   style={{
                     width: '46px',
                     height: '46px',
                     borderRadius: '12px',
-                    background: 'rgba(168, 85, 247, 0.15)',
+                    background: 'rgba(37, 211, 102, 0.15)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    color: 'var(--accent-purple)'
+                    color: '#25D366'
                   }}
                 >
-                  <Mail size={22} />
+                  <MessageCircle size={24} />
                 </div>
                 <div>
-                  <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>
-                    Correo de Management
+                  <span style={{ fontSize: '0.78rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block' }}>
+                    WhatsApp Oficial (Respuesta Rápida)
                   </span>
-                  <a
-                    href="mailto:booking@missafx.com"
-                    style={{ display: 'block', color: '#fff', textDecoration: 'none', fontWeight: 600, fontSize: '1rem' }}
-                  >
-                    booking@missafx.com
-                  </a>
+                  <strong style={{ color: '#fff', fontSize: '1.1rem' }}>
+                    +52 1 444 357 0777
+                  </strong>
                 </div>
-              </div>
+              </a>
 
-              <div
+              {/* Instagram DM Card */}
+              <a
+                href="https://www.instagram.com/missaa.fx/"
+                target="_blank"
+                rel="noreferrer"
                 className="glass-panel"
-                style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: '16px' }}
+                style={{
+                  padding: '20px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '16px',
+                  textDecoration: 'none',
+                  borderColor: 'rgba(225, 48, 108, 0.3)'
+                }}
               >
                 <div
                   style={{
                     width: '46px',
                     height: '46px',
                     borderRadius: '12px',
-                    background: 'rgba(34, 197, 94, 0.15)',
+                    background: 'rgba(225, 48, 108, 0.15)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    color: '#4ade80'
+                    color: '#E1306C'
                   }}
                 >
-                  <Phone size={22} />
+                  <Instagram size={24} />
                 </div>
                 <div>
-                  <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>
-                    WhatsApp Directo
+                  <span style={{ fontSize: '0.78rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block' }}>
+                    Mensaje Directo
                   </span>
-                  <a
-                    href={`https://wa.me/5211234567890?text=${whatsappMessage}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    style={{ display: 'block', color: '#fff', textDecoration: 'none', fontWeight: 600, fontSize: '1rem' }}
-                  >
-                    +52 (1) 123 456 7890 (Chat de Booking)
-                  </a>
+                  <strong style={{ color: '#fff', fontSize: '1.1rem' }}>
+                    @missaa.fx
+                  </strong>
                 </div>
-              </div>
+              </a>
             </div>
 
             <div
               style={{
-                padding: '24px',
+                padding: '20px',
                 borderRadius: '16px',
                 background: 'rgba(255, 255, 255, 0.02)',
                 border: '1px dashed var(--border-glass)'
               }}
             >
-              <h4 style={{ color: '#fff', fontSize: '0.95rem', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Sparkles size={16} color="var(--accent-cyan)" /> Política de Fechas
+              <h4 style={{ color: '#fff', fontSize: '0.92rem', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Sparkles size={16} color="#FF003C" /> Disponibilidad de Fechas
               </h4>
               <p style={{ fontSize: '0.85rem', color: 'var(--text-dim)', lineHeight: 1.6 }}>
-                Se requiere un anticipo del 50% para bloquear la fecha en calendario oficial. Se incluye rider técnico y hospitalidad estándar.
+                Recomendamos coordinar fechas con anticipación para asegurar la disponibilidad de cabina y agenda.
               </p>
             </div>
           </div>
 
-          {/* Booking Form Card */}
+          {/* Quick Cotizador WhatsApp Form */}
           <div
             className="glass-panel"
             style={{
               padding: '36px',
-              border: '1px solid rgba(168, 85, 247, 0.3)',
-              background: 'linear-gradient(180deg, rgba(20, 19, 36, 0.8) 0%, rgba(10, 10, 18, 0.95) 100%)'
+              border: '1px solid rgba(255, 0, 60, 0.25)',
+              background: 'linear-gradient(180deg, rgba(20, 18, 24, 0.95) 0%, rgba(10, 10, 14, 0.98) 100%)'
             }}
           >
             {submitted ? (
-              <div style={{ textAlign: 'center', padding: '40px 10px' }}>
+              <div style={{ textAlign: 'center', padding: '30px 10px' }}>
                 <div
                   style={{
-                    width: '64px',
-                    height: '64px',
+                    width: '60px',
+                    height: '60px',
                     borderRadius: '50%',
-                    background: 'rgba(34, 197, 94, 0.15)',
+                    background: 'rgba(37, 211, 102, 0.15)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    margin: '0 auto 20px auto',
-                    color: '#4ade80'
+                    margin: '0 auto 18px auto',
+                    color: '#25D366'
                   }}
                 >
-                  <CheckCircle size={36} />
+                  <CheckCircle size={32} />
                 </div>
-                <h3 className="font-display" style={{ fontSize: '1.5rem', color: '#fff', marginBottom: '10px' }}>
-                  ¡Solicitud Recibida!
+                <h3 className="font-display" style={{ fontSize: '1.4rem', color: '#fff', marginBottom: '8px' }}>
+                  ¡Abriendo Chat de WhatsApp!
                 </h3>
-                <p style={{ color: 'var(--text-muted)', marginBottom: '24px' }}>
-                  El equipo de booking de DJ Missa se comunicará contigo en menos de 24 horas para coordinar detalles y disponibilidad.
+                <p style={{ color: 'var(--text-muted)', marginBottom: '20px', fontSize: '0.92rem' }}>
+                  Tu mensaje se ha generado con los datos de tu evento para cotizar directamente con Missafx.
                 </p>
                 <button
                   onClick={() => setSubmitted(false)}
                   className="btn btn-secondary btn-sm"
                 >
-                  Enviar otra solicitud
+                  Enviar otra consulta
                 </button>
               </div>
             ) : (
               <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+                <h3 className="font-display" style={{ fontSize: '1.25rem', color: '#fff' }}>
+                  COTIZACIÓN RÁPIDA VÍA WHATSAPP
+                </h3>
+
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '6px' }}>
-                    Nombre del Promotor o Empresa *
+                  <label style={{ display: 'block', fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '6px' }}>
+                    Tu Nombre o Promotora
                   </label>
                   <input
                     type="text"
                     required
-                    placeholder="Ej. Producciones Beat Corp"
+                    placeholder="Ej. Carlos Mendoza / Nocturna Club"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    style={inputStyle}
+                    style={{
+                      width: '100%',
+                      padding: '12px 16px',
+                      borderRadius: '10px',
+                      background: 'rgba(255, 255, 255, 0.04)',
+                      border: '1px solid var(--border-glass)',
+                      color: '#fff',
+                      fontSize: '0.92rem',
+                      outline: 'none'
+                    }}
                   />
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '6px' }}>
-                      Correo Electrónico *
-                    </label>
-                    <input
-                      type="email"
-                      required
-                      placeholder="promotor@evento.com"
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      style={inputStyle}
-                    />
-                  </div>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '6px' }}>
-                      Teléfono / WhatsApp *
-                    </label>
-                    <input
-                      type="tel"
-                      required
-                      placeholder="+52 123 456 7890"
-                      value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      style={inputStyle}
-                    />
-                  </div>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '6px' }}>
+                    <label style={{ display: 'block', fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '6px' }}>
                       Tipo de Evento
                     </label>
                     <select
                       value={formData.eventType}
                       onChange={(e) => setFormData({ ...formData, eventType: e.target.value })}
-                      style={inputStyle}
+                      style={{
+                        width: '100%',
+                        padding: '12px 14px',
+                        borderRadius: '10px',
+                        background: '#161620',
+                        border: '1px solid var(--border-glass)',
+                        color: '#fff',
+                        fontSize: '0.9rem',
+                        outline: 'none'
+                      }}
                     >
-                      <option value="Festival / Gran Escenario">Festival / Escenario</option>
-                      <option value="Club / Discoteca">Club / Discoteca</option>
-                      <option value="Fiesta Privada / VIP">Fiesta Privada / VIP</option>
-                      <option value="Evento Corporativo">Evento Corporativo</option>
+                      <option value="Club / Antro">Club / Antro</option>
+                      <option value="Festival / Escenario">Festival</option>
+                      <option value="Fiesta Privada / After">Fiesta Privada</option>
+                      <option value="Rave / Warehouse">Rave / Warehouse</option>
                     </select>
                   </div>
+
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '6px' }}>
-                      Fecha Estimada
+                    <label style={{ display: 'block', fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '6px' }}>
+                      Ciudad / Ubicación
                     </label>
                     <input
-                      type="date"
-                      value={formData.date}
-                      onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                      style={inputStyle}
+                      type="text"
+                      placeholder="Ej. San Luis Potosí / CDMX"
+                      value={formData.location}
+                      onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                      style={{
+                        width: '100%',
+                        padding: '12px 16px',
+                        borderRadius: '10px',
+                        background: 'rgba(255, 255, 255, 0.04)',
+                        border: '1px solid var(--border-glass)',
+                        color: '#fff',
+                        fontSize: '0.92rem',
+                        outline: 'none'
+                      }}
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '6px' }}>
-                    Ciudad / Lugar del Evento
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Ej. Cancún, México (Beach Club)"
-                    value={formData.location}
-                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                    style={inputStyle}
-                  />
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '6px' }}>
-                    Detalles Adicionales o Mensaje
+                  <label style={{ display: 'block', fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '6px' }}>
+                    Mensaje o Requerimientos
                   </label>
                   <textarea
-                    rows={4}
-                    placeholder="Duración del set requerida, horario tentativo, capacidad del venue..."
+                    rows="3"
+                    placeholder="Detalles sobre horario, concepto del evento, etc."
                     value={formData.message}
                     onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                    style={{ ...inputStyle, resize: 'vertical' }}
+                    style={{
+                      width: '100%',
+                      padding: '12px 16px',
+                      borderRadius: '10px',
+                      background: 'rgba(255, 255, 255, 0.04)',
+                      border: '1px solid var(--border-glass)',
+                      color: '#fff',
+                      fontSize: '0.92rem',
+                      outline: 'none',
+                      resize: 'none'
+                    }}
                   />
                 </div>
 
-                <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '8px' }}>
-                  <Send size={18} /> Enviar Solicitud de Booking
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  style={{ width: '100%', gap: '10px', marginTop: '6px' }}
+                >
+                  <MessageCircle size={18} /> Enviar Cotización a WhatsApp
                 </button>
               </form>
             )}
@@ -289,16 +305,3 @@ export default function Booking() {
     </section>
   );
 }
-
-const inputStyle = {
-  width: '100%',
-  padding: '12px 16px',
-  background: 'rgba(10, 10, 18, 0.8)',
-  border: '1px solid var(--border-glass)',
-  borderRadius: '10px',
-  color: '#fff',
-  fontSize: '0.95rem',
-  fontFamily: 'inherit',
-  outline: 'none',
-  transition: 'border-color 0.2s ease'
-};

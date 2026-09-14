@@ -1,5 +1,5 @@
-import React from 'react';
-import { Disc3, Heart, ArrowUp } from 'lucide-react';
+﻿import React from 'react';
+import { ArrowUp, Music, Instagram, Video, Radio, MessageCircle } from 'lucide-react';
 
 export default function Footer() {
   const scrollToTop = () => {
@@ -10,7 +10,7 @@ export default function Footer() {
     <footer
       style={{
         borderTop: '1px solid var(--border-glass)',
-        background: 'rgba(5, 5, 8, 0.95)',
+        background: 'rgba(5, 5, 8, 0.98)',
         padding: '60px 0 30px 0',
         position: 'relative'
       }}
@@ -26,39 +26,26 @@ export default function Footer() {
             marginBottom: '40px'
           }}
         >
-          {/* Brand */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div
-              style={{
-                width: '36px',
-                height: '36px',
-                borderRadius: '8px',
-                background: 'var(--gradient-main)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-            >
-              <Disc3 size={20} color="#fff" />
-            </div>
-            <div>
-              <span className="font-display" style={{ fontSize: '1.4rem', fontWeight: 900, color: '#fff' }}>
-                MISSA<span style={{ color: 'var(--accent-purple)' }}>.FX</span>
-              </span>
-              <p style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>
-                Official Electronic Music & DJ Landing Page
-              </p>
-            </div>
+          {/* Brand Logo */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+            <img
+              src="/missafx-logo.png"
+              alt="MISSAFX"
+              style={{ height: '32px', width: 'auto', display: 'block' }}
+            />
+            <span style={{ fontSize: '0.85rem', color: 'var(--text-dim)', borderLeft: '1px solid var(--border-glass)', paddingLeft: '14px' }}>
+              DJ & Electronic Music Producer
+            </span>
           </div>
 
           {/* Social Links */}
-          <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
             {[
-              { name: 'Instagram', url: 'https://instagram.com' },
-              { name: 'Spotify', url: 'https://spotify.com' },
-              { name: 'SoundCloud', url: 'https://soundcloud.com' },
-              { name: 'YouTube', url: 'https://youtube.com' },
-              { name: 'Beatport', url: 'https://beatport.com' }
+              { name: 'Instagram', url: 'https://www.instagram.com/missaa.fx/', color: '#E1306C' },
+              { name: 'SoundCloud', url: 'https://soundcloud.com/missael-arath', color: '#FF5500' },
+              { name: 'Kick', url: 'https://kick.com/7missa', color: '#53FC18' },
+              { name: 'YouTube', url: 'https://www.youtube.com/@missaelarath6364', color: '#FF0000' },
+              { name: 'WhatsApp', url: 'https://wa.me/5214443570777', color: '#25D366' }
             ].map((social) => (
               <a
                 key={social.name}
@@ -66,8 +53,9 @@ export default function Footer() {
                 target="_blank"
                 rel="noreferrer"
                 className="btn btn-secondary btn-sm"
-                style={{ fontSize: '0.8rem', padding: '6px 14px' }}
+                style={{ fontSize: '0.82rem', padding: '6px 14px' }}
               >
+                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: social.color, display: 'inline-block' }} />
                 {social.name}
               </a>
             ))}
@@ -102,9 +90,9 @@ export default function Footer() {
             gap: '12px'
           }}
         >
-          <p>© {new Date().getFullYear()} DJ Missa (Missafx). Todos los derechos reservados.</p>
-          <p style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            Diseñado y optimizado para alto rendimiento en Docker & DigitalOcean.
+          <p>© {new Date().getFullYear()} Missafx. Sitio Oficial Representativo.</p>
+          <p>
+            Contacto directo de booking: <a href="tel:+5214443570777" style={{ color: '#FF003C', textDecoration: 'none' }}>+52 1 444 357 0777</a>
           </p>
         </div>
       </div>
