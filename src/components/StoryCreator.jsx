@@ -179,7 +179,7 @@ export default function StoryCreator({ onBack }) {
   // Motion FX & Story Animation States
   const [isMotionActive, setIsMotionActive] = useState(true);
   const [isPlaying, setIsPlaying] = useState(true);
-  const [loopDuration, setLoopDuration] = useState(3); // 3s or 4s
+  const [loopDuration, setLoopDuration] = useState(7); // default 7s for Instagram Stories / Reels loop
 
   // 1. Cascada Lateral ("MISSA MISSA")
   const [cascadeEffect, setCascadeEffect] = useState('scroll-down'); // none | scroll-down | scroll-up | breathe | glitch
@@ -216,7 +216,7 @@ export default function StoryCreator({ onBack }) {
     setPhotoMotionIntensity(1.0);
     setAtmosphereEffect('dust-laser');
     setAtmosphereDensity(1.0);
-    setLoopDuration(3);
+    setLoopDuration(7);
   };
 
   // Canvas & Image refs
@@ -895,7 +895,7 @@ export default function StoryCreator({ onBack }) {
     const canvas = canvasRef.current;
     if (!canvas) return;
     setIsExporting(true);
-    setExportStatusText(cT.exportVideoRecording || 'Grabando video en 60 FPS...');
+    setExportStatusText(`${cT.exportVideoRecording || 'Grabando video en 60 FPS...'} (${loopDuration}s)`);
 
     const wasSafeZonesActive = showSafeZones;
     if (wasSafeZonesActive) setShowSafeZones(false);
@@ -2074,30 +2074,88 @@ export default function StoryCreator({ onBack }) {
                     </div>
                   </div>
 
-                  {/* Loop Duration Selector */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Clock size={15} color="var(--text-muted)" />
-                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>
-                      {cT.motionLoopDuration}:
-                    </span>
-                    {[3, 4].map((sec) => (
-                      <button
-                        key={sec}
-                        onClick={() => setLoopDuration(sec)}
+                  {/* Settable Loop Duration Selector & Slider */}
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      flexWrap: 'wrap',
+                      background: 'rgba(0, 0, 0, 0.25)',
+                      padding: '8px 14px',
+                      borderRadius: '12px',
+                      border: '1px solid rgba(255, 255, 255, 0.08)'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <Clock size={15} color={frameColor} />
+                      <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+                        {cT.motionLoopDuration}:
+                      </span>
+                      <span
                         style={{
-                          padding: '6px 12px',
-                          borderRadius: '8px',
-                          border: loopDuration === sec ? `1px solid ${frameColor}` : '1px solid rgba(255, 255, 255, 0.1)',
-                          background: loopDuration === sec ? hexToRgba(frameColor, 0.2) : 'rgba(255, 255, 255, 0.04)',
-                          color: loopDuration === sec ? '#fff' : 'var(--text-muted)',
-                          fontSize: '0.78rem',
-                          fontWeight: 700,
-                          cursor: 'pointer'
+                          padding: '3px 8px',
+                          borderRadius: '6px',
+                          background: hexToRgba(frameColor, 0.2),
+                          border: `1px solid ${hexToRgba(frameColor, 0.45)}`,
+                          color: frameColor,
+                          fontSize: '0.84rem',
+                          fontWeight: 800,
+                          fontFamily: 'monospace'
                         }}
                       >
-                        {sec}s
-                      </button>
-                    ))}
+                        {loopDuration}s
+                      </span>
+                    </div>
+
+                    {/* Quick Presets */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      {[
+                        { sec: 3, label: '3s' },
+                        { sec: 5, label: '5s' },
+                        { sec: 7, label: '7s ★ Default' },
+                        { sec: 10, label: '10s' },
+                        { sec: 15, label: '15s Story' }
+                      ].map(({ sec, label }) => (
+                        <button
+                          key={sec}
+                          onClick={() => setLoopDuration(sec)}
+                          style={{
+                            padding: '5px 10px',
+                            borderRadius: '8px',
+                            border: loopDuration === sec ? `1px solid ${frameColor}` : '1px solid rgba(255, 255, 255, 0.08)',
+                            background: loopDuration === sec ? hexToRgba(frameColor, 0.25) : 'rgba(255, 255, 255, 0.03)',
+                            color: loopDuration === sec ? '#fff' : 'var(--text-muted)',
+                            fontSize: '0.74rem',
+                            fontWeight: loopDuration === sec ? 700 : 500,
+                            cursor: 'pointer',
+                            boxShadow: loopDuration === sec ? `0 0 10px ${hexToRgba(frameColor, 0.3)}` : 'none',
+                            transition: 'all 0.15s ease'
+                          }}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Interactive Slider */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <input
+                        type="range"
+                        min="2"
+                        max="15"
+                        step="1"
+                        value={loopDuration}
+                        onChange={(e) => setLoopDuration(parseInt(e.target.value, 10) || 7)}
+                        style={{
+                          width: '90px',
+                          accentColor: frameColor,
+                          cursor: 'pointer'
+                        }}
+                        title={`${loopDuration}s`}
+                      />
+                      <span style={{ fontSize: '0.72rem', color: 'var(--text-dim)', fontFamily: 'monospace' }}>2-15s</span>
+                    </div>
                   </div>
                 </div>
 
@@ -2798,7 +2856,7 @@ export default function StoryCreator({ onBack }) {
                               fontWeight: 700
                             }}
                           >
-                            60 FPS • LOOP
+                            {loopDuration}s • 60 FPS • LOOP
                           </span>
                         </div>
                       </div>
@@ -2866,7 +2924,7 @@ export default function StoryCreator({ onBack }) {
                               fontWeight: 700
                             }}
                           >
-                            .GIF • LOOP
+                            {loopDuration}s • .GIF • LOOP
                           </span>
                         </div>
                       </div>

@@ -279,9 +279,9 @@ export const translations = {
       motionSubtitle: 'Convierte tu flyer estático en una historia animada con efectos sincronizados para Instagram y WhatsApp.',
       motionMasterPlay: 'Reproducir Animación',
       motionMasterPause: 'Pausar',
-      motionLoopDuration: 'Duración del Bucle (Loop)',
-      motionLoop3s: '3 Segundos (Recomendado Story / GIF)',
-      motionLoop4s: '4 Segundos (Fluido)',
+      motionLoopDuration: 'Duración del Loop / Video',
+      motionLoopDefaultBadge: 'Default',
+      motionLoopCustomSec: 'segundos',
       motionReset: 'Restablecer Efectos',
       
       // 1. Cascada
@@ -647,9 +647,9 @@ export const translations = {
       motionSubtitle: 'Turn your static flyer into an animated motion story with audio-synchronized visual effects for Instagram and WhatsApp.',
       motionMasterPlay: 'Play Motion',
       motionMasterPause: 'Pause',
-      motionLoopDuration: 'Loop Duration',
-      motionLoop3s: '3 Seconds (Recommended Story / GIF)',
-      motionLoop4s: '4 Seconds (Smooth)',
+      motionLoopDuration: 'Loop / Video Duration',
+      motionLoopDefaultBadge: 'Default',
+      motionLoopCustomSec: 'seconds',
       motionReset: 'Reset Effects',
 
       // 1. Cascada
