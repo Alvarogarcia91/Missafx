@@ -215,8 +215,9 @@ export const translations = {
       step2: '2. Foto & Ajuste',
       step3: '3. Textos',
       step4: '4. Colores & Estilo',
-      step5: '5. Máscaras & Capas',
-      step6: '6. Exportar',
+      step5: '5. Motion FX & Animación',
+      step6: '6. Máscaras & Capas',
+      step7: '7. Exportar (Video, GIF, PNG)',
       formatTitle: 'Selecciona el Formato Ideal',
       formatHint: 'Recomendaciones de tamaño y áreas seguras según la plataforma destino:',
       storyFormat: 'Instagram / WhatsApp Story',
@@ -272,6 +273,69 @@ export const translations = {
       colorText: 'Color de Textos y Fecha (Información)',
       colorTech: 'Acentos Técnicos, Ecualizador & Booking',
       contrastNotice: '💡 Protección de contraste inteligente: Si el fondo es blanco o muy claro, el texto se adapta automáticamente para evitar que se empalme.',
+      
+      // Motion FX & Animación
+      motionTitle: 'Motion FX & Animación para Stories',
+      motionSubtitle: 'Convierte tu flyer estático en una historia animada con efectos sincronizados para Instagram y WhatsApp.',
+      motionMasterPlay: 'Reproducir Animación',
+      motionMasterPause: 'Pausar',
+      motionLoopDuration: 'Duración del Bucle (Loop)',
+      motionLoop3s: '3 Segundos (Recomendado Story / GIF)',
+      motionLoop4s: '4 Segundos (Fluido)',
+      motionReset: 'Restablecer Efectos',
+      
+      // 1. Cascada
+      elementCascadeTitle: '1. Cascada Lateral ("MISSA MISSA")',
+      cascadeEffectLabel: 'Efecto de Cascada:',
+      cascadeSpeedLabel: 'Velocidad de Desplazamiento',
+      fxCascadeNone: 'Estático (Sin Movimiento)',
+      fxCascadeScrollDown: 'Cascada Descendente (Scroll Down)',
+      fxCascadeScrollUp: 'Cascada Ascendente (Scroll Up)',
+      fxCascadeBreathe: 'Pulso de Contorno (Breathe)',
+      fxCascadeGlitch: 'Glitch Cyberpunk',
+
+      // 2. Titular Principal
+      elementTitleFxTitle: '2. Titular Principal ("MISSAFX")',
+      titleEffectLabel: 'Efecto del Titular:',
+      titleGlowLabel: 'Intensidad de Resplandor Neón',
+      titleBpmLabel: 'Ritmo / BPM del Pulso',
+      fxTitleNone: 'Estático (Sin Efecto)',
+      fxTitleNeonBreathe: 'Resplandor Neón Lento (Neon Breathe)',
+      fxTitleNeonFlicker: 'Parpadeo Neón Club (Neon Flicker)',
+      fxTitleGlitch: 'Glitch RGB Split Cyberpunk',
+      fxTitleStrobe: 'Estroboscópico Rítmico (Strobe)',
+      fxTitleColorCycle: 'Ciclo de Color Dinámico',
+
+      // 3. Ecualizador
+      elementEqTitle: '3. Ecualizador Gráfico (EQ)',
+      eqEffectLabel: 'Efecto de Barras:',
+      eqSpeedLabel: 'Velocidad del Rebote',
+      eqIntensityLabel: 'Altura / Intensidad de Barras',
+      fxEqNone: 'Estático (Barras Fijas)',
+      fxEqVuBounce: 'Rebote VU Rítmico (VU Bounce)',
+      fxEqWaveFlow: 'Ola de Frecuencia Suave (Wave Flow)',
+      fxEqBassPulse: 'Golpe de Bombo / Bass Pulse',
+
+      // 4. Foto de Artista
+      elementPhotoTitle: '4. Foto de Cabina / Artista',
+      photoEffectLabel: 'Movimiento de Cámara:',
+      photoMotionLabel: 'Intensidad del Movimiento',
+      fxPhotoNone: 'Estática (Sin Movimiento)',
+      fxPhotoKenBurnsIn: 'Zoom In Suave (Ken Burns)',
+      fxPhotoKenBurnsOut: 'Zoom Out Dinámico',
+      fxPhotoPanSway: 'Paneo Oscilante (Camera Sway)',
+      fxPhotoClubStrobe: 'Flash Club Neón',
+
+      // 5. Atmósfera
+      elementAtmosphereTitle: '5. Atmósfera & Partículas',
+      atmosphereEffectLabel: 'Efecto Ambiental:',
+      atmosphereDensityLabel: 'Densidad y Opacidad',
+      fxAtmosphereNone: 'Desactivado (Limpio)',
+      fxAtmosphereDustLaser: 'Partículas Láser Flotantes',
+      fxAtmosphereScanlines: 'Líneas de Escáner CRT Cyberpunk',
+      fxAtmosphereRaveSmoke: 'Niebla & Humo de Club',
+
+      // Máscaras y Capas
       masksTitle: 'Interruptores de Máscaras & Capas (On/Off)',
       maskRepeatText: 'Texto Repetido Lateral ("MISSA MISSA")',
       maskCyberFrame: 'Marco Cyberpunk con Cortes Diagonales',
@@ -279,8 +343,22 @@ export const translations = {
       maskBadges: 'Logos e Insignias (MISSAFX, Pioneer DJ)',
       maskVignette: 'Gradiente y Viñeta Oscura para Legibilidad',
       previewTitle: 'Vista Previa en Vivo',
-      exportBtn: 'Descargar Imagen en Alta Calidad (PNG)',
-      exportSuccess: '¡Imagen generada con éxito a 1080px!',
+      
+      // Exportación Triple
+      exportTitle: 'Exportar Flyer & Animación',
+      exportDesc: 'Selecciona el formato de exportación que mejor se adapte a tu canal de difusión:',
+      exportVideoTitle: 'Video Story Instagram / WhatsApp',
+      exportVideoDesc: 'Video en bucle de 60 FPS (formato MP4/WebM) optimizado para historias de Instagram, Reels y estados de WhatsApp sin compresión.',
+      exportVideoBtn: 'Descargar Video Story (MP4/WebM)',
+      exportVideoRecording: 'Grabando video en 60 FPS...',
+      exportGifTitle: 'GIF Animado',
+      exportGifDesc: 'Animación en bucle infinito (.gif) lista para compartir en chats de WhatsApp, stickers y sitios web.',
+      exportGifBtn: 'Descargar GIF Animado (.gif)',
+      exportGifRendering: 'Generando frames GIF...',
+      exportPngTitle: 'Imagen Estática en Alta Calidad',
+      exportPngDesc: 'Flyer estático en formato PNG nativo de 1080px para impresión, carteleras o publicaciones del feed.',
+      exportBtn: 'Descargar Imagen Estática (PNG)',
+      exportSuccess: '¡Archivo generado con éxito!',
       safeZoneWarning: '💡 Los márgenes superior e inferior están calculados para que la interfaz de Instagram no oculte el texto.'
     },
     footer: {
@@ -505,8 +583,9 @@ export const translations = {
       step2: '2. Photo & Pan',
       step3: '3. Typography',
       step4: '4. Colors & Style',
-      step5: '5. Masks & Layers',
-      step6: '6. Export',
+      step5: '5. Motion FX & Animation',
+      step6: '6. Masks & Layers',
+      step7: '7. Export (Video, GIF, PNG)',
       formatTitle: 'Select the Ideal Format',
       formatHint: 'Size recommendations and safe zones according to platform:',
       storyFormat: 'Instagram / WhatsApp Story',
@@ -562,6 +641,69 @@ export const translations = {
       colorText: 'Event Info & Date Text Color',
       colorTech: 'Tech Accents, Equalizer & Booking',
       contrastNotice: '💡 Smart contrast protection: If the background is white or light, text adapts automatically to prevent disappearing.',
+      
+      // Motion FX & Animation
+      motionTitle: 'Motion FX & Story Animation',
+      motionSubtitle: 'Turn your static flyer into an animated motion story with audio-synchronized visual effects for Instagram and WhatsApp.',
+      motionMasterPlay: 'Play Motion',
+      motionMasterPause: 'Pause',
+      motionLoopDuration: 'Loop Duration',
+      motionLoop3s: '3 Seconds (Recommended Story / GIF)',
+      motionLoop4s: '4 Seconds (Smooth)',
+      motionReset: 'Reset Effects',
+
+      // 1. Cascada
+      elementCascadeTitle: '1. Lateral Cascade ("MISSA MISSA")',
+      cascadeEffectLabel: 'Cascade Effect:',
+      cascadeSpeedLabel: 'Scroll Speed',
+      fxCascadeNone: 'Static (No Motion)',
+      fxCascadeScrollDown: 'Scroll Down (Cascade)',
+      fxCascadeScrollUp: 'Scroll Up',
+      fxCascadeBreathe: 'Outline Breathe Pulse',
+      fxCascadeGlitch: 'Cyberpunk Glitch',
+
+      // 2. Titular Principal
+      elementTitleFxTitle: '2. Main Title ("MISSAFX")',
+      titleEffectLabel: 'Title Effect:',
+      titleGlowLabel: 'Neon Glow Intensity',
+      titleBpmLabel: 'Beat / Pulse BPM',
+      fxTitleNone: 'Static (No FX)',
+      fxTitleNeonBreathe: 'Slow Neon Breathe',
+      fxTitleNeonFlicker: 'Club Neon Flicker',
+      fxTitleGlitch: 'RGB Split Glitch',
+      fxTitleStrobe: 'Rhythmic Strobe',
+      fxTitleColorCycle: 'Dynamic Color Cycle',
+
+      // 3. Ecualizador
+      elementEqTitle: '3. Graphic Equalizer (EQ)',
+      eqEffectLabel: 'Bars Effect:',
+      eqSpeedLabel: 'Bounce Speed',
+      eqIntensityLabel: 'Bar Height / Peak Intensity',
+      fxEqNone: 'Static (Fixed Bars)',
+      fxEqVuBounce: 'Rhythmic VU Bounce',
+      fxEqWaveFlow: 'Smooth Frequency Wave',
+      fxEqBassPulse: 'Kick Drum / Bass Pulse',
+
+      // 4. Foto de Artista
+      elementPhotoTitle: '4. DJ Booth / Artist Photo',
+      photoEffectLabel: 'Camera Motion:',
+      photoMotionLabel: 'Motion Intensity',
+      fxPhotoNone: 'Static (No Motion)',
+      fxPhotoKenBurnsIn: 'Smooth Zoom In (Ken Burns)',
+      fxPhotoKenBurnsOut: 'Dynamic Zoom Out',
+      fxPhotoPanSway: 'Oscillating Camera Sway',
+      fxPhotoClubStrobe: 'Neon Club Strobe Flash',
+
+      // 5. Atmósfera
+      elementAtmosphereTitle: '5. Atmosphere & Particles',
+      atmosphereEffectLabel: 'Atmospheric FX:',
+      atmosphereDensityLabel: 'Density & Opacity',
+      fxAtmosphereNone: 'Disabled (Clean)',
+      fxAtmosphereDustLaser: 'Floating Laser Dust',
+      fxAtmosphereScanlines: 'CRT Cyberpunk Scanlines',
+      fxAtmosphereRaveSmoke: 'Club Rave Smoke Haze',
+
+      // Masks & Layers
       masksTitle: 'Masks & Graphic Layers (On/Off)',
       maskRepeatText: 'Lateral Repeated Text ("MISSA MISSA")',
       maskCyberFrame: 'Cyberpunk Frame with 45° Diagonal Cuts',
@@ -569,8 +711,22 @@ export const translations = {
       maskBadges: 'Logos & Badges (MISSAFX, Pioneer DJ)',
       maskVignette: 'Dark Gradient & Edge Vignette for Contrast',
       previewTitle: 'Live Preview',
-      exportBtn: 'Download High-Res PNG Image',
-      exportSuccess: 'Image successfully exported at 1080px resolution!',
+      
+      // Triple Export Options
+      exportTitle: 'Export Flyer & Motion Story',
+      exportDesc: 'Select the export format that best matches your target media channel:',
+      exportVideoTitle: 'Instagram / WhatsApp Video Story',
+      exportVideoDesc: 'High-definition 60 FPS video (MP4/WebM) ready to upload directly to Instagram Stories or WhatsApp statuses without compression.',
+      exportVideoBtn: 'Download Video Story (MP4/WebM)',
+      exportVideoRecording: 'Recording 60 FPS Video...',
+      exportGifTitle: 'Animated GIF',
+      exportGifDesc: 'Seamless loop animation (.gif) optimized for WhatsApp chats, Telegram, Discord, and websites.',
+      exportGifBtn: 'Download Animated GIF (.gif)',
+      exportGifRendering: 'Rendering GIF frames...',
+      exportPngTitle: 'High-Res Static PNG',
+      exportPngDesc: 'Original lossless 1080px PNG flyer for print, billboards, and feed posts.',
+      exportBtn: 'Download Static Image (PNG)',
+      exportSuccess: 'File exported successfully!',
       safeZoneWarning: '💡 Top and bottom margins are calculated so that Instagram controls do not cover key text.'
     },
     footer: {

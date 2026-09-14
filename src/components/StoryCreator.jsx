@@ -17,8 +17,17 @@ import {
   RectangleVertical,
   CheckCircle2,
   AlertCircle,
-  Palette
+  Palette,
+  Play,
+  Pause,
+  Film,
+  Video,
+  Zap,
+  Activity,
+  Radio,
+  Clock
 } from 'lucide-react';
+import { GIFEncoder, quantize, applyPalette } from 'gifenc';
 import { useLanguage } from '../context/LanguageContext';
 
 const FORMATS = {
@@ -165,6 +174,50 @@ export default function StoryCreator({ onBack }) {
   // Export status
   const [isExporting, setIsExporting] = useState(false);
   const [downloadSuccess, setDownloadSuccess] = useState(false);
+  const [exportStatusText, setExportStatusText] = useState('');
+
+  // Motion FX & Story Animation States
+  const [isMotionActive, setIsMotionActive] = useState(true);
+  const [isPlaying, setIsPlaying] = useState(true);
+  const [loopDuration, setLoopDuration] = useState(3); // 3s or 4s
+
+  // 1. Cascada Lateral ("MISSA MISSA")
+  const [cascadeEffect, setCascadeEffect] = useState('scroll-down'); // none | scroll-down | scroll-up | breathe | glitch
+  const [cascadeSpeed, setCascadeSpeed] = useState(1.0); // 0.2 to 3.0
+
+  // 2. Titular Principal ("MISSAFX")
+  const [titleEffect, setTitleEffect] = useState('neon-breathe'); // none | neon-breathe | neon-flicker | glitch | strobe | color-cycle
+  const [titleGlow, setTitleGlow] = useState(1.2); // 0.2 to 2.5
+  const [titleBpm, setTitleBpm] = useState(128); // 60 to 180
+
+  // 3. Ecualizador Gráfico (EQ)
+  const [eqEffect, setEqEffect] = useState('vu-bounce'); // none | vu-bounce | wave-flow | bass-pulse
+  const [eqSpeed, setEqSpeed] = useState(1.0); // 0.5 to 2.5
+  const [eqIntensity, setEqIntensity] = useState(1.0); // 0.5 to 2.0
+
+  // 4. Foto de Cabina / Artista
+  const [photoEffect, setPhotoEffect] = useState('ken-burns-in'); // none | ken-burns-in | ken-burns-out | pan-sway | club-strobe
+  const [photoMotionIntensity, setPhotoMotionIntensity] = useState(1.0); // 0.2 to 2.0
+
+  // 5. Atmósfera & Partículas
+  const [atmosphereEffect, setAtmosphereEffect] = useState('dust-laser'); // none | dust-laser | scanlines | rave-smoke
+  const [atmosphereDensity, setAtmosphereDensity] = useState(1.0); // 0.3 to 2.0
+
+  const handleResetMotion = () => {
+    setCascadeEffect('scroll-down');
+    setCascadeSpeed(1.0);
+    setTitleEffect('neon-breathe');
+    setTitleGlow(1.2);
+    setTitleBpm(128);
+    setEqEffect('vu-bounce');
+    setEqSpeed(1.0);
+    setEqIntensity(1.0);
+    setPhotoEffect('ken-burns-in');
+    setPhotoMotionIntensity(1.0);
+    setAtmosphereEffect('dust-laser');
+    setAtmosphereDensity(1.0);
+    setLoopDuration(3);
+  };
 
   // Canvas & Image refs
   const canvasRef = useRef(null);
@@ -201,438 +254,613 @@ export default function StoryCreator({ onBack }) {
     }
   };
 
-  // Main Canvas Render function
-  const renderCanvas = useCallback(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+  // Main Canvas Render function with Motion FX Time Parameter
+  const renderCanvas = useCallback(
+    (time = 0) => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
 
-    const currentFormat = FORMATS[format];
-    const width = currentFormat.width;
-    const height = currentFormat.height;
+      const currentFormat = FORMATS[format];
+      const width = currentFormat.width;
+      const height = currentFormat.height;
 
-    // Set canvas dimensions
-    if (canvas.width !== width || canvas.height !== height) {
-      canvas.width = width;
-      canvas.height = height;
-    }
-
-    // 1. Dark Base Background
-    ctx.fillStyle = '#060608';
-    ctx.fillRect(0, 0, width, height);
-
-    // 2. Draw Photo Layer
-    const img = imageRef.current;
-    if (img && imageLoaded) {
-      ctx.save();
-
-      // Color filter
-      if (photoFilter === 'contrast') {
-        ctx.filter = 'contrast(130%) brightness(95%) saturate(110%)';
-      } else if (photoFilter === 'cyberpunk') {
-        ctx.filter = 'grayscale(100%) contrast(150%) brightness(85%)';
-      } else {
-        ctx.filter = 'none';
+      // Set canvas dimensions
+      if (canvas.width !== width || canvas.height !== height) {
+        canvas.width = width;
+        canvas.height = height;
       }
 
-      // Calculate cover dimensions
-      const imgRatio = img.width / img.height;
-      const canvasRatio = width / height;
-      let drawW, drawH;
+      // Loop & beat calculations
+      const t = loopDuration > 0 ? (time % loopDuration) / loopDuration : 0;
+      const beatPhase = (time * (titleBpm / 60)) % 1;
+      const omega = 2 * Math.PI * t;
 
-      if (imgRatio > canvasRatio) {
-        drawH = height;
-        drawW = height * imgRatio;
-      } else {
-        drawW = width;
-        drawH = width / imgRatio;
-      }
+      // 1. Dark Base Background
+      ctx.fillStyle = '#060608';
+      ctx.fillRect(0, 0, width, height);
 
-      // Apply zoom/scale
-      drawW *= photoScale;
-      drawH *= photoScale;
+      // 2. Draw Photo Layer (Element #4 FX)
+      const img = imageRef.current;
+      if (img && imageLoaded) {
+        ctx.save();
 
-      // Center + pan offsets
-      const drawX = (width - drawW) / 2 + photoPanX;
-      const drawY = (height - drawH) / 2 + photoPanY;
+        let animScale = photoScale;
+        let animPanX = photoPanX;
+        let animPanY = photoPanY;
+        let animBrightness = 1.0;
 
-      ctx.drawImage(img, drawX, drawY, drawW, drawH);
-      ctx.restore();
-    }
-
-    // 3. Dark Vignette & Gradient Overlays (if enabled)
-    if (showVignette) {
-      ctx.save();
-
-      // Top Header Gradient
-      const topGrad = ctx.createLinearGradient(0, 0, 0, height * 0.28);
-      topGrad.addColorStop(0, 'rgba(6, 6, 8, 0.88)');
-      topGrad.addColorStop(1, 'rgba(6, 6, 8, 0)');
-      ctx.fillStyle = topGrad;
-      ctx.fillRect(0, 0, width, height * 0.28);
-
-      // Bottom Typography Gradient
-      const bottomGrad = ctx.createLinearGradient(0, height * 0.45, 0, height);
-      bottomGrad.addColorStop(0, 'rgba(6, 6, 8, 0)');
-      bottomGrad.addColorStop(0.55, 'rgba(6, 6, 8, 0.75)');
-      bottomGrad.addColorStop(1, 'rgba(6, 6, 8, 0.98)');
-      ctx.fillStyle = bottomGrad;
-      ctx.fillRect(0, height * 0.45, width, height * 0.55);
-
-      // Lateral Vignette for repeated text contrast
-      const leftGrad = ctx.createLinearGradient(0, 0, width * 0.45, 0);
-      leftGrad.addColorStop(0, 'rgba(6, 6, 8, 0.85)');
-      leftGrad.addColorStop(1, 'rgba(6, 6, 8, 0)');
-      ctx.fillStyle = leftGrad;
-      ctx.fillRect(0, 0, width * 0.45, height);
-
-      ctx.restore();
-    }
-
-    // 4. Repeated Lateral Outline Typography ("MISSA MISSA") (if enabled)
-    if (showRepeatText && repeatedText.trim()) {
-      ctx.save();
-      const textToRepeat = repeatedText.trim().toUpperCase();
-      ctx.font = '900 88px "Syne", "Outfit", sans-serif';
-      ctx.textBaseline = 'middle';
-      ctx.textAlign = 'left';
-
-      // Repeat down the left margin
-      const startY = height * 0.14;
-      const endY = height * 0.82;
-      const stepY = 104;
-      const posX = 60;
-
-      let count = 0;
-      for (let y = startY; y <= endY; y += stepY) {
-        // Outline text styling
-        ctx.lineWidth = 2.5;
-        ctx.strokeStyle = repeatTextColor;
-        ctx.strokeText(textToRepeat, posX, y);
-
-        // One line gets filled solid accent for editorial rhythm
-        if (count === 1) {
-          ctx.fillStyle = repeatTextColor;
-          ctx.fillText(textToRepeat, posX, y);
-        } else {
-          ctx.fillStyle = hexToRgba(repeatTextColor, 0.04);
-          ctx.fillText(textToRepeat, posX, y);
+        if (isMotionActive) {
+          if (photoEffect === 'ken-burns-in') {
+            const k = Math.sin(t * Math.PI);
+            animScale = photoScale * (1 + 0.08 * k * photoMotionIntensity);
+            animPanY = photoPanY - (15 * k * photoMotionIntensity);
+          } else if (photoEffect === 'ken-burns-out') {
+            const k = Math.sin(t * Math.PI);
+            animScale = photoScale * (1 + 0.08 * (1 - k) * photoMotionIntensity);
+            animPanY = photoPanY + (15 * k * photoMotionIntensity);
+          } else if (photoEffect === 'pan-sway') {
+            animPanX = photoPanX + Math.sin(omega) * 22 * photoMotionIntensity;
+            animPanY = photoPanY + Math.cos(omega) * 12 * photoMotionIntensity;
+          } else if (photoEffect === 'club-strobe') {
+            const strobePulse = Math.pow(Math.sin(Math.PI * beatPhase), 6);
+            animBrightness = 1.0 + 0.5 * strobePulse * photoMotionIntensity;
+            animScale = photoScale * (1 + 0.02 * strobePulse * photoMotionIntensity);
+          }
         }
-        count++;
-      }
-      ctx.restore();
-    }
 
-    // 5. Cyberpunk Angular Frame with 45° Beveled Corners (if enabled)
-    if (showCyberFrame) {
-      ctx.save();
-      const inset = 44;
-      const bevel = 36;
+        // Color filter with dynamic brightness
+        if (photoFilter === 'contrast') {
+          ctx.filter = `contrast(130%) brightness(${Math.round(95 * animBrightness)}%) saturate(110%)`;
+        } else if (photoFilter === 'cyberpunk') {
+          ctx.filter = `grayscale(100%) contrast(150%) brightness(${Math.round(85 * animBrightness)}%)`;
+        } else {
+          ctx.filter = animBrightness !== 1.0 ? `brightness(${Math.round(100 * animBrightness)}%)` : 'none';
+        }
 
-      ctx.beginPath();
-      // Top-Left bevel start
-      ctx.moveTo(inset + bevel, inset);
-      // Top line
-      ctx.lineTo(width - inset - bevel, inset);
-      // Top-Right bevel
-      ctx.lineTo(width - inset, inset + bevel);
-      // Right line
-      ctx.lineTo(width - inset, height - inset - bevel);
-      // Bottom-Right bevel
-      ctx.lineTo(width - inset - bevel, height - inset);
-      // Bottom line
-      ctx.lineTo(inset + bevel, height - inset);
-      // Bottom-Left bevel
-      ctx.lineTo(inset, height - inset - bevel);
-      // Left line
-      ctx.lineTo(inset, inset + bevel);
-      ctx.closePath();
+        // Calculate cover dimensions
+        const imgRatio = img.width / img.height;
+        const canvasRatio = width / height;
+        let drawW, drawH;
 
-      ctx.strokeStyle = frameColor;
-      ctx.lineWidth = 4;
-      ctx.shadowColor = frameColor;
-      ctx.shadowBlur = 14;
-      ctx.stroke();
+        if (imgRatio > canvasRatio) {
+          drawH = height;
+          drawW = height * imgRatio;
+        } else {
+          drawW = width;
+          drawH = width / imgRatio;
+        }
 
-      // Corner accent brackets & notches
-      ctx.shadowBlur = 0;
-      ctx.fillStyle = frameColor;
+        // Apply zoom/scale
+        drawW *= animScale;
+        drawH *= animScale;
 
-      // Top-left notch
-      ctx.fillRect(inset + bevel, inset - 4, 30, 8);
-      // Top-right notch
-      ctx.fillRect(width - inset - bevel - 30, inset - 4, 30, 8);
-      // Bottom-left notch
-      ctx.fillRect(inset + bevel, height - inset - 4, 30, 8);
-      // Bottom-right notch
-      ctx.fillRect(width - inset - bevel - 30, height - inset - 4, 30, 8);
+        // Center + pan offsets
+        const drawX = (width - drawW) / 2 + animPanX;
+        const drawY = (height - drawH) / 2 + animPanY;
 
-      ctx.restore();
-    }
-
-    // 6. Technical Accents & Overlays (if enabled)
-    if (showTechAccents) {
-      ctx.save();
-      ctx.fillStyle = '#94A3B8';
-      ctx.font = '600 13px "Outfit", monospace';
-      ctx.letterSpacing = '1px';
-
-      // Crosshairs in corners
-      const crossSize = 10;
-      const corners = [
-        [75, 75],
-        [width - 75, 75],
-        [75, height - 75],
-        [width - 75, height - 75]
-      ];
-
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
-      ctx.lineWidth = 1.5;
-      corners.forEach(([cx, cy]) => {
-        ctx.beginPath();
-        ctx.moveTo(cx - crossSize, cy);
-        ctx.lineTo(cx + crossSize, cy);
-        ctx.moveTo(cx, cy - crossSize);
-        ctx.lineTo(cx, cy + crossSize);
-        ctx.stroke();
-      });
-
-      // Coordinates & Audio Protocol tags
-      ctx.fillStyle = '#F8FAFC';
-      ctx.fillText('[ 22° 09\' N // 100° 58\' W ]', 110, 80);
-
-      // Mini Graphic Equalizer Bars (top right)
-      const eqX = width - 220;
-      const eqY = 70;
-      const barCount = 12;
-      const heights = [14, 22, 10, 26, 18, 12, 28, 20, 16, 24, 15, 8];
-
-      for (let i = 0; i < barCount; i++) {
-        const barH = heights[i];
-        ctx.fillStyle = i % 3 === 0 ? techColor : 'rgba(255, 255, 255, 0.7)';
-        ctx.fillRect(eqX + i * 8, eqY + (28 - barH), 5, barH);
+        ctx.drawImage(img, drawX, drawY, drawW, drawH);
+        ctx.restore();
       }
 
-      ctx.restore();
-    }
+      // 3. Dark Vignette & Gradient Overlays (if enabled)
+      if (showVignette) {
+        ctx.save();
 
-    // 7. Badges & Logos (if enabled)
-    if (showBadges) {
-      ctx.save();
+        // Top Header Gradient
+        const topGrad = ctx.createLinearGradient(0, 0, 0, height * 0.28);
+        topGrad.addColorStop(0, 'rgba(6, 6, 8, 0.88)');
+        topGrad.addColorStop(1, 'rgba(6, 6, 8, 0)');
+        ctx.fillStyle = topGrad;
+        ctx.fillRect(0, 0, width, height * 0.28);
 
-      // Top Tag Pill
-      const tagText = 'PIONEER DJ PRO SESSION';
-      ctx.font = '700 14px "Outfit", sans-serif';
-      const tagMetrics = ctx.measureText(tagText);
-      const tagW = tagMetrics.width + 36;
-      const tagH = 34;
-      const tagX = (width - tagW) / 2;
-      const tagY = height * 0.08;
+        // Bottom Typography Gradient
+        const bottomGrad = ctx.createLinearGradient(0, height * 0.45, 0, height);
+        bottomGrad.addColorStop(0, 'rgba(6, 6, 8, 0)');
+        bottomGrad.addColorStop(0.55, 'rgba(6, 6, 8, 0.75)');
+        bottomGrad.addColorStop(1, 'rgba(6, 6, 8, 0.98)');
+        ctx.fillStyle = bottomGrad;
+        ctx.fillRect(0, height * 0.45, width, height * 0.55);
 
-      ctx.fillStyle = 'rgba(12, 12, 16, 0.85)';
-      ctx.strokeStyle = badgeColor;
-      ctx.lineWidth = 1.5;
+        // Lateral Vignette for repeated text contrast
+        const leftGrad = ctx.createLinearGradient(0, 0, width * 0.45, 0);
+        leftGrad.addColorStop(0, 'rgba(6, 6, 8, 0.85)');
+        leftGrad.addColorStop(1, 'rgba(6, 6, 8, 0)');
+        ctx.fillStyle = leftGrad;
+        ctx.fillRect(0, 0, width * 0.45, height);
 
-      // Rounded rectangle
-      ctx.beginPath();
-      ctx.roundRect(tagX, tagY, tagW, tagH, 8);
-      ctx.fill();
-      ctx.stroke();
-
-      // Active dot
-      ctx.fillStyle = badgeColor;
-      ctx.beginPath();
-      ctx.arc(tagX + 16, tagY + tagH / 2, 4, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Text inside pill
-      ctx.fillStyle = '#FFFFFF';
-      ctx.textAlign = 'left';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(tagText, tagX + 26, tagY + tagH / 2);
-
-      // Audio spec tag
-      ctx.font = '600 12px "Outfit", monospace';
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-      ctx.textAlign = 'center';
-      ctx.fillText('• 48kHz / 24-BIT MASTER AUDIO •', width / 2, tagY + tagH + 18);
-
-      ctx.restore();
-    }
-
-    // 8. Main Typography & Event Information
-    ctx.save();
-    const bottomBase = height - (format === 'story' ? 180 : 130);
-
-    // Subtle atmospheric glow behind the artist title
-    const glowGrad = ctx.createRadialGradient(
-      width / 2, bottomBase - 85, 10,
-      width / 2, bottomBase - 85, width * 0.42
-    );
-    glowGrad.addColorStop(0, hexToRgba(titleColor, 0.22));
-    glowGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-    ctx.fillStyle = glowGrad;
-    ctx.fillRect(0, bottomBase - 260, width, 360);
-
-    // Subtitle Pill (e.g. TECH HOUSE)
-    if (subTitle.trim()) {
-      ctx.font = '800 18px "Syne", sans-serif';
-      const subMetrics = ctx.measureText(subTitle.toUpperCase());
-      const subW = subMetrics.width + 32;
-      const subH = 36;
-      const subX = width / 2 - subW / 2;
-      const subY = bottomBase - 180;
-
-      // Smart contrast guarantee: text is NEVER same luminance as background pill
-      let effectiveBadgeTextColor = badgeTextColor;
-      if (isLightColor(badgeColor) && isLightColor(badgeTextColor)) {
-        effectiveBadgeTextColor = '#060608';
-      } else if (!isLightColor(badgeColor) && !isLightColor(badgeTextColor)) {
-        effectiveBadgeTextColor = '#FFFFFF';
+        ctx.restore();
       }
 
-      ctx.fillStyle = badgeColor;
-      ctx.beginPath();
-      ctx.roundRect(subX, subY, subW, subH, 6);
-      ctx.fill();
+      // 4. Atmosphere & Particles Layer (Element #5 FX)
+      if (isMotionActive && atmosphereEffect !== 'none') {
+        ctx.save();
+        if (atmosphereEffect === 'dust-laser') {
+          const particleCount = 35;
+          for (let i = 0; i < particleCount; i++) {
+            const seedX = (i * 137.5) % width;
+            const seedY = (i * 219.7) % height;
+            const speed = 40 + (i % 5) * 20;
+            const size = 1.5 + (i % 4) * 1.5;
+            const curY = (seedY - time * speed * atmosphereDensity + height * 10) % height;
+            const curX = (seedX + Math.sin(time * 1.6 + i) * 25) % width;
+            const alpha = (0.2 + 0.35 * Math.sin(time * 2.5 + i)) * Math.min(1, atmosphereDensity);
 
-      ctx.fillStyle = effectiveBadgeTextColor;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(subTitle.toUpperCase(), width / 2, subY + subH / 2);
-    }
+            ctx.fillStyle = hexToRgba(frameColor, Math.max(0.05, alpha));
+            ctx.beginPath();
+            ctx.arc(curX, curY, size, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        } else if (atmosphereEffect === 'scanlines') {
+          const scanGap = 8;
+          const scanSpeed = (time * 90) % scanGap;
+          ctx.strokeStyle = hexToRgba(frameColor, 0.04 * atmosphereDensity);
+          ctx.lineWidth = 1;
+          for (let sy = scanSpeed; sy < height; sy += scanGap) {
+            ctx.beginPath();
+            ctx.moveTo(0, sy);
+            ctx.lineTo(width, sy);
+            ctx.stroke();
+          }
+          const beamY = (time * 300) % height;
+          const beamGrad = ctx.createLinearGradient(0, beamY - 40, 0, beamY + 40);
+          beamGrad.addColorStop(0, 'rgba(255, 255, 255, 0)');
+          beamGrad.addColorStop(0.5, hexToRgba(frameColor, 0.08 * atmosphereDensity));
+          beamGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+          ctx.fillStyle = beamGrad;
+          ctx.fillRect(0, beamY - 40, width, 80);
+        } else if (atmosphereEffect === 'rave-smoke') {
+          for (let i = 0; i < 3; i++) {
+            const fx = width * (0.3 + 0.4 * Math.sin(omega + i * 2));
+            const fy = height * (0.35 + 0.3 * Math.cos(omega + i * 1.5));
+            const fRadius = width * (0.35 + 0.08 * Math.sin(time + i));
+            const fogGrad = ctx.createRadialGradient(fx, fy, 10, fx, fy, fRadius);
+            fogGrad.addColorStop(0, hexToRgba(frameColor, 0.09 * atmosphereDensity));
+            fogGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+            ctx.fillStyle = fogGrad;
+            ctx.fillRect(0, 0, width, height);
+          }
+        }
+        ctx.restore();
+      }
 
-    // Main Title (e.g. MISSAFX)
-    if (mainTitle.trim()) {
-      ctx.font = '900 110px "Syne", sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-
-      // Split into "MISSA" and "FX" if matching default, or draw cleanly
-      const titleUpper = mainTitle.trim().toUpperCase();
-      if (titleUpper.startsWith('MISSA') && titleUpper.endsWith('FX')) {
-        const missaPart = 'MISSA';
-        const fxPart = 'FX';
-
-        ctx.font = '900 110px "Syne", sans-serif';
-        const missaMetrics = ctx.measureText(missaPart);
-        const fxMetrics = ctx.measureText(fxPart);
-        const fullW = missaMetrics.width + fxMetrics.width;
-        const startX = (width - fullW) / 2;
-
+      // 5. Repeated Lateral Outline Typography ("MISSA MISSA") (Element #1 FX)
+      if (showRepeatText && repeatedText.trim()) {
+        ctx.save();
+        const textToRepeat = repeatedText.trim().toUpperCase();
+        ctx.font = '900 88px "Syne", "Outfit", sans-serif';
+        ctx.textBaseline = 'middle';
         ctx.textAlign = 'left';
-        ctx.fillStyle = titleColor;
-        ctx.fillText(missaPart, startX, bottomBase - 90);
 
-        ctx.fillStyle = titleFxColor;
-        ctx.fillText(fxPart, startX + missaMetrics.width, bottomBase - 90);
-      } else {
-        ctx.fillStyle = titleColor;
-        ctx.fillText(titleUpper, width / 2, bottomBase - 90);
+        const startY = height * 0.14;
+        const endY = height * 0.82;
+        const stepY = 104;
+        const posX = 60;
+
+        let shiftY = 0;
+        let dynamicLineWidth = 2.5;
+        let jitterX = 0;
+        let isGlitchActive = false;
+
+        if (isMotionActive) {
+          if (cascadeEffect === 'scroll-down') {
+            shiftY = (time * 80 * cascadeSpeed) % stepY;
+          } else if (cascadeEffect === 'scroll-up') {
+            shiftY = -((time * 80 * cascadeSpeed) % stepY);
+          } else if (cascadeEffect === 'breathe') {
+            dynamicLineWidth = 2.5 + Math.sin(omega * 2) * 1.8 * cascadeSpeed;
+          } else if (cascadeEffect === 'glitch') {
+            const gFrame = Math.sin(time * 20) > 0.85;
+            if (gFrame) {
+              isGlitchActive = true;
+              jitterX = Math.sin(time * 50) * 8 * cascadeSpeed;
+            }
+          }
+        }
+
+        ctx.beginPath();
+        ctx.rect(0, startY - 20, width * 0.45, endY - startY + 40);
+        ctx.clip();
+
+        let count = 0;
+        for (let y = startY - stepY; y <= endY + stepY; y += stepY) {
+          const curY = y + shiftY;
+          const curX = posX + jitterX;
+
+          ctx.lineWidth = Math.max(1, dynamicLineWidth);
+          ctx.strokeStyle = repeatTextColor;
+
+          if (isGlitchActive) {
+            ctx.save();
+            ctx.shadowColor = '#00F0FF';
+            ctx.shadowBlur = 10;
+            ctx.strokeText(textToRepeat, curX + 3, curY);
+            ctx.restore();
+          }
+
+          ctx.strokeText(textToRepeat, curX, curY);
+
+          if (count % 7 === 1) {
+            ctx.fillStyle = repeatTextColor;
+            ctx.fillText(textToRepeat, curX, curY);
+          } else {
+            ctx.fillStyle = hexToRgba(repeatTextColor, 0.04);
+            ctx.fillText(textToRepeat, curX, curY);
+          }
+          count++;
+        }
+        ctx.restore();
       }
-    }
 
-    // Divider Line
-    ctx.strokeStyle = hexToRgba(textColor, 0.2);
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(width * 0.15, bottomBase - 30);
-    ctx.lineTo(width * 0.85, bottomBase - 30);
-    ctx.stroke();
+      // 6. Cyberpunk Frame with Neon Glow
+      if (showCyberFrame) {
+        ctx.save();
+        const inset = 44;
+        const bevel = 36;
 
-    // Event Date & Venue Info
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
+        ctx.beginPath();
+        ctx.moveTo(inset + bevel, inset);
+        ctx.lineTo(width - inset - bevel, inset);
+        ctx.lineTo(width - inset, inset + bevel);
+        ctx.lineTo(width - inset, height - inset - bevel);
+        ctx.lineTo(width - inset - bevel, height - inset);
+        ctx.lineTo(inset + bevel, height - inset);
+        ctx.lineTo(inset, height - inset - bevel);
+        ctx.lineTo(inset, inset + bevel);
+        ctx.closePath();
 
-    // Date
-    if (eventDate.trim()) {
-      ctx.font = '800 24px "Outfit", sans-serif';
-      ctx.fillStyle = textColor;
-      ctx.fillText(eventDate.toUpperCase(), width / 2, bottomBase + 10);
-    }
+        ctx.strokeStyle = frameColor;
+        ctx.lineWidth = 4;
+        ctx.shadowColor = frameColor;
+        ctx.shadowBlur = isMotionActive ? 14 + Math.sin(omega) * 6 : 14;
+        ctx.stroke();
 
-    // Venue / Location
-    if (eventVenue.trim()) {
-      ctx.font = '500 17px "Outfit", sans-serif';
-      ctx.fillStyle = hexToRgba(textColor, 0.75);
-      ctx.fillText(eventVenue.toUpperCase(), width / 2, bottomBase + 45);
-    }
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = frameColor;
+        ctx.fillRect(inset + bevel, inset - 4, 30, 8);
+        ctx.fillRect(width - inset - bevel - 30, inset - 4, 30, 8);
+        ctx.fillRect(inset + bevel, height - inset - 4, 30, 8);
+        ctx.fillRect(width - inset - bevel - 30, height - inset - 4, 30, 8);
 
-    // Booking Pill
-    ctx.font = '700 13px "Outfit", sans-serif';
-    ctx.fillStyle = techColor;
-    ctx.fillText('BOOKING DIRECTO • WA +52 1 444 357 0777', width / 2, bottomBase + 78);
+        ctx.restore();
+      }
 
-    ctx.restore();
+      // 7. Technical Accents & Overlays (Element #3 FX: Equalizer)
+      if (showTechAccents) {
+        ctx.save();
+        ctx.fillStyle = '#94A3B8';
+        ctx.font = '600 13px "Outfit", monospace';
+        ctx.letterSpacing = '1px';
 
-    // 9. Safe Zone Guides (Preview only overlay)
-    if (showSafeZones && format === 'story') {
+        const crossSize = 10;
+        const corners = [
+          [75, 75],
+          [width - 75, 75],
+          [75, height - 75],
+          [width - 75, height - 75]
+        ];
+
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+        ctx.lineWidth = 1.5;
+        corners.forEach(([cx, cy]) => {
+          ctx.beginPath();
+          ctx.moveTo(cx - crossSize, cy);
+          ctx.lineTo(cx + crossSize, cy);
+          ctx.moveTo(cx, cy - crossSize);
+          ctx.lineTo(cx, cy + crossSize);
+          ctx.stroke();
+        });
+
+        ctx.fillStyle = '#F8FAFC';
+        ctx.fillText('[ 22° 09\' N // 100° 58\' W ]', 110, 80);
+
+        const eqX = width - 220;
+        const eqY = 70;
+        const barCount = 12;
+        const baseHeights = [14, 22, 10, 26, 18, 12, 28, 20, 16, 24, 15, 8];
+
+        for (let i = 0; i < barCount; i++) {
+          let barH = baseHeights[i];
+          if (isMotionActive) {
+            if (eqEffect === 'vu-bounce') {
+              barH = Math.min(28, Math.max(4, Math.abs(Math.sin(time * 7 * eqSpeed + i * 0.65)) * 24 * eqIntensity));
+            } else if (eqEffect === 'wave-flow') {
+              barH = Math.min(28, Math.max(4, ((Math.sin(time * 5 * eqSpeed + i * 0.5) * 0.5 + 0.5) * 25 * eqIntensity)));
+            } else if (eqEffect === 'bass-pulse') {
+              const bassHit = Math.pow(Math.sin(Math.PI * beatPhase), 4);
+              barH = Math.min(28, Math.max(4, bassHit * 22 * eqIntensity + Math.sin(time * 12 + i) * 5));
+            }
+          }
+          ctx.fillStyle = i % 3 === 0 ? techColor : 'rgba(255, 255, 255, 0.7)';
+          ctx.fillRect(eqX + i * 8, eqY + (28 - barH), 5, barH);
+        }
+
+        ctx.restore();
+      }
+
+      // 8. Badges & Logos (if enabled)
+      if (showBadges) {
+        ctx.save();
+
+        const tagText = 'PIONEER DJ PRO SESSION';
+        ctx.font = '700 14px "Outfit", sans-serif';
+        const tagMetrics = ctx.measureText(tagText);
+        const tagW = tagMetrics.width + 36;
+        const tagH = 34;
+        const tagX = (width - tagW) / 2;
+        const tagY = height * 0.08;
+
+        ctx.fillStyle = 'rgba(12, 12, 16, 0.85)';
+        ctx.strokeStyle = badgeColor;
+        ctx.lineWidth = 1.5;
+
+        ctx.beginPath();
+        ctx.roundRect(tagX, tagY, tagW, tagH, 8);
+        ctx.fill();
+        ctx.stroke();
+
+        const dotRadius = isMotionActive ? 4 + Math.sin(omega * 3) * 1.2 : 4;
+        ctx.fillStyle = badgeColor;
+        ctx.beginPath();
+        ctx.arc(tagX + 16, tagY + tagH / 2, dotRadius, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#FFFFFF';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(tagText, tagX + 26, tagY + tagH / 2);
+
+        ctx.font = '600 12px "Outfit", monospace';
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+        ctx.textAlign = 'center';
+        ctx.fillText('• 48kHz / 24-BIT MASTER AUDIO •', width / 2, tagY + tagH + 18);
+
+        ctx.restore();
+      }
+
+      // 9. Main Typography & Event Information (Element #2 FX: Titular)
       ctx.save();
-      ctx.strokeStyle = 'rgba(250, 204, 21, 0.75)'; // Yellow dashed line
-      ctx.lineWidth = 2;
-      ctx.setLineDash([8, 8]);
+      const bottomBase = height - (format === 'story' ? 180 : 130);
 
-      // Top safe zone (220px)
-      ctx.strokeRect(40, 220, width - 80, height - 440);
+      let titleGlowBlur = 0;
+      let titleShadowColor = titleColor;
+      let titleAlpha = 1.0;
+      let titleGlitchOffset = 0;
+      let effectiveTitleColor = titleColor;
 
-      ctx.fillStyle = 'rgba(250, 204, 21, 0.15)';
-      ctx.fillRect(0, 0, width, 220);
-      ctx.fillRect(0, height - 220, width, 220);
+      if (isMotionActive) {
+        if (titleEffect === 'neon-breathe') {
+          const glowFactor = Math.sin(2 * Math.PI * (titleBpm / 60) * time) * 0.5 + 0.5;
+          titleGlowBlur = 12 + glowFactor * 32 * titleGlow;
+          titleShadowColor = titleColor;
+        } else if (titleEffect === 'neon-flicker') {
+          const fRand = Math.sin(time * 33) * Math.cos(time * 19);
+          const isFlicker = fRand > 0.72;
+          titleGlowBlur = isFlicker ? 4 : 24 * titleGlow;
+          titleAlpha = isFlicker ? 0.65 : 1.0;
+          titleShadowColor = titleColor;
+        } else if (titleEffect === 'glitch') {
+          const isGlitch = Math.sin(time * 26) > 0.85;
+          titleGlitchOffset = isGlitch ? Math.sin(time * 50) * 8 : 0;
+          titleGlowBlur = isGlitch ? 20 * titleGlow : 0;
+          titleShadowColor = '#00F0FF';
+        } else if (titleEffect === 'strobe') {
+          const strobeVal = Math.pow(Math.sin(Math.PI * beatPhase), 8);
+          titleGlowBlur = 8 + strobeVal * 42 * titleGlow;
+          titleShadowColor = '#FFFFFF';
+        } else if (titleEffect === 'color-cycle') {
+          const hue = Math.round(t * 360);
+          effectiveTitleColor = `hsl(${hue}, 100%, 65%)`;
+          titleShadowColor = effectiveTitleColor;
+          titleGlowBlur = 20 * titleGlow;
+        }
+      }
 
-      ctx.fillStyle = '#FACC15';
-      ctx.font = '700 18px "Outfit", sans-serif';
+      // Glow background behind title
+      const glowGrad = ctx.createRadialGradient(
+        width / 2, bottomBase - 85, 10,
+        width / 2, bottomBase - 85, width * 0.42
+      );
+      const bgGlowAlpha = isMotionActive && titleEffect === 'neon-breathe'
+        ? 0.15 + (Math.sin(2 * Math.PI * (titleBpm / 60) * time) * 0.5 + 0.5) * 0.15
+        : 0.22;
+      glowGrad.addColorStop(0, hexToRgba(titleColor, bgGlowAlpha));
+      glowGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = glowGrad;
+      ctx.fillRect(0, bottomBase - 260, width, 360);
+
+      // Subtitle Pill
+      if (subTitle.trim()) {
+        ctx.font = '800 18px "Syne", sans-serif';
+        const subMetrics = ctx.measureText(subTitle.toUpperCase());
+        const subW = subMetrics.width + 32;
+        const subH = 36;
+        const subX = width / 2 - subW / 2;
+        const subY = bottomBase - 180;
+
+        let effectiveBadgeTextColor = badgeTextColor;
+        if (isLightColor(badgeColor) && isLightColor(badgeTextColor)) {
+          effectiveBadgeTextColor = '#060608';
+        } else if (!isLightColor(badgeColor) && !isLightColor(badgeTextColor)) {
+          effectiveBadgeTextColor = '#FFFFFF';
+        }
+
+        ctx.fillStyle = badgeColor;
+        ctx.beginPath();
+        ctx.roundRect(subX, subY, subW, subH, 6);
+        ctx.fill();
+
+        ctx.fillStyle = effectiveBadgeTextColor;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(subTitle.toUpperCase(), width / 2, subY + subH / 2);
+      }
+
+      // Main Title
+      if (mainTitle.trim()) {
+        ctx.font = '900 110px "Syne", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.shadowColor = titleShadowColor;
+        ctx.shadowBlur = titleGlowBlur;
+        ctx.globalAlpha = titleAlpha;
+
+        const titleUpper = mainTitle.trim().toUpperCase();
+        if (titleUpper.startsWith('MISSA') && titleUpper.endsWith('FX')) {
+          const missaPart = 'MISSA';
+          const fxPart = 'FX';
+
+          ctx.font = '900 110px "Syne", sans-serif';
+          const missaMetrics = ctx.measureText(missaPart);
+          const fxMetrics = ctx.measureText(fxPart);
+          const fullW = missaMetrics.width + fxMetrics.width;
+          const startX = (width - fullW) / 2 + titleGlitchOffset;
+
+          ctx.textAlign = 'left';
+          ctx.fillStyle = effectiveTitleColor;
+          ctx.fillText(missaPart, startX, bottomBase - 90);
+
+          ctx.fillStyle = titleFxColor;
+          ctx.fillText(fxPart, startX + missaMetrics.width, bottomBase - 90);
+        } else {
+          ctx.fillStyle = effectiveTitleColor;
+          ctx.fillText(titleUpper, width / 2 + titleGlitchOffset, bottomBase - 90);
+        }
+      }
+
+      // Divider Line
+      ctx.shadowBlur = 0;
+      ctx.globalAlpha = 1.0;
+      ctx.strokeStyle = hexToRgba(textColor, 0.2);
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(width * 0.15, bottomBase - 30);
+      ctx.lineTo(width * 0.85, bottomBase - 30);
+      ctx.stroke();
+
+      // Event Date & Venue Info
       ctx.textAlign = 'center';
-      ctx.fillText('ZONA HEADER INSTAGRAM (Evitar textos)', width / 2, 110);
-      ctx.fillText('ZONA RESPUESTA / MENSAJE (Evitar textos)', width / 2, height - 110);
+      ctx.textBaseline = 'middle';
+
+      if (eventDate.trim()) {
+        ctx.font = '800 24px "Outfit", sans-serif';
+        ctx.fillStyle = textColor;
+        ctx.fillText(eventDate.toUpperCase(), width / 2, bottomBase + 10);
+      }
+
+      if (eventVenue.trim()) {
+        ctx.font = '500 17px "Outfit", sans-serif';
+        ctx.fillStyle = hexToRgba(textColor, 0.75);
+        ctx.fillText(eventVenue.toUpperCase(), width / 2, bottomBase + 45);
+      }
+
+      // Booking Pill
+      ctx.font = '700 13px "Outfit", sans-serif';
+      ctx.fillStyle = techColor;
+      ctx.fillText('BOOKING DIRECTO • WA +52 1 444 357 0777', width / 2, bottomBase + 78);
 
       ctx.restore();
-    }
-  }, [
-    format,
-    photoScale,
-    photoPanX,
-    photoPanY,
-    photoFilter,
-    imageLoaded,
-    repeatedText,
-    mainTitle,
-    subTitle,
-    eventDate,
-    eventVenue,
-    frameColor,
-    titleColor,
-    titleFxColor,
-    repeatTextColor,
-    badgeColor,
-    badgeTextColor,
-    textColor,
-    techColor,
-    showRepeatText,
-    showCyberFrame,
-    showTechAccents,
-    showBadges,
-    showVignette,
-    showSafeZones
-  ]);
 
-  // Trigger render when inputs change
+      // 10. Safe Zone Guides (Preview only overlay)
+      if (showSafeZones && format === 'story') {
+        ctx.save();
+        ctx.strokeStyle = 'rgba(250, 204, 21, 0.75)';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([8, 8]);
+
+        ctx.strokeRect(40, 220, width - 80, height - 440);
+
+        ctx.fillStyle = 'rgba(250, 204, 21, 0.15)';
+        ctx.fillRect(0, 0, width, 220);
+        ctx.fillRect(0, height - 220, width, 220);
+
+        ctx.fillStyle = '#FACC15';
+        ctx.font = '700 18px "Outfit", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('ZONA HEADER INSTAGRAM (Evitar textos)', width / 2, 110);
+        ctx.fillText('ZONA RESPUESTA / MENSAJE (Evitar textos)', width / 2, height - 110);
+
+        ctx.restore();
+      }
+    },
+    [
+      format,
+      photoScale,
+      photoPanX,
+      photoPanY,
+      photoFilter,
+      imageLoaded,
+      repeatedText,
+      mainTitle,
+      subTitle,
+      eventDate,
+      eventVenue,
+      frameColor,
+      titleColor,
+      titleFxColor,
+      repeatTextColor,
+      badgeColor,
+      badgeTextColor,
+      textColor,
+      techColor,
+      showRepeatText,
+      showCyberFrame,
+      showTechAccents,
+      showBadges,
+      showVignette,
+      showSafeZones,
+      isMotionActive,
+      loopDuration,
+      cascadeEffect,
+      cascadeSpeed,
+      titleEffect,
+      titleGlow,
+      titleBpm,
+      eqEffect,
+      eqSpeed,
+      eqIntensity,
+      photoEffect,
+      photoMotionIntensity,
+      atmosphereEffect,
+      atmosphereDensity
+    ]
+  );
+
+  // Animation frame loop for continuous live motion preview
   useEffect(() => {
-    renderCanvas();
-  }, [renderCanvas]);
+    if (!isPlaying || !isMotionActive) {
+      renderCanvas(0);
+      return;
+    }
 
-  // Export high resolution PNG
+    let animationFrameId;
+    const startTime = performance.now();
+
+    const renderLoop = (currentTime) => {
+      const elapsed = (currentTime - startTime) / 1000;
+      renderCanvas(elapsed);
+      animationFrameId = requestAnimationFrame(renderLoop);
+    };
+
+    animationFrameId = requestAnimationFrame(renderLoop);
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, [isPlaying, isMotionActive, renderCanvas]);
+
+  // Export 1: High resolution PNG (Static Flyer)
   const handleDownload = () => {
     setIsExporting(true);
 
-    // Make sure safe zones overlay is NOT included in export
     const wasSafeZonesActive = showSafeZones;
     if (wasSafeZonesActive) {
       setShowSafeZones(false);
     }
 
     setTimeout(() => {
-      renderCanvas();
+      renderCanvas(0);
       const canvas = canvasRef.current;
       if (!canvas) {
         setIsExporting(false);
@@ -660,6 +888,145 @@ export default function StoryCreator({ onBack }) {
         }
       }
     }, 150);
+  };
+
+  // Export 2: Video Story (MP4 / WebM at 60 FPS)
+  const handleExportVideo = async () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    setIsExporting(true);
+    setExportStatusText(cT.exportVideoRecording || 'Grabando video en 60 FPS...');
+
+    const wasSafeZonesActive = showSafeZones;
+    if (wasSafeZonesActive) setShowSafeZones(false);
+
+    try {
+      let mimeType = 'video/mp4';
+      let ext = 'mp4';
+      if (!MediaRecorder.isTypeSupported('video/mp4')) {
+        if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) {
+          mimeType = 'video/webm;codecs=vp9';
+          ext = 'webm';
+        } else if (MediaRecorder.isTypeSupported('video/webm')) {
+          mimeType = 'video/webm';
+          ext = 'webm';
+        }
+      }
+
+      setIsPlaying(true);
+      setIsMotionActive(true);
+
+      const stream = canvas.captureStream(30);
+      const recorder = new MediaRecorder(stream, {
+        mimeType: MediaRecorder.isTypeSupported(mimeType) ? mimeType : undefined,
+        videoBitsPerSecond: 10000000
+      });
+
+      const chunks = [];
+      recorder.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) chunks.push(e.data);
+      };
+
+      recorder.onstop = () => {
+        const blob = new Blob(chunks, { type: mimeType });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `missafx-story-motion-${format}-${FORMATS[format].width}x${FORMATS[format].height}.${ext}`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        setIsExporting(false);
+        setExportStatusText('');
+        setDownloadSuccess(true);
+        setTimeout(() => setDownloadSuccess(false), 4000);
+      };
+
+      recorder.start();
+      setTimeout(() => {
+        recorder.stop();
+        if (wasSafeZonesActive) setShowSafeZones(true);
+      }, loopDuration * 1000);
+    } catch (err) {
+      console.error('Video recording error:', err);
+      setIsExporting(false);
+      setExportStatusText('');
+      if (wasSafeZonesActive) setShowSafeZones(true);
+    }
+  };
+
+  // Export 3: Animated GIF (.gif) using gifenc
+  const handleExportGif = async () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    setIsExporting(true);
+    setExportStatusText(cT.exportGifRendering || 'Generando frames GIF...');
+
+    const wasSafeZonesActive = showSafeZones;
+    if (wasSafeZonesActive) setShowSafeZones(false);
+
+    try {
+      const gifScale = 0.5;
+      const gW = Math.round(FORMATS[format].width * gifScale);
+      const gH = Math.round(FORMATS[format].height * gifScale);
+
+      const offCanvas = document.createElement('canvas');
+      offCanvas.width = gW;
+      offCanvas.height = gH;
+      const offCtx = offCanvas.getContext('2d', { willReadFrequently: true });
+
+      const gif = GIFEncoder();
+      const fps = 15;
+      const totalFrames = Math.round(loopDuration * fps);
+      const frameDelay = Math.round(1000 / fps);
+
+      for (let i = 0; i < totalFrames; i++) {
+        const frameTime = (i / totalFrames) * loopDuration;
+
+        renderCanvas(frameTime);
+
+        offCtx.clearRect(0, 0, gW, gH);
+        offCtx.drawImage(canvas, 0, 0, gW, gH);
+
+        const imgData = offCtx.getImageData(0, 0, gW, gH);
+        const palette = quantize(imgData.data, 256);
+        const index = applyPalette(imgData.data, palette);
+
+        gif.writeFrame(index, gW, gH, {
+          palette,
+          delay: frameDelay,
+          repeat: 0
+        });
+
+        setExportStatusText(
+          `${cT.exportGifRendering || 'Generando frames GIF...'} (${Math.round(((i + 1) / totalFrames) * 100)}%)`
+        );
+        await new Promise((resolve) => setTimeout(resolve, 12));
+      }
+
+      gif.finish();
+      const buffer = gif.bytesView();
+      const blob = new Blob([buffer], { type: 'image/gif' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `missafx-animated-story-${format}.gif`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      setDownloadSuccess(true);
+      setTimeout(() => setDownloadSuccess(false), 4000);
+    } catch (err) {
+      console.error('GIF export error:', err);
+    } finally {
+      setIsExporting(false);
+      setExportStatusText('');
+      if (wasSafeZonesActive) setShowSafeZones(true);
+      renderCanvas(0);
+    }
   };
 
   // Reset Photo position
@@ -818,7 +1185,7 @@ export default function StoryCreator({ onBack }) {
           </p>
         </div>
 
-        {/* Step Progress Tabs Bar (6 Steps) */}
+        {/* Step Progress Tabs Bar (7 Steps) */}
         <div
           style={{
             display: 'flex',
@@ -834,8 +1201,9 @@ export default function StoryCreator({ onBack }) {
             { id: 2, label: cT.step2, icon: Sliders },
             { id: 3, label: cT.step3, icon: Type },
             { id: 4, label: cT.step4, icon: Palette },
-            { id: 5, label: cT.step5, icon: Layers },
-            { id: 6, label: cT.step6, icon: Download }
+            { id: 5, label: cT.step5, icon: Film },
+            { id: 6, label: cT.step6, icon: Layers },
+            { id: 7, label: cT.step7, icon: Download }
           ].map((step) => {
             const Icon = step.icon;
             const isActive = activeStep === step.id;
@@ -1619,14 +1987,516 @@ export default function StoryCreator({ onBack }) {
                     className="btn btn-primary btn-sm"
                     style={{ cursor: 'pointer' }}
                   >
-                    <span>Siguiente: Máscaras →</span>
+                    <span>Siguiente: Motion FX →</span>
                   </button>
                 </div>
               </div>
             )}
 
-            {/* STEP 5: Masks & Layers Toggles (Prender/Apagar) */}
+            {/* STEP 5: Motion FX & Story Animation */}
             {activeStep === 5 && (
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                  <h3 className="font-display" style={{ fontSize: '1.25rem', color: '#fff' }}>
+                    {cT.motionTitle}
+                  </h3>
+                  <button
+                    onClick={handleResetMotion}
+                    title={cT.motionReset}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      color: 'var(--text-muted)',
+                      padding: '6px 12px',
+                      borderRadius: '8px',
+                      fontSize: '0.76rem',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <RefreshCw size={12} />
+                    <span>{cT.motionReset}</span>
+                  </button>
+                </div>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', marginBottom: '22px' }}>
+                  {cT.motionSubtitle}
+                </p>
+
+                {/* Master Playback & Loop Settings Bar */}
+                <div
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.03)',
+                    border: `1px solid ${hexToRgba(frameColor, 0.3)}`,
+                    borderRadius: '14px',
+                    padding: '16px',
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '14px',
+                    marginBottom: '24px'
+                  }}
+                >
+                  {/* Master Play/Pause */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <button
+                      onClick={() => setIsPlaying(!isPlaying)}
+                      className="btn btn-primary btn-sm"
+                      style={{
+                        padding: '10px 18px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        fontSize: '0.86rem',
+                        fontWeight: 700
+                      }}
+                    >
+                      {isPlaying ? <Pause size={16} /> : <Play size={16} />}
+                      <span>{isPlaying ? cT.motionMasterPause : cT.motionMasterPlay}</span>
+                    </button>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span
+                        style={{
+                          width: '8px',
+                          height: '8px',
+                          borderRadius: '50%',
+                          background: isPlaying ? '#22c55e' : '#ef4444',
+                          boxShadow: isPlaying ? '0 0 8px #22c55e' : 'none'
+                        }}
+                      />
+                      <span style={{ fontSize: '0.78rem', color: isPlaying ? '#22c55e' : 'var(--text-dim)', fontWeight: 600 }}>
+                        {isPlaying ? '60 FPS LIVE' : 'PAUSADO'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Loop Duration Selector */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Clock size={15} color="var(--text-muted)" />
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+                      {cT.motionLoopDuration}:
+                    </span>
+                    {[3, 4].map((sec) => (
+                      <button
+                        key={sec}
+                        onClick={() => setLoopDuration(sec)}
+                        style={{
+                          padding: '6px 12px',
+                          borderRadius: '8px',
+                          border: loopDuration === sec ? `1px solid ${frameColor}` : '1px solid rgba(255, 255, 255, 0.1)',
+                          background: loopDuration === sec ? hexToRgba(frameColor, 0.2) : 'rgba(255, 255, 255, 0.04)',
+                          color: loopDuration === sec ? '#fff' : 'var(--text-muted)',
+                          fontSize: '0.78rem',
+                          fontWeight: 700,
+                          cursor: 'pointer'
+                        }}
+                      >
+                        {sec}s
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 5 Dropdown & Controller Effect Cards */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+
+                  {/* 1. Cascada Lateral ("MISSA MISSA") */}
+                  <div
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.02)',
+                      border: '1px solid rgba(255, 255, 255, 0.08)',
+                      borderRadius: '14px',
+                      padding: '16px 18px'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                      <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#fff' }}>
+                        {cT.elementCascadeTitle}
+                      </span>
+                      <span style={{ fontSize: '0.72rem', color: frameColor, fontFamily: 'monospace', fontWeight: 600 }}>
+                        {cascadeEffect.toUpperCase()}
+                      </span>
+                    </div>
+
+                    <div style={{ marginBottom: '14px' }}>
+                      <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>
+                        {cT.cascadeEffectLabel}
+                      </label>
+                      <select
+                        value={cascadeEffect}
+                        onChange={(e) => setCascadeEffect(e.target.value)}
+                        style={{
+                          width: '100%',
+                          padding: '10px 12px',
+                          background: 'rgba(0, 0, 0, 0.5)',
+                          border: `1px solid ${hexToRgba(frameColor, 0.4)}`,
+                          borderRadius: '8px',
+                          color: '#fff',
+                          fontSize: '0.86rem',
+                          outline: 'none',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <option value="scroll-down" style={{ background: '#0c0c10', color: '#fff' }}>{cT.fxCascadeScrollDown}</option>
+                        <option value="scroll-up" style={{ background: '#0c0c10', color: '#fff' }}>{cT.fxCascadeScrollUp}</option>
+                        <option value="breathe" style={{ background: '#0c0c10', color: '#fff' }}>{cT.fxCascadeBreathe}</option>
+                        <option value="glitch" style={{ background: '#0c0c10', color: '#fff' }}>{cT.fxCascadeGlitch}</option>
+                        <option value="none" style={{ background: '#0c0c10', color: '#fff' }}>{cT.fxCascadeNone}</option>
+                      </select>
+                    </div>
+
+                    {cascadeEffect !== 'none' && (
+                      <div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                          <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{cT.cascadeSpeedLabel}</span>
+                          <span style={{ fontSize: '0.76rem', color: frameColor, fontFamily: 'monospace', fontWeight: 700 }}>
+                            {cascadeSpeed.toFixed(1)}x
+                          </span>
+                        </div>
+                        <input
+                          type="range"
+                          min="0.2"
+                          max="3.0"
+                          step="0.1"
+                          value={cascadeSpeed}
+                          onChange={(e) => setCascadeSpeed(parseFloat(e.target.value))}
+                          style={{ width: '100%', accentColor: frameColor, cursor: 'pointer' }}
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 2. Titular Principal ("MISSAFX") */}
+                  <div
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.02)',
+                      border: '1px solid rgba(255, 255, 255, 0.08)',
+                      borderRadius: '14px',
+                      padding: '16px 18px'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                      <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#fff' }}>
+                        {cT.elementTitleFxTitle}
+                      </span>
+                      <span style={{ fontSize: '0.72rem', color: titleColor, fontFamily: 'monospace', fontWeight: 600 }}>
+                        {titleEffect.toUpperCase()}
+                      </span>
+                    </div>
+
+                    <div style={{ marginBottom: '14px' }}>
+                      <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>
+                        {cT.titleEffectLabel}
+                      </label>
+                      <select
+                        value={titleEffect}
+                        onChange={(e) => setTitleEffect(e.target.value)}
+                        style={{
+                          width: '100%',
+                          padding: '10px 12px',
+                          background: 'rgba(0, 0, 0, 0.5)',
+                          border: `1px solid ${hexToRgba(titleColor, 0.4)}`,
+                          borderRadius: '8px',
+                          color: '#fff',
+                          fontSize: '0.86rem',
+                          outline: 'none',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <option value="neon-breathe" style={{ background: '#0c0c10', color: '#fff' }}>{cT.fxTitleNeonBreathe}</option>
+                        <option value="neon-flicker" style={{ background: '#0c0c10', color: '#fff' }}>{cT.fxTitleNeonFlicker}</option>
+                        <option value="glitch" style={{ background: '#0c0c10', color: '#fff' }}>{cT.fxTitleGlitch}</option>
+                        <option value="strobe" style={{ background: '#0c0c10', color: '#fff' }}>{cT.fxTitleStrobe}</option>
+                        <option value="color-cycle" style={{ background: '#0c0c10', color: '#fff' }}>{cT.fxTitleColorCycle}</option>
+                        <option value="none" style={{ background: '#0c0c10', color: '#fff' }}>{cT.fxTitleNone}</option>
+                      </select>
+                    </div>
+
+                    {titleEffect !== 'none' && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{cT.titleGlowLabel}</span>
+                            <span style={{ fontSize: '0.76rem', color: titleColor, fontFamily: 'monospace', fontWeight: 700 }}>
+                              {titleGlow.toFixed(1)}x
+                            </span>
+                          </div>
+                          <input
+                            type="range"
+                            min="0.2"
+                            max="2.5"
+                            step="0.1"
+                            value={titleGlow}
+                            onChange={(e) => setTitleGlow(parseFloat(e.target.value))}
+                            style={{ width: '100%', accentColor: titleColor, cursor: 'pointer' }}
+                          />
+                        </div>
+
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{cT.titleBpmLabel}</span>
+                            <span style={{ fontSize: '0.76rem', color: titleColor, fontFamily: 'monospace', fontWeight: 700 }}>
+                              {titleBpm} BPM
+                            </span>
+                          </div>
+                          <input
+                            type="range"
+                            min="60"
+                            max="180"
+                            step="2"
+                            value={titleBpm}
+                            onChange={(e) => setTitleBpm(parseInt(e.target.value))}
+                            style={{ width: '100%', accentColor: titleColor, cursor: 'pointer' }}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 3. Ecualizador Gráfico (EQ) */}
+                  <div
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.02)',
+                      border: '1px solid rgba(255, 255, 255, 0.08)',
+                      borderRadius: '14px',
+                      padding: '16px 18px'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                      <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#fff' }}>
+                        {cT.elementEqTitle}
+                      </span>
+                      <span style={{ fontSize: '0.72rem', color: techColor, fontFamily: 'monospace', fontWeight: 600 }}>
+                        {eqEffect.toUpperCase()}
+                      </span>
+                    </div>
+
+                    <div style={{ marginBottom: '14px' }}>
+                      <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>
+                        {cT.eqEffectLabel}
+                      </label>
+                      <select
+                        value={eqEffect}
+                        onChange={(e) => setEqEffect(e.target.value)}
+                        style={{
+                          width: '100%',
+                          padding: '10px 12px',
+                          background: 'rgba(0, 0, 0, 0.5)',
+                          border: `1px solid ${hexToRgba(techColor, 0.4)}`,
+                          borderRadius: '8px',
+                          color: '#fff',
+                          fontSize: '0.86rem',
+                          outline: 'none',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <option value="vu-bounce" style={{ background: '#0c0c10', color: '#fff' }}>{cT.fxEqVuBounce}</option>
+                        <option value="wave-flow" style={{ background: '#0c0c10', color: '#fff' }}>{cT.fxEqWaveFlow}</option>
+                        <option value="bass-pulse" style={{ background: '#0c0c10', color: '#fff' }}>{cT.fxEqBassPulse}</option>
+                        <option value="none" style={{ background: '#0c0c10', color: '#fff' }}>{cT.fxEqNone}</option>
+                      </select>
+                    </div>
+
+                    {eqEffect !== 'none' && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{cT.eqIntensityLabel}</span>
+                            <span style={{ fontSize: '0.76rem', color: techColor, fontFamily: 'monospace', fontWeight: 700 }}>
+                              {eqIntensity.toFixed(1)}x
+                            </span>
+                          </div>
+                          <input
+                            type="range"
+                            min="0.5"
+                            max="2.0"
+                            step="0.1"
+                            value={eqIntensity}
+                            onChange={(e) => setEqIntensity(parseFloat(e.target.value))}
+                            style={{ width: '100%', accentColor: techColor, cursor: 'pointer' }}
+                          />
+                        </div>
+
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{cT.eqSpeedLabel}</span>
+                            <span style={{ fontSize: '0.76rem', color: techColor, fontFamily: 'monospace', fontWeight: 700 }}>
+                              {eqSpeed.toFixed(1)}x
+                            </span>
+                          </div>
+                          <input
+                            type="range"
+                            min="0.5"
+                            max="2.5"
+                            step="0.1"
+                            value={eqSpeed}
+                            onChange={(e) => setEqSpeed(parseFloat(e.target.value))}
+                            style={{ width: '100%', accentColor: techColor, cursor: 'pointer' }}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 4. Foto de Cabina / Artista */}
+                  <div
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.02)',
+                      border: '1px solid rgba(255, 255, 255, 0.08)',
+                      borderRadius: '14px',
+                      padding: '16px 18px'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                      <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#fff' }}>
+                        {cT.elementPhotoTitle}
+                      </span>
+                      <span style={{ fontSize: '0.72rem', color: frameColor, fontFamily: 'monospace', fontWeight: 600 }}>
+                        {photoEffect.toUpperCase()}
+                      </span>
+                    </div>
+
+                    <div style={{ marginBottom: '14px' }}>
+                      <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>
+                        {cT.photoEffectLabel}
+                      </label>
+                      <select
+                        value={photoEffect}
+                        onChange={(e) => setPhotoEffect(e.target.value)}
+                        style={{
+                          width: '100%',
+                          padding: '10px 12px',
+                          background: 'rgba(0, 0, 0, 0.5)',
+                          border: `1px solid ${hexToRgba(frameColor, 0.4)}`,
+                          borderRadius: '8px',
+                          color: '#fff',
+                          fontSize: '0.86rem',
+                          outline: 'none',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <option value="ken-burns-in" style={{ background: '#0c0c10', color: '#fff' }}>{cT.fxPhotoKenBurnsIn}</option>
+                        <option value="ken-burns-out" style={{ background: '#0c0c10', color: '#fff' }}>{cT.fxPhotoKenBurnsOut}</option>
+                        <option value="pan-sway" style={{ background: '#0c0c10', color: '#fff' }}>{cT.fxPhotoPanSway}</option>
+                        <option value="club-strobe" style={{ background: '#0c0c10', color: '#fff' }}>{cT.fxPhotoClubStrobe}</option>
+                        <option value="none" style={{ background: '#0c0c10', color: '#fff' }}>{cT.fxPhotoNone}</option>
+                      </select>
+                    </div>
+
+                    {photoEffect !== 'none' && (
+                      <div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                          <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{cT.photoMotionLabel}</span>
+                          <span style={{ fontSize: '0.76rem', color: frameColor, fontFamily: 'monospace', fontWeight: 700 }}>
+                            {photoMotionIntensity.toFixed(1)}x
+                          </span>
+                        </div>
+                        <input
+                          type="range"
+                          min="0.2"
+                          max="2.0"
+                          step="0.1"
+                          value={photoMotionIntensity}
+                          onChange={(e) => setPhotoMotionIntensity(parseFloat(e.target.value))}
+                          style={{ width: '100%', accentColor: frameColor, cursor: 'pointer' }}
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 5. Atmósfera & Partículas */}
+                  <div
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.02)',
+                      border: '1px solid rgba(255, 255, 255, 0.08)',
+                      borderRadius: '14px',
+                      padding: '16px 18px'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                      <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#fff' }}>
+                        {cT.elementAtmosphereTitle}
+                      </span>
+                      <span style={{ fontSize: '0.72rem', color: frameColor, fontFamily: 'monospace', fontWeight: 600 }}>
+                        {atmosphereEffect.toUpperCase()}
+                      </span>
+                    </div>
+
+                    <div style={{ marginBottom: '14px' }}>
+                      <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>
+                        {cT.atmosphereEffectLabel}
+                      </label>
+                      <select
+                        value={atmosphereEffect}
+                        onChange={(e) => setAtmosphereEffect(e.target.value)}
+                        style={{
+                          width: '100%',
+                          padding: '10px 12px',
+                          background: 'rgba(0, 0, 0, 0.5)',
+                          border: `1px solid ${hexToRgba(frameColor, 0.4)}`,
+                          borderRadius: '8px',
+                          color: '#fff',
+                          fontSize: '0.86rem',
+                          outline: 'none',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <option value="dust-laser" style={{ background: '#0c0c10', color: '#fff' }}>{cT.fxAtmosphereDustLaser}</option>
+                        <option value="scanlines" style={{ background: '#0c0c10', color: '#fff' }}>{cT.fxAtmosphereScanlines}</option>
+                        <option value="rave-smoke" style={{ background: '#0c0c10', color: '#fff' }}>{cT.fxAtmosphereRaveSmoke}</option>
+                        <option value="none" style={{ background: '#0c0c10', color: '#fff' }}>{cT.fxAtmosphereNone}</option>
+                      </select>
+                    </div>
+
+                    {atmosphereEffect !== 'none' && (
+                      <div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                          <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{cT.atmosphereDensityLabel}</span>
+                          <span style={{ fontSize: '0.76rem', color: frameColor, fontFamily: 'monospace', fontWeight: 700 }}>
+                            {atmosphereDensity.toFixed(1)}x
+                          </span>
+                        </div>
+                        <input
+                          type="range"
+                          min="0.3"
+                          max="2.0"
+                          step="0.1"
+                          value={atmosphereDensity}
+                          onChange={(e) => setAtmosphereDensity(parseFloat(e.target.value))}
+                          style={{ width: '100%', accentColor: frameColor, cursor: 'pointer' }}
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                </div>
+
+                {/* Next / Prev */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '28px' }}>
+                  <button
+                    onClick={() => setActiveStep(4)}
+                    className="btn btn-secondary btn-sm"
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <span>← Colores</span>
+                  </button>
+                  <button
+                    onClick={() => setActiveStep(6)}
+                    className="btn btn-primary btn-sm"
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <span>Siguiente: Máscaras & Capas →</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* STEP 6: Masks & Layers Toggles (Prender/Apagar) */}
+            {activeStep === 6 && (
               <div>
                 <h3
                   className="font-display"
@@ -1784,14 +2654,14 @@ export default function StoryCreator({ onBack }) {
                 {/* Next / Prev */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '28px' }}>
                   <button
-                    onClick={() => setActiveStep(4)}
+                    onClick={() => setActiveStep(5)}
                     className="btn btn-secondary btn-sm"
                     style={{ cursor: 'pointer' }}
                   >
-                    <span>← Colores</span>
+                    <span>← Motion FX</span>
                   </button>
                   <button
-                    onClick={() => setActiveStep(6)}
+                    onClick={() => setActiveStep(7)}
                     className="btn btn-primary btn-sm"
                     style={{ cursor: 'pointer' }}
                   >
@@ -1801,14 +2671,14 @@ export default function StoryCreator({ onBack }) {
               </div>
             )}
 
-            {/* STEP 6: Export & Final Download */}
-            {activeStep === 6 && (
+            {/* STEP 7: Export & Final Download (Video, GIF, PNG) */}
+            {activeStep === 7 && (
               <div>
                 <h3
                   className="font-display"
                   style={{ fontSize: '1.25rem', marginBottom: '8px', color: '#fff' }}
                 >
-                  {cT.step6}: Descargar en Alta Calidad
+                  {cT.exportTitle}
                 </h3>
                 <p
                   style={{
@@ -1817,7 +2687,7 @@ export default function StoryCreator({ onBack }) {
                     marginBottom: '20px'
                   }}
                 >
-                  Tu diseño está listo para ser exportado a resolución nativa de 1080px (PNG sin pérdida de calidad).
+                  {cT.exportDesc}
                 </p>
 
                 {/* Spec Summary Card */}
@@ -1851,7 +2721,7 @@ export default function StoryCreator({ onBack }) {
                       marginBottom: '10px'
                     }}
                   >
-                    <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>Resolución:</span>
+                    <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>Resolución Nativa:</span>
                     <strong style={{ color: frameColor, fontSize: '0.86rem', fontFamily: 'monospace' }}>
                       {FORMATS[format].width} × {FORMATS[format].height} px
                     </strong>
@@ -1864,8 +2734,11 @@ export default function StoryCreator({ onBack }) {
                       marginBottom: '10px'
                     }}
                   >
-                    <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>Formato de Salida:</span>
-                    <strong style={{ color: '#fff', fontSize: '0.86rem' }}>PNG 24-bit (Crisp)</strong>
+                    <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>Efectos de Animación:</span>
+                    <strong style={{ color: '#22c55e', fontSize: '0.86rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <Zap size={14} />
+                      <span>{loopDuration}s Loop @ 60 FPS</span>
+                    </strong>
                   </div>
                   <div
                     style={{
@@ -1874,32 +2747,244 @@ export default function StoryCreator({ onBack }) {
                       justifyContent: 'space-between'
                     }}
                   >
-                    <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>Capas Activas:</span>
+                    <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>Capas Gráficas Activas:</span>
                     <strong style={{ color: '#fff', fontSize: '0.86rem' }}>
                       {[showRepeatText, showCyberFrame, showTechAccents, showBadges, showVignette].filter(Boolean).length} / 5
                     </strong>
                   </div>
                 </div>
 
-                {/* Big Download Button */}
-                <button
-                  onClick={handleDownload}
-                  disabled={isExporting}
-                  className="btn btn-primary"
-                  style={{
-                    width: '100%',
-                    padding: '16px',
-                    fontSize: '0.98rem',
-                    fontWeight: 700,
-                    cursor: isExporting ? 'wait' : 'pointer',
-                    gap: '10px',
-                    marginBottom: '16px',
-                    boxShadow: `0 8px 24px ${hexToRgba(frameColor, 0.4)}`
-                  }}
-                >
-                  <Download size={20} />
-                  <span>{isExporting ? 'Generando PNG...' : cT.exportBtn}</span>
-                </button>
+                {/* Triple Export Options Cards */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '24px' }}>
+                  
+                  {/* Option 1: Video Story (MP4 / WebM) */}
+                  <div
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.02)',
+                      border: `1px solid ${hexToRgba(frameColor, 0.35)}`,
+                      borderRadius: '16px',
+                      padding: '18px 20px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '12px'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div
+                          style={{
+                            width: '36px',
+                            height: '36px',
+                            borderRadius: '10px',
+                            background: hexToRgba(frameColor, 0.2),
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: frameColor
+                          }}
+                        >
+                          <Video size={18} />
+                        </div>
+                        <div>
+                          <strong style={{ color: '#fff', fontSize: '0.94rem' }}>{cT.exportVideoTitle}</strong>
+                          <span
+                            style={{
+                              marginLeft: '8px',
+                              fontSize: '0.7rem',
+                              padding: '2px 8px',
+                              borderRadius: '4px',
+                              background: hexToRgba(frameColor, 0.15),
+                              color: frameColor,
+                              fontWeight: 700
+                            }}
+                          >
+                            60 FPS • LOOP
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: 0, lineHeight: 1.5 }}>
+                      {cT.exportVideoDesc}
+                    </p>
+                    <button
+                      onClick={handleExportVideo}
+                      disabled={isExporting}
+                      className="btn btn-primary btn-sm"
+                      style={{
+                        padding: '12px 18px',
+                        fontSize: '0.86rem',
+                        fontWeight: 700,
+                        justifyContent: 'center',
+                        cursor: isExporting ? 'wait' : 'pointer',
+                        gap: '8px',
+                        boxShadow: `0 4px 16px ${hexToRgba(frameColor, 0.3)}`
+                      }}
+                    >
+                      <Video size={16} />
+                      <span>{cT.exportVideoBtn}</span>
+                    </button>
+                  </div>
+
+                  {/* Option 2: Animated GIF (.gif) */}
+                  <div
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.02)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      borderRadius: '16px',
+                      padding: '18px 20px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '12px'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div
+                          style={{
+                            width: '36px',
+                            height: '36px',
+                            borderRadius: '10px',
+                            background: 'rgba(0, 240, 255, 0.15)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: '#00F0FF'
+                          }}
+                        >
+                          <Film size={18} />
+                        </div>
+                        <div>
+                          <strong style={{ color: '#fff', fontSize: '0.94rem' }}>{cT.exportGifTitle}</strong>
+                          <span
+                            style={{
+                              marginLeft: '8px',
+                              fontSize: '0.7rem',
+                              padding: '2px 8px',
+                              borderRadius: '4px',
+                              background: 'rgba(0, 240, 255, 0.12)',
+                              color: '#00F0FF',
+                              fontWeight: 700
+                            }}
+                          >
+                            .GIF • LOOP
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: 0, lineHeight: 1.5 }}>
+                      {cT.exportGifDesc}
+                    </p>
+                    <button
+                      onClick={handleExportGif}
+                      disabled={isExporting}
+                      className="btn btn-secondary btn-sm"
+                      style={{
+                        padding: '12px 18px',
+                        fontSize: '0.86rem',
+                        fontWeight: 700,
+                        justifyContent: 'center',
+                        cursor: isExporting ? 'wait' : 'pointer',
+                        gap: '8px',
+                        border: '1px solid rgba(0, 240, 255, 0.4)',
+                        color: '#00F0FF'
+                      }}
+                    >
+                      <Film size={16} />
+                      <span>{cT.exportGifBtn}</span>
+                    </button>
+                  </div>
+
+                  {/* Option 3: Static PNG (1080p) */}
+                  <div
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.02)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      borderRadius: '16px',
+                      padding: '18px 20px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '12px'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div
+                          style={{
+                            width: '36px',
+                            height: '36px',
+                            borderRadius: '10px',
+                            background: 'rgba(255, 255, 255, 0.08)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: '#fff'
+                          }}
+                        >
+                          <Download size={18} />
+                        </div>
+                        <div>
+                          <strong style={{ color: '#fff', fontSize: '0.94rem' }}>{cT.exportPngTitle}</strong>
+                          <span
+                            style={{
+                              marginLeft: '8px',
+                              fontSize: '0.7rem',
+                              padding: '2px 8px',
+                              borderRadius: '4px',
+                              background: 'rgba(255, 255, 255, 0.08)',
+                              color: 'var(--text-muted)',
+                              fontWeight: 700
+                            }}
+                          >
+                            PNG • 1080p HI-RES
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: 0, lineHeight: 1.5 }}>
+                      {cT.exportPngDesc}
+                    </p>
+                    <button
+                      onClick={handleDownload}
+                      disabled={isExporting}
+                      className="btn btn-secondary btn-sm"
+                      style={{
+                        padding: '12px 18px',
+                        fontSize: '0.86rem',
+                        fontWeight: 700,
+                        justifyContent: 'center',
+                        cursor: isExporting ? 'wait' : 'pointer',
+                        gap: '8px',
+                        border: '1px solid rgba(255, 255, 255, 0.15)',
+                        color: '#fff'
+                      }}
+                    >
+                      <Download size={16} />
+                      <span>{cT.exportBtn}</span>
+                    </button>
+                  </div>
+
+                </div>
+
+                {/* Progress / Status feedback */}
+                {isExporting && exportStatusText && (
+                  <div
+                    style={{
+                      padding: '14px 18px',
+                      borderRadius: '12px',
+                      background: hexToRgba(frameColor, 0.15),
+                      border: `1px solid ${hexToRgba(frameColor, 0.4)}`,
+                      color: '#fff',
+                      fontSize: '0.86rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      marginBottom: '16px'
+                    }}
+                  >
+                    <RefreshCw size={16} className="spin" color={frameColor} />
+                    <span>{exportStatusText}</span>
+                  </div>
+                )}
 
                 {downloadSuccess && (
                   <div
@@ -1934,7 +3019,7 @@ export default function StoryCreator({ onBack }) {
                 {/* Back to previous step */}
                 <div style={{ marginTop: '24px' }}>
                   <button
-                    onClick={() => setActiveStep(5)}
+                    onClick={() => setActiveStep(6)}
                     className="btn btn-secondary btn-sm"
                     style={{ cursor: 'pointer' }}
                   >
@@ -2020,50 +3105,119 @@ export default function StoryCreator({ onBack }) {
                     objectFit: 'contain'
                   }}
                 />
+
+                {/* Floating Play / Pause Overlay */}
+                <button
+                  onClick={() => setIsPlaying(!isPlaying)}
+                  title={isPlaying ? 'Pausar Animación' : 'Reproducir Animación'}
+                  style={{
+                    position: 'absolute',
+                    bottom: '12px',
+                    left: '12px',
+                    zIndex: 10,
+                    background: 'rgba(12, 12, 16, 0.85)',
+                    border: `1px solid ${hexToRgba(frameColor, 0.4)}`,
+                    borderRadius: '20px',
+                    padding: '6px 12px',
+                    color: '#fff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    cursor: 'pointer',
+                    backdropFilter: 'blur(8px)',
+                    fontSize: '0.72rem',
+                    fontWeight: 700,
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.5)'
+                  }}
+                >
+                  {isPlaying ? <Pause size={12} color={frameColor} /> : <Play size={12} color={frameColor} />}
+                  <span>{isPlaying ? 'MOTION ON' : 'PAUSA'}</span>
+                </button>
               </div>
 
               {/* Quick Actions Below Canvas */}
-              <div style={{ marginTop: '16px', display: 'flex', gap: '10px' }}>
-                <button
-                  onClick={handleDownload}
-                  disabled={isExporting}
-                  className="btn btn-primary"
-                  style={{
-                    flex: 1,
-                    justifyContent: 'center',
-                    padding: '12px 14px',
-                    fontSize: '0.86rem',
-                    fontWeight: 700,
-                    cursor: isExporting ? 'wait' : 'pointer'
-                  }}
-                >
-                  <Download size={16} />
-                  <span>{isExporting ? 'Descargando...' : 'Descargar PNG'}</span>
-                </button>
-
-                {format === 'story' && (
+              <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                   <button
-                    onClick={() => setShowSafeZones(!showSafeZones)}
-                    title="Alternar Zonas Seguras de Instagram"
+                    onClick={handleExportVideo}
+                    disabled={isExporting}
+                    className="btn btn-primary"
                     style={{
-                      padding: '12px 14px',
-                      borderRadius: '10px',
-                      border: showSafeZones
-                        ? '1px solid #FACC15'
-                        : '1px solid rgba(255, 255, 255, 0.1)',
-                      background: showSafeZones
-                        ? 'rgba(250, 204, 21, 0.15)'
-                        : 'rgba(255, 255, 255, 0.04)',
-                      color: showSafeZones ? '#FACC15' : 'var(--text-muted)',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
+                      justifyContent: 'center',
+                      padding: '10px 12px',
+                      fontSize: '0.8rem',
+                      fontWeight: 700,
+                      cursor: isExporting ? 'wait' : 'pointer',
+                      gap: '6px'
                     }}
                   >
-                    <Eye size={16} />
+                    <Video size={14} />
+                    <span>Video (MP4)</span>
                   </button>
-                )}
+
+                  <button
+                    onClick={handleExportGif}
+                    disabled={isExporting}
+                    className="btn btn-secondary"
+                    style={{
+                      justifyContent: 'center',
+                      padding: '10px 12px',
+                      fontSize: '0.8rem',
+                      fontWeight: 700,
+                      cursor: isExporting ? 'wait' : 'pointer',
+                      gap: '6px',
+                      border: '1px solid rgba(0, 240, 255, 0.4)',
+                      color: '#00F0FF'
+                    }}
+                  >
+                    <Film size={14} />
+                    <span>GIF Animado</span>
+                  </button>
+                </div>
+
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button
+                    onClick={handleDownload}
+                    disabled={isExporting}
+                    className="btn btn-secondary"
+                    style={{
+                      flex: 1,
+                      justifyContent: 'center',
+                      padding: '10px 12px',
+                      fontSize: '0.8rem',
+                      fontWeight: 600,
+                      cursor: isExporting ? 'wait' : 'pointer',
+                      border: '1px solid rgba(255, 255, 255, 0.12)'
+                    }}
+                  >
+                    <Download size={14} />
+                    <span>Descargar PNG</span>
+                  </button>
+
+                  {format === 'story' && (
+                    <button
+                      onClick={() => setShowSafeZones(!showSafeZones)}
+                      title="Alternar Zonas Seguras de Instagram"
+                      style={{
+                        padding: '10px 14px',
+                        borderRadius: '10px',
+                        border: showSafeZones
+                          ? '1px solid #FACC15'
+                          : '1px solid rgba(255, 255, 255, 0.1)',
+                        background: showSafeZones
+                          ? 'rgba(250, 204, 21, 0.15)'
+                          : 'rgba(255, 255, 255, 0.04)',
+                        color: showSafeZones ? '#FACC15' : 'var(--text-muted)',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                    >
+                      <Eye size={15} />
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           </div>
