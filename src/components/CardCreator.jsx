@@ -11,16 +11,14 @@ import {
   Eye,
   EyeOff,
   Sparkles,
-  Smartphone,
   Square,
   RectangleHorizontal,
   RectangleVertical,
   CheckCircle2,
-  Phone,
-  MapPin,
-  Globe,
+  Palette,
   Share2,
-  Check
+  Check,
+  Sliders
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -64,11 +62,35 @@ const QR_PRESETS = [
   { id: 'kick', labelKey: 'presetKick', url: 'https://kick.com/missafx' }
 ];
 
+const COLOR_PRESETS = [
+  { id: 'red', nameKey: 'themeRed', hex: '#FF003C' },
+  { id: 'kick', nameKey: 'themeKick', hex: '#53FC18' },
+  { id: 'violet', nameKey: 'themeViolet', hex: '#A855F7' },
+  { id: 'cyan', nameKey: 'themeCyan', hex: '#00F0FF' },
+  { id: 'gold', nameKey: 'themeGold', hex: '#EAB308' },
+  { id: 'white', nameKey: 'themeWhite', hex: '#FFFFFF' }
+];
+
+// Helper to convert hex to rgba
+const hexToRgba = (hex, alpha = 1) => {
+  if (!hex) return `rgba(255, 0, 60, ${alpha})`;
+  let c = hex.replace('#', '');
+  if (c.length === 3) {
+    c = c.split('').map((x) => x + x).join('');
+  }
+  const num = parseInt(c, 16);
+  if (isNaN(num)) return `rgba(255, 0, 60, ${alpha})`;
+  const r = (num >> 16) & 255;
+  const g = (num >> 8) & 255;
+  const b = num & 255;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+
 export default function CardCreator({ onBack }) {
   const { t } = useLanguage();
   const cT = t.cardCreator;
 
-  // Wizard active step (1 to 5)
+  // Wizard active step (1 to 6)
   const [activeStep, setActiveStep] = useState(1);
 
   // Format selection
@@ -85,7 +107,13 @@ export default function CardCreator({ onBack }) {
   const [phoneWhatsapp, setPhoneWhatsapp] = useState('+52 1 444 357 0777');
   const [cityLocation, setCityLocation] = useState('San Luis Potosí, México');
   const [tagline, setTagline] = useState('Tech House • Club Dates • Festivals');
-  const [accentColor, setAccentColor] = useState('#FF003C');
+
+  // Granular Color Customization State
+  const [frameColor, setFrameColor] = useState('#FF003C');
+  const [titleColor, setTitleColor] = useState('#FF003C');
+  const [badgeColor, setBadgeColor] = useState('#FF003C');
+  const [backAccentColor, setBackAccentColor] = useState('#FF003C');
+  const [glowColor, setGlowColor] = useState('#FF003C');
 
   // QR Code State
   const [qrUrl, setQrUrl] = useState('https://wa.me/5214443570777');
@@ -138,6 +166,15 @@ export default function CardCreator({ onBack }) {
       });
   }, [qrUrl]);
 
+  // Apply a unified color theme to all elements at once
+  const applyUnifiedColor = (hex) => {
+    setFrameColor(hex);
+    setTitleColor(hex);
+    setBadgeColor(hex);
+    setBackAccentColor(hex);
+    setGlowColor(hex);
+  };
+
   // Render FRONT Canvas
   const renderFrontCanvas = useCallback(() => {
     const canvas = frontCanvasRef.current;
@@ -179,10 +216,10 @@ export default function CardCreator({ onBack }) {
       ctx.restore();
     }
 
-    // Radial dark glow
+    // Radial atmospheric glow with customizable glowColor
     const radGrad = ctx.createRadialGradient(w / 2, h / 2, 40, w / 2, h / 2, w * 0.7);
-    radGrad.addColorStop(0, 'rgba(255, 0, 60, 0.08)');
-    radGrad.addColorStop(1, 'rgba(6, 6, 8, 0.92)');
+    radGrad.addColorStop(0, hexToRgba(glowColor, 0.16));
+    radGrad.addColorStop(1, 'rgba(6, 6, 8, 0.94)');
     ctx.fillStyle = radGrad;
     ctx.fillRect(0, 0, w, h);
 
@@ -203,15 +240,15 @@ export default function CardCreator({ onBack }) {
       ctx.lineTo(inset, inset + bevel);
       ctx.closePath();
 
-      ctx.strokeStyle = accentColor;
+      ctx.strokeStyle = frameColor;
       ctx.lineWidth = 3;
-      ctx.shadowColor = accentColor;
-      ctx.shadowBlur = 10;
+      ctx.shadowColor = frameColor;
+      ctx.shadowBlur = 12;
       ctx.stroke();
 
       // Corner accent blocks
       ctx.shadowBlur = 0;
-      ctx.fillStyle = accentColor;
+      ctx.fillStyle = frameColor;
       ctx.fillRect(inset + bevel, inset - 3, 24, 6);
       ctx.fillRect(w - inset - bevel - 24, inset - 3, 24, 6);
       ctx.fillRect(inset + bevel, h - inset - 3, 24, 6);
@@ -255,7 +292,7 @@ export default function CardCreator({ onBack }) {
       const eqY = h - 60;
       const heights = [8, 14, 6, 18, 12, 16, 9, 5];
       for (let i = 0; i < heights.length; i++) {
-        ctx.fillStyle = i % 2 === 0 ? accentColor : 'rgba(255, 255, 255, 0.5)';
+        ctx.fillStyle = i % 2 === 0 ? frameColor : 'rgba(255, 255, 255, 0.5)';
         ctx.fillRect(eqX + i * 6, eqY - heights[i], 4, heights[i]);
       }
       ctx.restore();
@@ -274,14 +311,14 @@ export default function CardCreator({ onBack }) {
     const bY = centerY - 95;
 
     ctx.fillStyle = 'rgba(12, 12, 16, 0.9)';
-    ctx.strokeStyle = accentColor;
+    ctx.strokeStyle = frameColor;
     ctx.lineWidth = 1.2;
     ctx.beginPath();
     ctx.roundRect(bX, bY, bW, bH, 6);
     ctx.fill();
     ctx.stroke();
 
-    ctx.fillStyle = accentColor;
+    ctx.fillStyle = frameColor;
     ctx.beginPath();
     ctx.arc(bX + 12, bY + bH / 2, 3, 0, Math.PI * 2);
     ctx.fill();
@@ -291,7 +328,7 @@ export default function CardCreator({ onBack }) {
     ctx.textBaseline = 'middle';
     ctx.fillText(badgeText, bX + 22, bY + bH / 2);
 
-    // Main Artist Title: MISSAFX
+    // Main Artist Title: MISSAFX with titleColor
     const titleUpper = artistName.trim().toUpperCase() || 'MISSAFX';
     ctx.font = '900 88px "Syne", sans-serif';
     ctx.textAlign = 'center';
@@ -306,16 +343,16 @@ export default function CardCreator({ onBack }) {
       const sX = (w - totalW) / 2;
 
       ctx.textAlign = 'left';
-      ctx.fillStyle = accentColor;
+      ctx.fillStyle = titleColor;
       ctx.fillText(p1, sX, centerY);
       ctx.fillStyle = '#FFFFFF';
       ctx.fillText(p2, sX + m1, centerY);
     } else {
-      ctx.fillStyle = '#FFFFFF';
+      ctx.fillStyle = titleColor;
       ctx.fillText(titleUpper, w / 2, centerY);
     }
 
-    // Role / Genre Pill
+    // Role / Genre Pill with badgeColor
     if (roleGenre.trim()) {
       ctx.font = '800 16px "Syne", sans-serif';
       const rText = roleGenre.trim().toUpperCase();
@@ -324,7 +361,7 @@ export default function CardCreator({ onBack }) {
       const rX = (w - rW) / 2;
       const rY = centerY + 58;
 
-      ctx.fillStyle = accentColor;
+      ctx.fillStyle = badgeColor;
       ctx.beginPath();
       ctx.roundRect(rX, rY, rW, rH, 5);
       ctx.fill();
@@ -353,7 +390,10 @@ export default function CardCreator({ onBack }) {
     realName,
     roleGenre,
     cityLocation,
-    accentColor,
+    frameColor,
+    titleColor,
+    badgeColor,
+    glowColor,
     showCyberFrame,
     showTechAccents,
     showPhotoBg
@@ -413,14 +453,14 @@ export default function CardCreator({ onBack }) {
       ctx.lineTo(inset, inset + bevel);
       ctx.closePath();
 
-      ctx.strokeStyle = accentColor;
+      ctx.strokeStyle = frameColor;
       ctx.lineWidth = 3;
-      ctx.shadowColor = accentColor;
-      ctx.shadowBlur = 10;
+      ctx.shadowColor = frameColor;
+      ctx.shadowBlur = 12;
       ctx.stroke();
 
       ctx.shadowBlur = 0;
-      ctx.fillStyle = accentColor;
+      ctx.fillStyle = frameColor;
       ctx.fillRect(inset + bevel, inset - 3, 24, 6);
       ctx.fillRect(w - inset - bevel - 24, inset - 3, 24, 6);
       ctx.fillRect(inset + bevel, h - inset - 3, 24, 6);
@@ -457,7 +497,7 @@ export default function CardCreator({ onBack }) {
       ctx.restore();
     }
 
-    // 4. Content Layout (Horizontal: Left = Info, Right = QR. Vertical/Square: Stacked)
+    // 4. Content Layout
     if (format === 'horizontal') {
       const leftColX = 75;
       const rightColX = w - 340;
@@ -470,7 +510,7 @@ export default function CardCreator({ onBack }) {
       ctx.font = '900 32px "Syne", sans-serif';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'top';
-      ctx.fillStyle = accentColor;
+      ctx.fillStyle = titleColor;
       ctx.fillText('MISSA', leftColX, 85);
       const m1 = ctx.measureText('MISSA').width;
       ctx.fillStyle = '#FFFFFF';
@@ -480,8 +520,8 @@ export default function CardCreator({ onBack }) {
       ctx.fillStyle = 'var(--text-muted)';
       ctx.fillText('DIRECT BOOKING & PRESS KIT', leftColX, 126);
 
-      // Red Accent Divider
-      ctx.strokeStyle = accentColor;
+      // Accent Divider
+      ctx.strokeStyle = backAccentColor;
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.moveTo(leftColX, 150);
@@ -501,7 +541,7 @@ export default function CardCreator({ onBack }) {
       // Social networks pills if enabled
       if (showSocialBadges) {
         ctx.font = '700 12px "Outfit", monospace';
-        ctx.fillStyle = accentColor;
+        ctx.fillStyle = backAccentColor;
         ctx.fillText('CHANNELS: IG • KICK • SOUNDCLOUD • WA', leftColX, 280);
 
         ctx.font = '600 13px "Outfit", sans-serif';
@@ -518,26 +558,27 @@ export default function CardCreator({ onBack }) {
       // Right Column: QR Code Box (if enabled)
       if (showQr && qrDataUrl) {
         ctx.save();
-        // White rounded background container for maximum scan readability
+        // White rounded background container
         ctx.fillStyle = '#FFFFFF';
         ctx.beginPath();
         ctx.roundRect(rightColX, qrBoxY, qrBoxSize, qrBoxSize, 14);
         ctx.fill();
 
-        // Glowing cyber border around QR
-        ctx.strokeStyle = accentColor;
-        ctx.lineWidth = 2;
+        // Glowing border around QR with backAccentColor
+        ctx.strokeStyle = backAccentColor;
+        ctx.lineWidth = 2.5;
+        ctx.shadowColor = backAccentColor;
+        ctx.shadowBlur = 8;
         ctx.stroke();
 
+        ctx.shadowBlur = 0;
         // Draw QR Image
         const qrImg = new Image();
         qrImg.src = qrDataUrl;
         if (qrImg.complete) {
           ctx.drawImage(qrImg, rightColX + 10, qrBoxY + 10, qrBoxSize - 20, qrBoxSize - 20);
         } else {
-          qrImg.onload = () => {
-            renderBackCanvas();
-          };
+          qrImg.onload = () => renderBackCanvas();
         }
 
         // QR label text below
@@ -545,8 +586,6 @@ export default function CardCreator({ onBack }) {
         ctx.font = '700 11px "Outfit", sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'top';
-
-        const maxLabelW = 260;
         ctx.fillText(qrLabelText.trim().toUpperCase(), rightColX + qrBoxSize / 2, qrBoxY + qrBoxSize + 14);
         ctx.restore();
       }
@@ -561,7 +600,7 @@ export default function CardCreator({ onBack }) {
       ctx.font = '900 36px "Syne", sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'top';
-      ctx.fillStyle = accentColor;
+      ctx.fillStyle = titleColor;
       ctx.fillText('MISSAFX', w / 2, 70);
 
       // QR Box
@@ -571,7 +610,7 @@ export default function CardCreator({ onBack }) {
         ctx.roundRect(qrBoxX, qrBoxY, qrBoxSize, qrBoxSize, 16);
         ctx.fill();
 
-        ctx.strokeStyle = accentColor;
+        ctx.strokeStyle = backAccentColor;
         ctx.lineWidth = 2.5;
         ctx.stroke();
 
@@ -602,7 +641,7 @@ export default function CardCreator({ onBack }) {
 
       if (showSocialBadges) {
         ctx.font = '700 13px "Outfit", monospace';
-        ctx.fillStyle = accentColor;
+        ctx.fillStyle = backAccentColor;
         ctx.fillText('@missafx_ • KICK • INSTAGRAM • SOUNDCLOUD', w / 2, infoBaseY + 90);
       }
 
@@ -620,7 +659,9 @@ export default function CardCreator({ onBack }) {
     phoneWhatsapp,
     cityLocation,
     tagline,
-    accentColor,
+    frameColor,
+    titleColor,
+    backAccentColor,
     qrDataUrl,
     qrLabelText,
     showQr,
@@ -629,7 +670,7 @@ export default function CardCreator({ onBack }) {
     showSocialBadges
   ]);
 
-  // Master render for all canvases
+  // Master render
   const renderAllCanvases = useCallback(() => {
     renderFrontCanvas();
     renderBackCanvas();
@@ -639,7 +680,7 @@ export default function CardCreator({ onBack }) {
     renderAllCanvases();
   }, [renderAllCanvases]);
 
-  // Export functions
+  // Download helper
   const downloadCanvas = (canvas, filename) => {
     if (!canvas) return;
     const link = document.createElement('a');
@@ -678,7 +719,6 @@ export default function CardCreator({ onBack }) {
     }, 100);
   };
 
-  // Download both sides together in one combined print-ready sheet
   const handleDownloadBoth = () => {
     setIsExporting(true);
     setTimeout(() => {
@@ -694,29 +734,24 @@ export default function CardCreator({ onBack }) {
 
       const w = CARD_FORMATS[format].width;
       const h = CARD_FORMATS[format].height;
-
       const dualCanvas = document.createElement('canvas');
       const ctx = dualCanvas.getContext('2d');
 
       if (format === 'horizontal') {
-        // Stacked vertically with trim gap
         dualCanvas.width = w + 80;
         dualCanvas.height = h * 2 + 140;
 
         ctx.fillStyle = '#0a0a0e';
         ctx.fillRect(0, 0, dualCanvas.width, dualCanvas.height);
 
-        // Header sheet title
         ctx.fillStyle = '#94A3B8';
         ctx.font = '700 16px "Outfit", sans-serif';
         ctx.textAlign = 'center';
         ctx.fillText('MISSAFX // PRINT READY DUAL-SIDE PRESS CARD (300 DPI)', dualCanvas.width / 2, 35);
 
-        // Draw Front
         ctx.drawImage(frontCanvas, 40, 55);
 
-        // Divider
-        ctx.strokeStyle = 'rgba(255, 0, 60, 0.4)';
+        ctx.strokeStyle = frameColor;
         ctx.lineWidth = 2;
         ctx.setLineDash([8, 8]);
         ctx.beginPath();
@@ -724,14 +759,12 @@ export default function CardCreator({ onBack }) {
         ctx.lineTo(w + 40, h + 85);
         ctx.stroke();
 
-        ctx.fillStyle = '#FF003C';
+        ctx.fillStyle = frameColor;
         ctx.font = '600 12px "Outfit", monospace';
         ctx.fillText('--- LÍNEA DE CORTE / TRIM LINE ---', dualCanvas.width / 2, h + 89);
 
-        // Draw Back
         ctx.drawImage(backCanvas, 40, h + 115);
       } else {
-        // Side by side
         dualCanvas.width = w * 2 + 140;
         dualCanvas.height = h + 80;
 
@@ -753,6 +786,66 @@ export default function CardCreator({ onBack }) {
     setIsFlipped(!isFlipped);
     setActiveSide(isFlipped ? 'front' : 'back');
   };
+
+  // Helper component for granular color picker row
+  const renderColorItem = (label, value, setter) => (
+    <div
+      style={{
+        padding: '12px 14px',
+        borderRadius: '12px',
+        background: 'rgba(255, 255, 255, 0.02)',
+        border: '1px solid rgba(255, 255, 255, 0.08)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: '10px'
+      }}
+    >
+      <div style={{ display: 'flex', flexDirection: 'column' }}>
+        <span style={{ fontSize: '0.84rem', fontWeight: 600, color: '#fff' }}>{label}</span>
+        <span style={{ fontSize: '0.72rem', fontFamily: 'monospace', color: 'var(--text-dim)' }}>
+          {value.toUpperCase()}
+        </span>
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        {/* Quick color dots */}
+        {['#FF003C', '#53FC18', '#A855F7', '#00F0FF', '#EAB308', '#FFFFFF'].map((c) => (
+          <button
+            key={c}
+            onClick={() => setter(c)}
+            style={{
+              width: '20px',
+              height: '20px',
+              borderRadius: '50%',
+              background: c,
+              border: value.toUpperCase() === c ? '2px solid #fff' : '1px solid rgba(0,0,0,0.5)',
+              cursor: 'pointer',
+              padding: 0,
+              boxShadow: value.toUpperCase() === c ? `0 0 8px ${c}` : 'none'
+            }}
+          />
+        ))}
+
+        {/* Native color picker */}
+        <input
+          type="color"
+          value={value}
+          onChange={(e) => setter(e.target.value)}
+          title="Selector de Color Personalizado"
+          style={{
+            width: '28px',
+            height: '28px',
+            border: 'none',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            background: 'transparent',
+            padding: 0
+          }}
+        />
+      </div>
+    </div>
+  );
 
   return (
     <div
@@ -841,7 +934,7 @@ export default function CardCreator({ onBack }) {
           </p>
         </div>
 
-        {/* Wizard Step Tabs */}
+        {/* Wizard Step Tabs (6 Steps) */}
         <div
           style={{
             display: 'flex',
@@ -855,9 +948,10 @@ export default function CardCreator({ onBack }) {
           {[
             { id: 1, label: cT.step1, icon: Maximize2 },
             { id: 2, label: cT.step2, icon: Type },
-            { id: 3, label: cT.step3, icon: QrCode },
-            { id: 4, label: cT.step4, icon: Layers },
-            { id: 5, label: cT.step5, icon: Download }
+            { id: 3, label: cT.step3, icon: Palette },
+            { id: 4, label: cT.step4, icon: QrCode },
+            { id: 5, label: cT.step5, icon: Layers },
+            { id: 6, label: cT.step6, icon: Download }
           ].map((step) => {
             const Icon = step.icon;
             const isActive = activeStep === step.id;
@@ -875,16 +969,16 @@ export default function CardCreator({ onBack }) {
                   fontWeight: 600,
                   cursor: 'pointer',
                   border: isActive
-                    ? '1px solid #FF003C'
+                    ? `1px solid ${frameColor}`
                     : '1px solid rgba(255, 255, 255, 0.06)',
                   background: isActive
-                    ? 'rgba(255, 0, 60, 0.12)'
+                    ? hexToRgba(frameColor, 0.14)
                     : 'rgba(255, 255, 255, 0.02)',
                   color: isActive ? '#FFFFFF' : 'var(--text-muted)',
                   transition: 'all 0.2s ease'
                 }}
               >
-                <Icon size={15} color={isActive ? '#FF003C' : 'var(--text-dim)'} />
+                <Icon size={15} color={isActive ? frameColor : 'var(--text-dim)'} />
                 <span>{step.label}</span>
               </button>
             );
@@ -932,10 +1026,10 @@ export default function CardCreator({ onBack }) {
                           padding: '18px 20px',
                           borderRadius: '14px',
                           border: isSelected
-                            ? '2px solid #FF003C'
+                            ? `2px solid ${frameColor}`
                             : '1px solid rgba(255, 255, 255, 0.08)',
                           background: isSelected
-                            ? 'rgba(255, 0, 60, 0.08)'
+                            ? hexToRgba(frameColor, 0.08)
                             : 'rgba(255, 255, 255, 0.02)',
                           cursor: 'pointer',
                           display: 'flex',
@@ -951,12 +1045,12 @@ export default function CardCreator({ onBack }) {
                               height: '44px',
                               borderRadius: '10px',
                               background: isSelected
-                                ? 'rgba(255, 0, 60, 0.2)'
+                                ? hexToRgba(frameColor, 0.2)
                                 : 'rgba(255, 255, 255, 0.04)',
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
-                              color: isSelected ? '#FF003C' : 'var(--text-muted)'
+                              color: isSelected ? frameColor : 'var(--text-muted)'
                             }}
                           >
                             <Icon size={24} />
@@ -985,7 +1079,7 @@ export default function CardCreator({ onBack }) {
                           </div>
                         </div>
 
-                        {isSelected && <CheckCircle2 size={20} color="#FF003C" />}
+                        {isSelected && <CheckCircle2 size={20} color={frameColor} />}
                       </div>
                     );
                   })}
@@ -1157,55 +1251,6 @@ export default function CardCreator({ onBack }) {
                   />
                 </div>
 
-                {/* Accent Color */}
-                <div style={{ marginBottom: '24px' }}>
-                  <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: '10px' }}>
-                    {cT.accentColor}
-                  </label>
-                  <div style={{ display: 'flex', gap: '12px' }}>
-                    {[
-                      { color: '#FF003C', label: 'Rojo' },
-                      { color: '#FFFFFF', label: 'Blanco' },
-                      { color: '#53FC18', label: 'Kick Neón' },
-                      { color: '#EAB308', label: 'VIP Gold' }
-                    ].map((item) => (
-                      <button
-                        key={item.color}
-                        onClick={() => setAccentColor(item.color)}
-                        style={{
-                          flex: 1,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '8px',
-                          padding: '10px',
-                          borderRadius: '8px',
-                          border:
-                            accentColor === item.color
-                              ? '2px solid #fff'
-                              : '1px solid rgba(255, 255, 255, 0.1)',
-                          background: 'rgba(255, 255, 255, 0.04)',
-                          cursor: 'pointer',
-                          color: '#fff',
-                          fontSize: '0.78rem',
-                          fontWeight: 600
-                        }}
-                      >
-                        <span
-                          style={{
-                            width: '12px',
-                            height: '12px',
-                            borderRadius: '50%',
-                            background: item.color,
-                            display: 'inline-block'
-                          }}
-                        />
-                        <span>{item.label}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
                 {/* Prev / Next */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '28px' }}>
                   <button
@@ -1216,8 +1261,102 @@ export default function CardCreator({ onBack }) {
                     <span>← Formato</span>
                   </button>
                   <button
+                    onClick={() => setActiveStep(3)}
+                    className="btn btn-primary btn-sm"
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <span>Siguiente: Colores & Estilo →</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* STEP 3: Colors & Style Customization */}
+            {activeStep === 3 && (
+              <div>
+                <h3 className="font-display" style={{ fontSize: '1.25rem', marginBottom: '8px', color: '#fff' }}>
+                  {cT.colorsTitle}
+                </h3>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', marginBottom: '20px' }}>
+                  {cT.colorsHint}
+                </p>
+
+                {/* 1-Click Unified Color Themes */}
+                <div style={{ marginBottom: '24px' }}>
+                  <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: '10px' }}>
+                    {cT.colorThemesTitle}
+                  </label>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
+                    {COLOR_PRESETS.map((p) => {
+                      const isSelected = frameColor === p.hex && titleColor === p.hex;
+                      return (
+                        <button
+                          key={p.id}
+                          onClick={() => applyUnifiedColor(p.hex)}
+                          style={{
+                            padding: '10px',
+                            borderRadius: '10px',
+                            border: isSelected ? `2px solid ${p.hex}` : '1px solid rgba(255, 255, 255, 0.1)',
+                            background: isSelected ? hexToRgba(p.hex, 0.15) : 'rgba(255, 255, 255, 0.03)',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            transition: 'all 0.2s ease'
+                          }}
+                        >
+                          <span
+                            style={{
+                              width: '14px',
+                              height: '14px',
+                              borderRadius: '50%',
+                              background: p.hex,
+                              boxShadow: `0 0 8px ${p.hex}`
+                            }}
+                          />
+                          <span style={{ fontSize: '0.78rem', fontWeight: 600, color: isSelected ? '#fff' : 'var(--text-muted)' }}>
+                            {cT[p.nameKey].split(' ')[0]}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Granular Elements Colors */}
+                <div style={{ marginBottom: '24px' }}>
+                  <label style={{ fontSize: '0.82rem', fontWeight: 600, color: '#fff', display: 'block', marginBottom: '12px' }}>
+                    {cT.colorElementsTitle}
+                  </label>
+
+                  {/* 1. Cyberpunk Frame */}
+                  {renderColorItem(cT.colorFrame, frameColor, setFrameColor)}
+
+                  {/* 2. Artist Title */}
+                  {renderColorItem(cT.colorTitle, titleColor, setTitleColor)}
+
+                  {/* 3. Genre Badge */}
+                  {renderColorItem(cT.colorBadge, badgeColor, setBadgeColor)}
+
+                  {/* 4. Background Glow */}
+                  {renderColorItem(cT.colorGlow, glowColor, setGlowColor)}
+
+                  {/* 5. Back Accent (QR & Handles) */}
+                  {renderColorItem(cT.colorBack, backAccentColor, setBackAccentColor)}
+                </div>
+
+                {/* Prev / Next */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '28px' }}>
+                  <button
+                    onClick={() => setActiveStep(2)}
+                    className="btn btn-secondary btn-sm"
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <span>← Textos</span>
+                  </button>
+                  <button
                     onClick={() => {
-                      setActiveStep(3);
+                      setActiveStep(4);
                       setIsFlipped(true);
                       setActiveSide('back');
                     }}
@@ -1230,8 +1369,8 @@ export default function CardCreator({ onBack }) {
               </div>
             )}
 
-            {/* STEP 3: QR Code Configuration */}
-            {activeStep === 3 && (
+            {/* STEP 4: QR Code Configuration */}
+            {activeStep === 4 && (
               <div>
                 <h3 className="font-display" style={{ fontSize: '1.25rem', marginBottom: '8px', color: '#fff' }}>
                   {cT.qrTitle}
@@ -1256,10 +1395,10 @@ export default function CardCreator({ onBack }) {
                             padding: '10px 12px',
                             borderRadius: '10px',
                             border: isSelected
-                              ? '1px solid #FF003C'
+                              ? `1px solid ${backAccentColor}`
                               : '1px solid rgba(255, 255, 255, 0.1)',
                             background: isSelected
-                              ? 'rgba(255, 0, 60, 0.12)'
+                              ? hexToRgba(backAccentColor, 0.14)
                               : 'rgba(255, 255, 255, 0.03)',
                             color: isSelected ? '#fff' : 'var(--text-muted)',
                             fontSize: '0.82rem',
@@ -1271,7 +1410,7 @@ export default function CardCreator({ onBack }) {
                           }}
                         >
                           <span>{cT[preset.labelKey]}</span>
-                          {isSelected && <Check size={14} color="#FF003C" />}
+                          {isSelected && <Check size={14} color={backAccentColor} />}
                         </button>
                       );
                     })}
@@ -1330,17 +1469,17 @@ export default function CardCreator({ onBack }) {
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '28px' }}>
                   <button
                     onClick={() => {
-                      setActiveStep(2);
+                      setActiveStep(3);
                       setIsFlipped(false);
                       setActiveSide('front');
                     }}
                     className="btn btn-secondary btn-sm"
                     style={{ cursor: 'pointer' }}
                   >
-                    <span>← Datos</span>
+                    <span>← Colores</span>
                   </button>
                   <button
-                    onClick={() => setActiveStep(4)}
+                    onClick={() => setActiveStep(5)}
                     className="btn btn-primary btn-sm"
                     style={{ cursor: 'pointer' }}
                   >
@@ -1350,8 +1489,8 @@ export default function CardCreator({ onBack }) {
               </div>
             )}
 
-            {/* STEP 4: Masks & Layers */}
-            {activeStep === 4 && (
+            {/* STEP 5: Masks & Layers */}
+            {activeStep === 5 && (
               <div>
                 <h3 className="font-display" style={{ fontSize: '1.25rem', marginBottom: '8px', color: '#fff' }}>
                   {cT.masksTitle}
@@ -1400,10 +1539,10 @@ export default function CardCreator({ onBack }) {
                         padding: '16px 18px',
                         borderRadius: '12px',
                         border: layer.active
-                          ? '1px solid rgba(255, 0, 60, 0.4)'
+                          ? `1px solid ${hexToRgba(frameColor, 0.4)}`
                           : '1px solid rgba(255, 255, 255, 0.08)',
                         background: layer.active
-                          ? 'rgba(255, 0, 60, 0.06)'
+                          ? hexToRgba(frameColor, 0.06)
                           : 'rgba(255, 255, 255, 0.02)',
                         cursor: 'pointer',
                         display: 'flex',
@@ -1414,7 +1553,7 @@ export default function CardCreator({ onBack }) {
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                         {layer.active ? (
-                          <Eye size={18} color="#FF003C" />
+                          <Eye size={18} color={frameColor} />
                         ) : (
                           <EyeOff size={18} color="var(--text-dim)" />
                         )}
@@ -1435,7 +1574,7 @@ export default function CardCreator({ onBack }) {
                           width: '44px',
                           height: '24px',
                           borderRadius: '12px',
-                          background: layer.active ? '#FF003C' : 'rgba(255, 255, 255, 0.1)',
+                          background: layer.active ? frameColor : 'rgba(255, 255, 255, 0.1)',
                           position: 'relative',
                           transition: 'background 0.2s ease'
                         }}
@@ -1461,14 +1600,14 @@ export default function CardCreator({ onBack }) {
                 {/* Prev / Next */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '28px' }}>
                   <button
-                    onClick={() => setActiveStep(3)}
+                    onClick={() => setActiveStep(4)}
                     className="btn btn-secondary btn-sm"
                     style={{ cursor: 'pointer' }}
                   >
                     <span>← Código QR</span>
                   </button>
                   <button
-                    onClick={() => setActiveStep(5)}
+                    onClick={() => setActiveStep(6)}
                     className="btn btn-primary btn-sm"
                     style={{ cursor: 'pointer' }}
                   >
@@ -1478,8 +1617,8 @@ export default function CardCreator({ onBack }) {
               </div>
             )}
 
-            {/* STEP 5: Export & Downloads */}
-            {activeStep === 5 && (
+            {/* STEP 6: Export & Downloads */}
+            {activeStep === 6 && (
               <div>
                 <h3 className="font-display" style={{ fontSize: '1.25rem', marginBottom: '8px', color: '#fff' }}>
                   {cT.exportTitle}
@@ -1518,10 +1657,10 @@ export default function CardCreator({ onBack }) {
                       gap: '10px',
                       fontWeight: 700,
                       cursor: 'pointer',
-                      border: '1px solid rgba(255, 0, 60, 0.4)'
+                      border: `1px solid ${hexToRgba(frameColor, 0.4)}`
                     }}
                   >
-                    <Download size={18} color="#FF003C" />
+                    <Download size={18} color={frameColor} />
                     <span>{cT.exportBackBtn}</span>
                   </button>
 
@@ -1569,7 +1708,7 @@ export default function CardCreator({ onBack }) {
 
                 <div style={{ marginTop: '24px' }}>
                   <button
-                    onClick={() => setActiveStep(4)}
+                    onClick={() => setActiveStep(5)}
                     className="btn btn-secondary btn-sm"
                     style={{ cursor: 'pointer' }}
                   >
@@ -1598,7 +1737,7 @@ export default function CardCreator({ onBack }) {
                 padding: '20px',
                 borderRadius: '24px',
                 border: '1px solid rgba(255, 255, 255, 0.1)',
-                boxShadow: '0 24px 48px rgba(0, 0, 0, 0.8), 0 0 30px rgba(255, 0, 60, 0.12)'
+                boxShadow: `0 24px 48px rgba(0, 0, 0, 0.8), 0 0 30px ${hexToRgba(frameColor, 0.15)}`
               }}
             >
               {/* Preview Header & Flip controls */}
@@ -1613,7 +1752,7 @@ export default function CardCreator({ onBack }) {
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Sparkles size={16} color="#FF003C" />
+                  <Sparkles size={16} color={frameColor} />
                   <span style={{ fontSize: '0.84rem', fontWeight: 700, color: '#fff' }}>
                     {cT.previewTitle}
                   </span>
@@ -1627,9 +1766,9 @@ export default function CardCreator({ onBack }) {
                     letterSpacing: '0.05em',
                     padding: '3px 8px',
                     borderRadius: '6px',
-                    background: isFlipped ? 'rgba(83, 252, 24, 0.15)' : 'rgba(255, 0, 60, 0.15)',
-                    color: isFlipped ? '#53fc18' : '#FF003C',
-                    border: isFlipped ? '1px solid rgba(83, 252, 24, 0.3)' : '1px solid rgba(255, 0, 60, 0.3)'
+                    background: isFlipped ? 'rgba(83, 252, 24, 0.15)' : hexToRgba(frameColor, 0.15),
+                    color: isFlipped ? '#53fc18' : frameColor,
+                    border: isFlipped ? '1px solid rgba(83, 252, 24, 0.3)' : `1px solid ${hexToRgba(frameColor, 0.3)}`
                   }}
                 >
                   {isFlipped ? cT.backBadge : cT.frontBadge}
@@ -1728,10 +1867,10 @@ export default function CardCreator({ onBack }) {
                     fontWeight: 700,
                     cursor: 'pointer',
                     border: !isFlipped
-                      ? '1px solid #FF003C'
+                      ? `1px solid ${frameColor}`
                       : '1px solid rgba(255, 255, 255, 0.08)',
                     background: !isFlipped
-                      ? 'rgba(255, 0, 60, 0.15)'
+                      ? hexToRgba(frameColor, 0.15)
                       : 'rgba(255, 255, 255, 0.03)',
                     color: !isFlipped ? '#fff' : 'var(--text-muted)'
                   }}
@@ -1752,10 +1891,10 @@ export default function CardCreator({ onBack }) {
                     fontWeight: 700,
                     cursor: 'pointer',
                     border: isFlipped
-                      ? '1px solid #FF003C'
+                      ? `1px solid ${frameColor}`
                       : '1px solid rgba(255, 255, 255, 0.08)',
                     background: isFlipped
-                      ? 'rgba(255, 0, 60, 0.15)'
+                      ? hexToRgba(frameColor, 0.15)
                       : 'rgba(255, 255, 255, 0.03)',
                     color: isFlipped ? '#fff' : 'var(--text-muted)'
                   }}
@@ -1773,7 +1912,7 @@ export default function CardCreator({ onBack }) {
                     cursor: 'pointer'
                   }}
                 >
-                  <RefreshCw size={14} color="#FF003C" />
+                  <RefreshCw size={14} color={frameColor} />
                 </button>
               </div>
 
