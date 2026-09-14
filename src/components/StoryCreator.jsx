@@ -901,25 +901,24 @@ export default function StoryCreator({ onBack }) {
     if (wasSafeZonesActive) setShowSafeZones(false);
 
     try {
-      let mimeType = 'video/mp4';
-      let ext = 'mp4';
-      if (!MediaRecorder.isTypeSupported('video/mp4')) {
-        if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) {
-          mimeType = 'video/webm;codecs=vp9';
-          ext = 'webm';
-        } else if (MediaRecorder.isTypeSupported('video/webm')) {
-          mimeType = 'video/webm';
-          ext = 'webm';
-        }
-      }
+      const candidateTypes = [
+        'video/mp4;codecs=avc1.42E01E,mp4a.40.2',
+        'video/mp4;codecs=avc1',
+        'video/mp4;codecs=h264',
+        'video/mp4',
+        'video/webm;codecs=h264',
+        'video/webm;codecs=vp9',
+        'video/webm'
+      ];
+      const selectedMime = candidateTypes.find((type) => MediaRecorder.isTypeSupported(type)) || 'video/mp4';
 
       setIsPlaying(true);
       setIsMotionActive(true);
 
-      const stream = canvas.captureStream(30);
+      const stream = canvas.captureStream(60);
       const recorder = new MediaRecorder(stream, {
-        mimeType: MediaRecorder.isTypeSupported(mimeType) ? mimeType : undefined,
-        videoBitsPerSecond: 10000000
+        mimeType: MediaRecorder.isTypeSupported(selectedMime) ? selectedMime : undefined,
+        videoBitsPerSecond: 12000000
       });
 
       const chunks = [];
@@ -928,11 +927,12 @@ export default function StoryCreator({ onBack }) {
       };
 
       recorder.onstop = () => {
-        const blob = new Blob(chunks, { type: mimeType });
+        const isNativeMp4 = selectedMime.startsWith('video/mp4');
+        const blob = new Blob(chunks, { type: isNativeMp4 ? 'video/mp4' : selectedMime });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `missafx-story-motion-${format}-${FORMATS[format].width}x${FORMATS[format].height}.${ext}`;
+        a.download = `missafx-story-${format}-${FORMATS[format].width}x${FORMATS[format].height}.mp4`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
