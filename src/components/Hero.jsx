@@ -1,11 +1,60 @@
-import React from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Flame } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { InstagramIcon, WhatsAppIcon, KickIcon, YouTubeIcon, SoundCloudIcon } from './SocialIcons';
 
+const HERO_PHOTOS = [
+  { src: '/gallery/missa-01.jpg', tag: 'PIONEER CDJ BOOTH' },
+  { src: '/gallery/missa-02.jpg', tag: 'CLUBBER ART' },
+  { src: '/gallery/missa-03.png', tag: 'STUDIO BRANDING' },
+  { src: '/gallery/missa-04.jpg', tag: 'CLUB RESIDENCY' },
+  { src: '/gallery/missa-05.jpg', tag: 'STAGE LIGHTS' },
+  { src: '/gallery/missa-06.jpg', tag: 'NIGHTCLUB CROWD' },
+  { src: '/gallery/missa-07.jpg', tag: 'HEADLINER SET' },
+  { src: '/gallery/missa-08.jpg', tag: 'PEAK TECH HOUSE' },
+  { src: '/gallery/missa-09.jpg', tag: 'HARDWARE & FX' }
+];
+
 export default function Hero() {
   const { t } = useLanguage();
   const whatsappUrl = "https://wa.me/5214443570777?text=Hola%20Missa,%20me%20gustar%C3%ADa%20cotizar%20una%20fecha%20o%20evento";
+
+  const [photoIndex, setPhotoIndex] = useState(0);
+  const [prevPhotoIndex, setPrevPhotoIndex] = useState(null);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [progressKey, setProgressKey] = useState(0);
+
+  const heroShuffleDeck = useRef([...Array(HERO_PHOTOS.length).keys()].sort(() => Math.random() - 0.5));
+
+  const getNextHeroIndex = useCallback((current) => {
+    if (heroShuffleDeck.current.length === 0) {
+      heroShuffleDeck.current = [...Array(HERO_PHOTOS.length).keys()].sort(() => Math.random() - 0.5);
+    }
+    if (heroShuffleDeck.current[0] === current && heroShuffleDeck.current.length > 1) {
+      const temp = heroShuffleDeck.current.shift();
+      heroShuffleDeck.current.push(temp);
+    }
+    return heroShuffleDeck.current.shift();
+  }, []);
+
+  const triggerHeroTransition = useCallback((nextIdx) => {
+    if (nextIdx === photoIndex || isTransitioning) return;
+    setPrevPhotoIndex(photoIndex);
+    setPhotoIndex(nextIdx);
+    setIsTransitioning(true);
+    setProgressKey(Date.now());
+    setTimeout(() => {
+      setIsTransitioning(false);
+      setPrevPhotoIndex(null);
+    }, 750);
+  }, [photoIndex, isTransitioning]);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      triggerHeroTransition(getNextHeroIndex(photoIndex));
+    }, 7000);
+    return () => clearInterval(timer);
+  }, [photoIndex, getNextHeroIndex, triggerHeroTransition]);
 
   return (
     <section
@@ -354,18 +403,50 @@ export default function Hero() {
               }}
             >
               {/* Photo Frame */}
-              <div
+              <a
+                href="#gallery"
+                title="Ver galería en vivo completa"
                 style={{
+                  display: 'block',
                   position: 'relative',
                   width: '100%',
                   aspectRatio: '1/1.08',
-                  overflow: 'hidden'
+                  overflow: 'hidden',
+                  cursor: 'pointer',
+                  textDecoration: 'none',
+                  color: 'inherit'
                 }}
               >
+                {/* Laser scanline that sweeps across during transition */}
+                {isTransitioning && <div className="carousel-laser-scan" />}
+
+                {/* PREVIOUS SLIDE (glitch exit animation) */}
+                {prevPhotoIndex !== null && isTransitioning && (
+                  <img
+                    key={`hero-prev-${prevPhotoIndex}`}
+                    src={HERO_PHOTOS[prevPhotoIndex].src}
+                    alt="DJ Missa en vivo"
+                    className="carousel-slide-exit"
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      objectPosition: 'center 20%'
+                    }}
+                  />
+                )}
+
+                {/* CURRENT ACTIVE SLIDE */}
                 <img
-                  src="/missa-capture.jpg"
-                  alt="DJ Missa en vivo en Pioneer CDJs"
+                  key={`hero-curr-${photoIndex}-${progressKey}`}
+                  src={HERO_PHOTOS[photoIndex].src}
+                  alt={`DJ Missa - ${HERO_PHOTOS[photoIndex].tag}`}
+                  className={isTransitioning ? 'carousel-slide-enter' : 'carousel-ken-burns'}
                   style={{
+                    position: 'absolute',
+                    inset: 0,
                     width: '100%',
                     height: '100%',
                     objectFit: 'cover',
@@ -380,7 +461,8 @@ export default function Hero() {
                     position: 'absolute',
                     inset: 0,
                     background: 'linear-gradient(to top, #060608 8%, transparent 55%), radial-gradient(circle at 50% 10%, transparent 40%, rgba(6,6,8,0.65) 100%)',
-                    pointerEvents: 'none'
+                    pointerEvents: 'none',
+                    zIndex: 4
                   }}
                 />
 
@@ -394,7 +476,8 @@ export default function Hero() {
                     height: '28px',
                     borderTop: '2px solid #FF003C',
                     borderLeft: '2px solid #FF003C',
-                    pointerEvents: 'none'
+                    pointerEvents: 'none',
+                    zIndex: 5
                   }}
                 />
                 <div
@@ -406,9 +489,42 @@ export default function Hero() {
                     height: '28px',
                     borderBottom: '2px solid #FF003C',
                     borderRight: '2px solid #FF003C',
-                    pointerEvents: 'none'
+                    pointerEvents: 'none',
+                    zIndex: 5
                   }}
                 />
+
+                {/* Top REC Indicator */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '16px',
+                    right: '16px',
+                    background: 'rgba(10, 10, 14, 0.85)',
+                    backdropFilter: 'blur(8px)',
+                    border: '1px solid rgba(255, 0, 60, 0.35)',
+                    borderRadius: '999px',
+                    padding: '4px 10px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    zIndex: 6
+                  }}
+                >
+                  <span
+                    style={{
+                      width: '6px',
+                      height: '6px',
+                      borderRadius: '50%',
+                      background: '#FF003C',
+                      boxShadow: '0 0 8px #FF003C',
+                      animation: 'pulseAnimation 1.5s infinite'
+                    }}
+                  />
+                  <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#FF003C', letterSpacing: '0.06em' }}>
+                    7s LIVE SHUFFLE
+                  </span>
+                </div>
 
                 {/* Live Performance Badge on Photo */}
                 <div
@@ -423,7 +539,8 @@ export default function Hero() {
                     padding: '8px 14px',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '10px'
+                    gap: '10px',
+                    zIndex: 6
                   }}
                 >
                   <div className="eq-bars">
@@ -433,9 +550,17 @@ export default function Hero() {
                     <span className="eq-bar" />
                   </div>
                   <span style={{ fontSize: '0.82rem', fontWeight: 700, letterSpacing: '0.05em' }}>
-                    {t.hero.sessionTag}
+                    {HERO_PHOTOS[photoIndex].tag}
                   </span>
                 </div>
+              </a>
+
+              {/* 7-Second countdown bar */}
+              <div style={{ width: '100%', height: '3px', background: 'rgba(255, 255, 255, 0.08)' }}>
+                <div
+                  key={`hero-progress-${photoIndex}-${progressKey}`}
+                  className="carousel-countdown-bar running"
+                />
               </div>
             </div>
 

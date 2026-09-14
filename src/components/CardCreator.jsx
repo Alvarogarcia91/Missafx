@@ -34,8 +34,15 @@ const CARD_HEIGHT = 600;
 const CARD_ASPECT_RATIO = '1050 / 600';
 
 const DEFAULT_PRESETS = [
-  { id: 'capture2', nameKey: 'photoPreset2', src: '/missa-capture-2.jpg' },
-  { id: 'capture1', nameKey: 'photoPreset1', src: '/missa-capture.jpg' }
+  { id: 'capture1', nameKey: 'photoPreset1', name: '01 Pioneer CDJ Booth', src: '/gallery/missa-01.jpg' },
+  { id: 'capture2', nameKey: 'photoPreset2', name: '02 Dark Clubber Art', src: '/gallery/missa-02.jpg' },
+  { id: 'live3', name: '03 Studio Branding', src: '/gallery/missa-03.png' },
+  { id: 'live4', name: '04 Club Energy', src: '/gallery/missa-04.jpg' },
+  { id: 'live5', name: '05 Stage Lights', src: '/gallery/missa-05.jpg' },
+  { id: 'live6', name: '06 Nightclub Crowd', src: '/gallery/missa-06.jpg' },
+  { id: 'live7', name: '07 Headliner Set', src: '/gallery/missa-07.jpg' },
+  { id: 'live8', name: '08 Peak Time Set', src: '/gallery/missa-08.jpg' },
+  { id: 'live9', name: '09 Decks & FX', src: '/gallery/missa-09.jpg' }
 ];
 
 const QR_PRESETS = [
@@ -2667,9 +2674,10 @@ export default function CardCreator({ onBack }) {
                   <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: '10px' }}>
                     {cT.photoPresets}
                   </label>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '10px' }}>
                     {DEFAULT_PRESETS.map((preset) => {
                       const isChosen = photoSrc === preset.src;
+                      const label = preset.nameKey && cT[preset.nameKey] ? cT[preset.nameKey] : preset.name;
                       return (
                         <div
                           key={preset.id}
@@ -2692,10 +2700,10 @@ export default function CardCreator({ onBack }) {
                         >
                           <img
                             src={preset.src}
-                            alt={preset.nameKey}
+                            alt={label}
                             style={{
                               width: '100%',
-                              height: '80px',
+                              height: '75px',
                               objectFit: 'cover',
                               display: 'block',
                               opacity: isChosen ? 1 : 0.6
@@ -2703,15 +2711,18 @@ export default function CardCreator({ onBack }) {
                           />
                           <div
                             style={{
-                              padding: '6px 8px',
-                              fontSize: '0.74rem',
+                              padding: '5px 6px',
+                              fontSize: '0.72rem',
                               fontWeight: 600,
                               color: isChosen ? frameColor : '#fff',
-                              background: 'rgba(12, 12, 16, 0.9)',
-                              textAlign: 'center'
+                              background: 'rgba(12, 12, 16, 0.92)',
+                              textAlign: 'center',
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis'
                             }}
                           >
-                            {cT[preset.nameKey]}
+                            {label}
                           </div>
                         </div>
                       );

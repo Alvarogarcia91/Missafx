@@ -3,6 +3,7 @@ export const translations = {
     nav: {
       home: 'Inicio',
       socials: 'Redes Oficiales',
+      gallery: 'Galería Live',
       about: 'Bio & Rider',
       contact: 'Contacto',
       whatsapp: 'WhatsApp Directo'
@@ -57,6 +58,18 @@ export const translations = {
           cta: 'Escuchar en SoundCloud'
         }
       }
+    },
+    gallery: {
+      tag: 'LIVE ARCHIVE // VISUAL FEED',
+      title: 'CABINA & ESCENARIOS EN VIVO',
+      desc: 'Sesiones en vivo, energía de club y atmósfera de cabina en alta resolución. Rotación aleatoria cada 7 segundos.',
+      camLive: 'EN VIVO',
+      shutterLabel: 'OBTURACIÓN',
+      audioLink: 'PRO DJ LINK • 48kHz',
+      photoCounter: 'FOTO',
+      pauseHint: 'Pausar rotación',
+      playHint: 'Reanudar rotación (7s)',
+      shuffleHint: 'Foto aleatoria'
     },
     about: {
       tag: 'SOBRE EL ARTISTA',
@@ -487,6 +500,7 @@ export const translations = {
     nav: {
       home: 'Home',
       socials: 'Official Links',
+      gallery: 'Live Gallery',
       about: 'Bio & Rider',
       contact: 'Booking',
       whatsapp: 'Direct WhatsApp'
@@ -541,6 +555,18 @@ export const translations = {
           cta: 'Listen on SoundCloud'
         }
       }
+    },
+    gallery: {
+      tag: 'LIVE ARCHIVE // VISUAL FEED',
+      title: 'LIVE BOOTH & CLUB STAGES',
+      desc: 'Live DJ sessions, club energy, and booth atmosphere in high resolution. Random rotation every 7 seconds.',
+      camLive: 'LIVE',
+      shutterLabel: 'SHUTTER',
+      audioLink: 'PRO DJ LINK • 48kHz',
+      photoCounter: 'PHOTO',
+      pauseHint: 'Pause rotation',
+      playHint: 'Resume rotation (7s)',
+      shuffleHint: 'Random photo'
     },
     about: {
       tag: 'ABOUT THE ARTIST',
