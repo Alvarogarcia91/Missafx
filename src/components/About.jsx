@@ -1,6 +1,7 @@
-﻿import React from 'react';
-import { Sliders, Headphones, MessageCircle } from 'lucide-react';
+import React from 'react';
+import { Sliders, Headphones } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { WhatsAppIcon } from './SocialIcons';
 
 export default function About() {
   const { t } = useLanguage();
@@ -61,12 +62,61 @@ export default function About() {
               className="btn btn-secondary"
               style={{ gap: '10px' }}
             >
-              <MessageCircle size={18} color="#FF003C" /> {t.about.pressKitBtn}
+              <WhatsAppIcon size={18} /> {t.about.pressKitBtn}
             </a>
           </div>
 
-          {/* Right Column: Technical Rider for Event Organizers */}
+          {/* Right Column: Missa Photo & Technical Rider for Event Organizers */}
           <div>
+            {/* Featured Photo: Capture2 Artwork */}
+            <div
+              className="glass-panel"
+              style={{
+                overflow: 'hidden',
+                borderRadius: '20px',
+                border: '1px solid rgba(255, 0, 60, 0.3)',
+                position: 'relative',
+                marginBottom: '28px',
+                boxShadow: '0 20px 45px rgba(0,0,0,0.7)',
+                background: 'linear-gradient(180deg, rgba(20, 18, 24, 0.9) 0%, rgba(10, 10, 14, 0.98) 100%)'
+              }}
+            >
+              <img
+                src="/missa-capture-2.jpg"
+                alt="Missa DJ Live Set"
+                style={{
+                  width: '100%',
+                  maxHeight: '340px',
+                  objectFit: 'cover',
+                  objectPosition: 'center 15%',
+                  display: 'block',
+                  filter: 'contrast(1.06) brightness(0.96)'
+                }}
+              />
+              <div
+                style={{
+                  position: 'absolute',
+                  bottom: '12px',
+                  left: '12px',
+                  right: '12px',
+                  background: 'rgba(6, 6, 10, 0.88)',
+                  backdropFilter: 'blur(10px)',
+                  padding: '8px 14px',
+                  borderRadius: '10px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  border: '1px solid rgba(255, 255, 255, 0.12)'
+                }}
+              >
+                <span style={{ fontSize: '0.80rem', fontWeight: 800, color: '#fff', letterSpacing: '0.06em' }}>
+                  MISSAFX • TECH HOUSE
+                </span>
+                <span style={{ fontSize: '0.74rem', color: '#FF003C', fontWeight: 700 }}>
+                  CLUB SESSIONS ARCHIVE
+                </span>
+              </div>
+            </div>
             <div
               className="glass-panel"
               style={{

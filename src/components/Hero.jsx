@@ -1,11 +1,27 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Flame } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { InstagramIcon, WhatsAppIcon, KickIcon, YouTubeIcon, SoundCloudIcon } from './SocialIcons';
 
 export default function Hero() {
   const { t } = useLanguage();
+  const [activePhoto, setActivePhoto] = useState(0);
   const whatsappUrl = "https://wa.me/5214443570777?text=Hola%20Missa,%20me%20gustar%C3%ADa%20cotizar%20una%20fecha%20o%20evento";
+
+  const photos = [
+    {
+      src: '/missa-capture.jpg',
+      tag: t.hero.photoTab1,
+      sub: t.hero.sessionTag,
+      objectPosition: 'center 20%'
+    },
+    {
+      src: '/missa-capture-2.jpg',
+      tag: t.hero.photoTab2,
+      sub: 'TECH HOUSE SESSIONS',
+      objectPosition: 'center center'
+    }
+  ];
 
   return (
     <section
@@ -52,10 +68,23 @@ export default function Hero() {
           }}
         >
           {/* Left Column: Headlines & Action CTAs */}
-          <div style={{ maxWidth: '580px', zIndex: 5 }}>
-            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '20px' }}>
+          <div style={{ maxWidth: '600px', zIndex: 5 }}>
+            {/* Top Badges */}
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '22px' }}>
+              <div
+                className="badge"
+                style={{
+                  background: 'rgba(255, 0, 60, 0.18)',
+                  borderColor: 'rgba(255, 0, 60, 0.45)',
+                  color: '#FF003C',
+                  fontWeight: 800,
+                  letterSpacing: '0.08em'
+                }}
+              >
+                <Flame size={14} color="#FF003C" /> {t.hero.badgeGenre}
+              </div>
               <div className="badge">
-                <Flame size={14} color="#FF003C" /> {t.hero.badgeDj}
+                {t.hero.badgePresskit}
               </div>
               <a 
                 href="https://kick.com/7missa" 
@@ -68,26 +97,43 @@ export default function Hero() {
               </a>
             </div>
 
+            {/* Option 1 Brutalist Headline styled like official Logo */}
             <h1
               className="font-display"
               style={{
-                fontSize: 'clamp(2.4rem, 5.2vw, 4.2rem)',
-                fontWeight: 900,
-                lineHeight: 1.05,
-                letterSpacing: '-0.03em',
-                marginBottom: '20px'
+                fontSize: 'clamp(3.8rem, 8.8vw, 6.6rem)',
+                fontWeight: 950,
+                lineHeight: 0.90,
+                letterSpacing: '-0.04em',
+                marginBottom: '20px',
+                textTransform: 'uppercase',
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '2px'
               }}
             >
-              {t.hero.title1} <br />
-              <span className="gradient-crimson-text">{t.hero.title2}</span> <br />
-              {t.hero.title3}
+              <span
+                style={{
+                  color: '#FF003C',
+                  textShadow: '0 0 45px rgba(255, 0, 60, 0.45)'
+                }}
+              >
+                {t.hero.artist1}
+              </span>
+              <span
+                style={{
+                  color: '#FFFFFF'
+                }}
+              >
+                {t.hero.artist2}
+              </span>
             </h1>
 
             <p
               style={{
                 color: 'var(--text-muted)',
-                fontSize: 'clamp(1rem, 1.6vw, 1.15rem)',
-                maxWidth: '500px',
+                fontSize: 'clamp(1.02rem, 1.7vw, 1.18rem)',
+                maxWidth: '520px',
                 marginBottom: '32px',
                 lineHeight: 1.7
               }}
@@ -96,7 +142,7 @@ export default function Hero() {
             </p>
 
             {/* Main Action Buttons */}
-            <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', marginBottom: '36px' }}>
+            <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', marginBottom: '34px' }}>
               <a
                 href={whatsappUrl}
                 target="_blank"
@@ -107,15 +153,6 @@ export default function Hero() {
                 <WhatsAppIcon size={20} color="#FFFFFF" innerColor="#FF003C" /> {t.hero.btnBooking}
               </a>
               <a
-                href="https://soundcloud.com/missael-arath"
-                target="_blank"
-                rel="noreferrer"
-                className="btn btn-secondary"
-                style={{ gap: '10px' }}
-              >
-                <SoundCloudIcon size={20} color="#FF7700" /> {t.hero.btnMusic}
-              </a>
-              <a
                 href="https://kick.com/7missa"
                 target="_blank"
                 rel="noreferrer"
@@ -124,70 +161,178 @@ export default function Hero() {
               >
                 <KickIcon size={20} color="#53fc18" /> {t.hero.btnKick}
               </a>
+              <a
+                href="https://soundcloud.com/missael-arath"
+                target="_blank"
+                rel="noreferrer"
+                className="btn btn-secondary"
+                style={{ gap: '10px' }}
+              >
+                <SoundCloudIcon size={20} color="#FF7700" /> {t.hero.btnMusic}
+              </a>
             </div>
 
-            {/* Quick Links Indicator Grid */}
+            {/* EXPOSED SOCIAL NETWORKS DOCK: All 5 networks with official icons */}
             <div
               style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(2, minmax(140px, 1fr))',
-                gap: '12px',
-                maxWidth: '440px',
                 paddingTop: '24px',
-                borderTop: '1px solid var(--border-glass)'
+                borderTop: '1px solid var(--border-glass)',
+                maxWidth: '540px'
               }}
             >
-              <a
-                href="https://www.instagram.com/missaa.fx/"
-                target="_blank"
-                rel="noreferrer"
-                className="glass-panel"
+              <div
                 style={{
-                  padding: '12px 16px',
+                  fontSize: '0.72rem',
+                  fontWeight: 800,
+                  letterSpacing: '0.1em',
+                  color: 'var(--text-dim)',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '12px',
-                  textDecoration: 'none',
-                  color: '#fff',
-                  borderRadius: '12px',
-                  border: '1px solid rgba(225, 48, 108, 0.25)',
-                  transition: 'all 0.2s ease'
+                  gap: '8px',
+                  marginBottom: '14px',
+                  textTransform: 'uppercase'
                 }}
               >
-                <InstagramIcon size={24} color="gradient" />
-                <div>
-                  <span style={{ fontSize: '0.76rem', color: 'var(--text-dim)', display: 'block' }}>Instagram</span>
-                  <span style={{ fontSize: '0.88rem', fontWeight: 700 }}>@missaa.fx</span>
-                </div>
-              </a>
+                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#FF003C' }} />
+                {t.hero.quickSocialsTitle}
+              </div>
 
-              <a
-                href="https://www.youtube.com/@missaelarath6364"
-                target="_blank"
-                rel="noreferrer"
-                className="glass-panel"
+              <div
                 style={{
-                  padding: '12px 16px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
-                  textDecoration: 'none',
-                  color: '#fff',
-                  borderRadius: '12px',
-                  border: '1px solid rgba(255, 0, 0, 0.25)',
-                  transition: 'all 0.2s ease'
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
+                  gap: '10px'
                 }}
               >
-                <YouTubeIcon size={24} />
-                <div>
-                  <span style={{ fontSize: '0.76rem', color: 'var(--text-dim)', display: 'block' }}>YouTube</span>
-                  <span style={{ fontSize: '0.88rem', fontWeight: 700 }}>Canal Oficial</span>
-                </div>
-              </a>
+                {/* Instagram */}
+                <a
+                  href="https://www.instagram.com/missaa.fx/"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="glass-panel"
+                  style={{
+                    padding: '10px 12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    textDecoration: 'none',
+                    color: '#fff',
+                    borderRadius: '12px',
+                    border: '1px solid rgba(225, 48, 108, 0.3)',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  <InstagramIcon size={22} color="gradient" />
+                  <div>
+                    <span style={{ fontSize: '0.70rem', color: 'var(--text-dim)', display: 'block' }}>Instagram</span>
+                    <span style={{ fontSize: '0.82rem', fontWeight: 700 }}>@missaa.fx</span>
+                  </div>
+                </a>
+
+                {/* WhatsApp */}
+                <a
+                  href={whatsappUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="glass-panel"
+                  style={{
+                    padding: '10px 12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    textDecoration: 'none',
+                    color: '#fff',
+                    borderRadius: '12px',
+                    border: '1px solid rgba(37, 211, 102, 0.3)',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  <WhatsAppIcon size={22} />
+                  <div>
+                    <span style={{ fontSize: '0.70rem', color: 'var(--text-dim)', display: 'block' }}>WhatsApp</span>
+                    <span style={{ fontSize: '0.82rem', fontWeight: 700 }}>Direct Chat</span>
+                  </div>
+                </a>
+
+                {/* Kick */}
+                <a
+                  href="https://kick.com/7missa"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="glass-panel"
+                  style={{
+                    padding: '10px 12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    textDecoration: 'none',
+                    color: '#fff',
+                    borderRadius: '12px',
+                    border: '1px solid rgba(83, 252, 24, 0.3)',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  <KickIcon size={22} />
+                  <div>
+                    <span style={{ fontSize: '0.70rem', color: 'var(--text-dim)', display: 'block' }}>Kick Live</span>
+                    <span style={{ fontSize: '0.82rem', fontWeight: 700 }}>/7missa</span>
+                  </div>
+                </a>
+
+                {/* YouTube */}
+                <a
+                  href="https://www.youtube.com/@missaelarath6364"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="glass-panel"
+                  style={{
+                    padding: '10px 12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    textDecoration: 'none',
+                    color: '#fff',
+                    borderRadius: '12px',
+                    border: '1px solid rgba(255, 0, 0, 0.3)',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  <YouTubeIcon size={22} />
+                  <div>
+                    <span style={{ fontSize: '0.70rem', color: 'var(--text-dim)', display: 'block' }}>YouTube</span>
+                    <span style={{ fontSize: '0.82rem', fontWeight: 700 }}>Canal Oficial</span>
+                  </div>
+                </a>
+
+                {/* SoundCloud */}
+                <a
+                  href="https://soundcloud.com/missael-arath"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="glass-panel"
+                  style={{
+                    padding: '10px 12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    textDecoration: 'none',
+                    color: '#fff',
+                    borderRadius: '12px',
+                    border: '1px solid rgba(255, 85, 0, 0.3)',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  <SoundCloudIcon size={22} color="gradient" />
+                  <div>
+                    <span style={{ fontSize: '0.70rem', color: 'var(--text-dim)', display: 'block' }}>SoundCloud</span>
+                    <span style={{ fontSize: '0.82rem', fontWeight: 700 }}>Sets & Mixes</span>
+                  </div>
+                </a>
+              </div>
             </div>
           </div>
 
-          {/* Right Column: Editorial Visual with Repeating Background Typography & Missa DJ photo */}
+          {/* Right Column: Editorial Visual with Photo Switcher, Repeating Background Typography & Missa DJ photo */}
           <div
             style={{
               position: 'relative',
@@ -242,6 +387,52 @@ export default function Hero() {
                 boxShadow: '0 25px 60px rgba(0, 0, 0, 0.8), 0 0 45px rgba(255, 0, 60, 0.18)'
               }}
             >
+              {/* Photo Selector Tabs */}
+              <div
+                style={{
+                  padding: '10px 12px',
+                  display: 'flex',
+                  gap: '8px',
+                  background: 'rgba(10, 10, 14, 0.92)',
+                  borderBottom: '1px solid rgba(255, 255, 255, 0.08)'
+                }}
+              >
+                {photos.map((p, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setActivePhoto(idx)}
+                    style={{
+                      flex: 1,
+                      padding: '7px 10px',
+                      fontSize: '0.72rem',
+                      fontWeight: 800,
+                      letterSpacing: '0.07em',
+                      borderRadius: '8px',
+                      border: activePhoto === idx ? '1px solid #FF003C' : '1px solid rgba(255, 255, 255, 0.1)',
+                      background: activePhoto === idx ? 'rgba(255, 0, 60, 0.22)' : 'rgba(255, 255, 255, 0.04)',
+                      color: activePhoto === idx ? '#fff' : 'var(--text-dim)',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px'
+                    }}
+                  >
+                    <span
+                      style={{
+                        width: '6px',
+                        height: '6px',
+                        borderRadius: '50%',
+                        background: activePhoto === idx ? '#FF003C' : 'rgba(255, 255, 255, 0.3)',
+                        boxShadow: activePhoto === idx ? '0 0 8px #FF003C' : 'none'
+                      }}
+                    />
+                    {p.tag}
+                  </button>
+                ))}
+              </div>
+
               {/* Photo Frame */}
               <div
                 style={{
@@ -252,14 +443,16 @@ export default function Hero() {
                 }}
               >
                 <img
-                  src="/missa-capture.jpg"
-                  alt="DJ Missa tocando en vivo"
+                  src={photos[activePhoto].src}
+                  alt="DJ Missa"
+                  key={activePhoto}
                   style={{
                     width: '100%',
                     height: '100%',
                     objectFit: 'cover',
-                    objectPosition: 'center 20%',
-                    filter: 'contrast(1.08) brightness(0.95)'
+                    objectPosition: photos[activePhoto].objectPosition,
+                    filter: 'contrast(1.08) brightness(0.95)',
+                    transition: 'all 0.3s ease'
                   }}
                 />
 
@@ -322,7 +515,7 @@ export default function Hero() {
                     <span className="eq-bar" />
                   </div>
                   <span style={{ fontSize: '0.82rem', fontWeight: 700, letterSpacing: '0.05em' }}>
-                    {t.hero.sessionTag}
+                    {photos[activePhoto].sub}
                   </span>
                 </div>
               </div>

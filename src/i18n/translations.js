@@ -1,4 +1,4 @@
-﻿export const translations = {
+export const translations = {
   es: {
     nav: {
       home: 'Inicio',
@@ -8,12 +8,12 @@
       whatsapp: 'WhatsApp Directo'
     },
     hero: {
-      badgeDj: 'DJ & MUSIC PRODUCER',
-      badgeLive: 'KICK STREAM LIVE',
-      title1: 'FEEL THE',
-      title2: 'FREQUENCY.',
-      title3: 'LIVE THE BEAT.',
-      desc: 'Sets electrizantes de Tech House, basslines contundentes y atmósfera de club underground. Explora la música, directos y booking directo de Missafx.',
+      badgeGenre: 'TECH HOUSE',
+      badgePresskit: 'OFFICIAL DJ PRESSKIT & CHANNELS',
+      badgeLive: 'KICK LIVE STREAM',
+      artist1: 'MISSA',
+      artist2: 'FX',
+      desc: 'DJ & Productor de música electrónica y Tech House. Sets en vivo con mezclas contundentes, transmisiones interactivas y booking directo.',
       btnBooking: 'Booking WhatsApp',
       btnMusic: 'Escuchar Sets',
       btnKick: 'Ver en Kick',
@@ -21,7 +21,10 @@
       soundCloudTag: 'SOUNDCLOUD',
       soundCloudSub: 'Escuchar Sesiones',
       kickTag: 'KICK LIVE',
-      directBookingTag: 'DIRECT BOOKING'
+      directBookingTag: 'DIRECT BOOKING',
+      quickSocialsTitle: 'CANALES & REDES OFICIALES',
+      photoTab1: '01 EN CABINA PIONEER',
+      photoTab2: '02 ARCHIVO CLUBBER'
     },
     socialHub: {
       tag: 'ECOSISTEMA DIGITAL',
@@ -132,12 +135,12 @@
       whatsapp: 'Direct WhatsApp'
     },
     hero: {
-      badgeDj: 'DJ & MUSIC PRODUCER',
-      badgeLive: 'KICK STREAM LIVE',
-      title1: 'FEEL THE',
-      title2: 'FREQUENCY.',
-      title3: 'LIVE THE BEAT.',
-      desc: 'Electrifying Tech House sets, heavy basslines and underground club vibes. Discover the official music, live streams, and direct booking for Missafx.',
+      badgeGenre: 'TECH HOUSE',
+      badgePresskit: 'OFFICIAL DJ PRESSKIT & CHANNELS',
+      badgeLive: 'KICK LIVE STREAM',
+      artist1: 'MISSA',
+      artist2: 'FX',
+      desc: 'Mexican Electronic & Tech House DJ & Producer. High-energy live sets, interactive streams, and direct booking for clubs and festivals.',
       btnBooking: 'Booking WhatsApp',
       btnMusic: 'Listen to Sets',
       btnKick: 'Watch on Kick',
@@ -145,7 +148,10 @@
       soundCloudTag: 'SOUNDCLOUD',
       soundCloudSub: 'Listen to Sessions',
       kickTag: 'KICK LIVE',
-      directBookingTag: 'DIRECT BOOKING'
+      directBookingTag: 'DIRECT BOOKING',
+      quickSocialsTitle: 'OFFICIAL NETWORKS & CHANNELS',
+      photoTab1: '01 PIONEER DJ BOOTH',
+      photoTab2: '02 CLUB ARCHIVE'
     },
     socialHub: {
       tag: 'DIGITAL ECOSYSTEM',
