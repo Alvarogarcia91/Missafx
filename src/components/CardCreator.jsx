@@ -6,54 +6,22 @@ import {
   QrCode,
   Layers,
   Type,
-  Maximize2,
   RefreshCw,
   Eye,
   EyeOff,
   Sparkles,
-  Square,
-  RectangleHorizontal,
-  RectangleVertical,
   CheckCircle2,
   Palette,
   Share2,
   Check,
-  Sliders
+  CreditCard
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
-const CARD_FORMATS = {
-  horizontal: {
-    id: 'horizontal',
-    nameKey: 'formatHorizontal',
-    dimKey: 'formatHorizontalDim',
-    noteKey: 'formatHorizontalNote',
-    width: 1050,
-    height: 600,
-    aspectRatio: '1050 / 600',
-    icon: RectangleHorizontal
-  },
-  vertical: {
-    id: 'vertical',
-    nameKey: 'formatVertical',
-    dimKey: 'formatVerticalDim',
-    noteKey: 'formatVerticalNote',
-    width: 600,
-    height: 1050,
-    aspectRatio: '600 / 1050',
-    icon: RectangleVertical
-  },
-  square: {
-    id: 'square',
-    nameKey: 'formatSquare',
-    dimKey: 'formatSquareDim',
-    noteKey: 'formatSquareNote',
-    width: 750,
-    height: 750,
-    aspectRatio: '1 / 1',
-    icon: Square
-  }
-};
+// Official standard business card dimensions (3.5" × 2" at 300 DPI)
+const CARD_WIDTH = 1050;
+const CARD_HEIGHT = 600;
+const CARD_ASPECT_RATIO = '1050 / 600';
 
 const QR_PRESETS = [
   { id: 'whatsapp', labelKey: 'presetWhatsapp', url: 'https://wa.me/5214443570777' },
@@ -90,11 +58,8 @@ export default function CardCreator({ onBack }) {
   const { t } = useLanguage();
   const cT = t.cardCreator;
 
-  // Wizard active step (1 to 6)
+  // Wizard active step (1 to 5)
   const [activeStep, setActiveStep] = useState(1);
-
-  // Format selection
-  const [format, setFormat] = useState('horizontal');
 
   // Active side for preview ('front' | 'back')
   const [activeSide, setActiveSide] = useState('front');
@@ -182,9 +147,8 @@ export default function CardCreator({ onBack }) {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const currentFmt = CARD_FORMATS[format];
-    const w = currentFmt.width;
-    const h = currentFmt.height;
+    const w = CARD_WIDTH;
+    const h = CARD_HEIGHT;
 
     if (canvas.width !== w || canvas.height !== h) {
       canvas.width = w;
@@ -216,7 +180,7 @@ export default function CardCreator({ onBack }) {
       ctx.restore();
     }
 
-    // Radial atmospheric glow with customizable glowColor
+    // Radial atmospheric glow
     const radGrad = ctx.createRadialGradient(w / 2, h / 2, 40, w / 2, h / 2, w * 0.7);
     radGrad.addColorStop(0, hexToRgba(glowColor, 0.16));
     radGrad.addColorStop(1, 'rgba(6, 6, 8, 0.94)');
@@ -300,7 +264,7 @@ export default function CardCreator({ onBack }) {
 
     // 5. Main Front Branding
     ctx.save();
-    const centerY = format === 'horizontal' ? h * 0.46 : h * 0.42;
+    const centerY = h * 0.46;
 
     // Pill badge: OFFICIAL DJ PRESS CARD
     const badgeText = 'OFFICIAL DJ PRESS CARD // PIONEER PRO DJ';
@@ -385,7 +349,6 @@ export default function CardCreator({ onBack }) {
 
     ctx.restore();
   }, [
-    format,
     artistName,
     realName,
     roleGenre,
@@ -406,9 +369,8 @@ export default function CardCreator({ onBack }) {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const currentFmt = CARD_FORMATS[format];
-    const w = currentFmt.width;
-    const h = currentFmt.height;
+    const w = CARD_WIDTH;
+    const h = CARD_HEIGHT;
 
     if (canvas.width !== w || canvas.height !== h) {
       canvas.width = w;
@@ -497,162 +459,98 @@ export default function CardCreator({ onBack }) {
       ctx.restore();
     }
 
-    // 4. Content Layout
-    if (format === 'horizontal') {
-      const leftColX = 75;
-      const rightColX = w - 340;
-      const qrBoxSize = 220;
-      const qrBoxY = (h - qrBoxSize) / 2 - 10;
+    // 4. Horizontal Standard Layout
+    const leftColX = 75;
+    const rightColX = w - 340;
+    const qrBoxSize = 220;
+    const qrBoxY = (h - qrBoxSize) / 2 - 10;
 
-      // Left Column: Contact & Booking Info
+    // Left Column: Contact & Booking Info
+    ctx.save();
+    // Mini Logo Header
+    ctx.font = '900 32px "Syne", sans-serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillStyle = titleColor;
+    ctx.fillText('MISSA', leftColX, 85);
+    const m1 = ctx.measureText('MISSA').width;
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillText('FX', leftColX + m1, 85);
+
+    ctx.font = '700 13px "Outfit", sans-serif';
+    ctx.fillStyle = 'var(--text-muted)';
+    ctx.fillText('DIRECT BOOKING & PRESS KIT', leftColX, 126);
+
+    // Accent Divider
+    ctx.strokeStyle = backAccentColor;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(leftColX, 150);
+    ctx.lineTo(leftColX + 320, 150);
+    ctx.stroke();
+
+    // Info rows
+    ctx.font = '600 16px "Outfit", sans-serif';
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillText(`WA: ${phoneWhatsapp.trim()}`, leftColX, 180);
+
+    ctx.font = '500 14px "Outfit", sans-serif';
+    ctx.fillStyle = '#94A3B8';
+    ctx.fillText(`LOC: ${cityLocation.trim()}`, leftColX, 214);
+    ctx.fillText(`TAG: ${tagline.trim()}`, leftColX, 244);
+
+    // Social networks pills if enabled
+    if (showSocialBadges) {
+      ctx.font = '700 12px "Outfit", monospace';
+      ctx.fillStyle = backAccentColor;
+      ctx.fillText('CHANNELS: IG • KICK • SOUNDCLOUD • WA', leftColX, 280);
+
+      ctx.font = '600 13px "Outfit", sans-serif';
+      ctx.fillStyle = '#E2E8F0';
+      ctx.fillText('@missafx_ // oficial', leftColX, 305);
+    }
+
+    // Nexora Footer
+    ctx.font = '600 11px "Outfit", monospace';
+    ctx.fillStyle = '#475569';
+    ctx.fillText('BY NEXORA IT // WWW.ITNEXORA.COM', leftColX, h - 60);
+    ctx.restore();
+
+    // Right Column: QR Code Box (if enabled)
+    if (showQr && qrDataUrl) {
       ctx.save();
-      // Mini Logo Header
-      ctx.font = '900 32px "Syne", sans-serif';
-      ctx.textAlign = 'left';
-      ctx.textBaseline = 'top';
-      ctx.fillStyle = titleColor;
-      ctx.fillText('MISSA', leftColX, 85);
-      const m1 = ctx.measureText('MISSA').width;
+      // White rounded background container
       ctx.fillStyle = '#FFFFFF';
-      ctx.fillText('FX', leftColX + m1, 85);
-
-      ctx.font = '700 13px "Outfit", sans-serif';
-      ctx.fillStyle = 'var(--text-muted)';
-      ctx.fillText('DIRECT BOOKING & PRESS KIT', leftColX, 126);
-
-      // Accent Divider
-      ctx.strokeStyle = backAccentColor;
-      ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.moveTo(leftColX, 150);
-      ctx.lineTo(leftColX + 320, 150);
+      ctx.roundRect(rightColX, qrBoxY, qrBoxSize, qrBoxSize, 14);
+      ctx.fill();
+
+      // Glowing border around QR with backAccentColor
+      ctx.strokeStyle = backAccentColor;
+      ctx.lineWidth = 2.5;
+      ctx.shadowColor = backAccentColor;
+      ctx.shadowBlur = 8;
       ctx.stroke();
 
-      // Info rows
-      ctx.font = '600 16px "Outfit", sans-serif';
-      ctx.fillStyle = '#FFFFFF';
-      ctx.fillText(`WA: ${phoneWhatsapp.trim()}`, leftColX, 180);
-
-      ctx.font = '500 14px "Outfit", sans-serif';
-      ctx.fillStyle = '#94A3B8';
-      ctx.fillText(`LOC: ${cityLocation.trim()}`, leftColX, 214);
-      ctx.fillText(`TAG: ${tagline.trim()}`, leftColX, 244);
-
-      // Social networks pills if enabled
-      if (showSocialBadges) {
-        ctx.font = '700 12px "Outfit", monospace';
-        ctx.fillStyle = backAccentColor;
-        ctx.fillText('CHANNELS: IG • KICK • SOUNDCLOUD • WA', leftColX, 280);
-
-        ctx.font = '600 13px "Outfit", sans-serif';
-        ctx.fillStyle = '#E2E8F0';
-        ctx.fillText('@missafx_ // oficial', leftColX, 305);
+      ctx.shadowBlur = 0;
+      // Draw QR Image
+      const qrImg = new Image();
+      qrImg.src = qrDataUrl;
+      if (qrImg.complete) {
+        ctx.drawImage(qrImg, rightColX + 10, qrBoxY + 10, qrBoxSize - 20, qrBoxSize - 20);
+      } else {
+        qrImg.onload = () => renderBackCanvas();
       }
 
-      // Nexora Footer
-      ctx.font = '600 11px "Outfit", monospace';
-      ctx.fillStyle = '#475569';
-      ctx.fillText('BY NEXORA IT // WWW.ITNEXORA.COM', leftColX, h - 60);
-      ctx.restore();
-
-      // Right Column: QR Code Box (if enabled)
-      if (showQr && qrDataUrl) {
-        ctx.save();
-        // White rounded background container
-        ctx.fillStyle = '#FFFFFF';
-        ctx.beginPath();
-        ctx.roundRect(rightColX, qrBoxY, qrBoxSize, qrBoxSize, 14);
-        ctx.fill();
-
-        // Glowing border around QR with backAccentColor
-        ctx.strokeStyle = backAccentColor;
-        ctx.lineWidth = 2.5;
-        ctx.shadowColor = backAccentColor;
-        ctx.shadowBlur = 8;
-        ctx.stroke();
-
-        ctx.shadowBlur = 0;
-        // Draw QR Image
-        const qrImg = new Image();
-        qrImg.src = qrDataUrl;
-        if (qrImg.complete) {
-          ctx.drawImage(qrImg, rightColX + 10, qrBoxY + 10, qrBoxSize - 20, qrBoxSize - 20);
-        } else {
-          qrImg.onload = () => renderBackCanvas();
-        }
-
-        // QR label text below
-        ctx.fillStyle = '#E2E8F0';
-        ctx.font = '700 11px "Outfit", sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'top';
-        ctx.fillText(qrLabelText.trim().toUpperCase(), rightColX + qrBoxSize / 2, qrBoxY + qrBoxSize + 14);
-        ctx.restore();
-      }
-    } else {
-      // Vertical or Square Layout: Stacked
-      ctx.save();
-      const qrBoxSize = format === 'vertical' ? 260 : 220;
-      const qrBoxX = (w - qrBoxSize) / 2;
-      const qrBoxY = format === 'vertical' ? 140 : 120;
-
-      // Header
-      ctx.font = '900 36px "Syne", sans-serif';
+      // QR label text below
+      ctx.fillStyle = '#E2E8F0';
+      ctx.font = '700 11px "Outfit", sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'top';
-      ctx.fillStyle = titleColor;
-      ctx.fillText('MISSAFX', w / 2, 70);
-
-      // QR Box
-      if (showQr && qrDataUrl) {
-        ctx.fillStyle = '#FFFFFF';
-        ctx.beginPath();
-        ctx.roundRect(qrBoxX, qrBoxY, qrBoxSize, qrBoxSize, 16);
-        ctx.fill();
-
-        ctx.strokeStyle = backAccentColor;
-        ctx.lineWidth = 2.5;
-        ctx.stroke();
-
-        const qrImg = new Image();
-        qrImg.src = qrDataUrl;
-        if (qrImg.complete) {
-          ctx.drawImage(qrImg, qrBoxX + 12, qrBoxY + 12, qrBoxSize - 24, qrBoxSize - 24);
-        } else {
-          qrImg.onload = () => renderBackCanvas();
-        }
-
-        ctx.fillStyle = '#FFFFFF';
-        ctx.font = '700 13px "Outfit", sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText(qrLabelText.trim().toUpperCase(), w / 2, qrBoxY + qrBoxSize + 18);
-      }
-
-      // Contact details below
-      const infoBaseY = qrBoxY + qrBoxSize + 60;
-      ctx.font = '700 18px "Outfit", sans-serif';
-      ctx.fillStyle = '#FFFFFF';
-      ctx.fillText(`WA: ${phoneWhatsapp.trim()}`, w / 2, infoBaseY);
-
-      ctx.font = '500 14px "Outfit", sans-serif';
-      ctx.fillStyle = '#94A3B8';
-      ctx.fillText(cityLocation.trim(), w / 2, infoBaseY + 28);
-      ctx.fillText(tagline.trim(), w / 2, infoBaseY + 52);
-
-      if (showSocialBadges) {
-        ctx.font = '700 13px "Outfit", monospace';
-        ctx.fillStyle = backAccentColor;
-        ctx.fillText('@missafx_ • KICK • INSTAGRAM • SOUNDCLOUD', w / 2, infoBaseY + 90);
-      }
-
-      ctx.font = '600 11px "Outfit", monospace';
-      ctx.fillStyle = '#475569';
-      ctx.fillText('BY NEXORA IT // WWW.ITNEXORA.COM', w / 2, h - 55);
-
+      ctx.fillText(qrLabelText.trim().toUpperCase(), rightColX + qrBoxSize / 2, qrBoxY + qrBoxSize + 14);
       ctx.restore();
     }
   }, [
-    format,
     artistName,
     realName,
     roleGenre,
@@ -697,7 +595,7 @@ export default function CardCreator({ onBack }) {
       renderFrontCanvas();
       downloadCanvas(
         frontCanvasRef.current,
-        `missafx-card-front-${CARD_FORMATS[format].width}x${CARD_FORMATS[format].height}.png`
+        `missafx-card-front-${CARD_WIDTH}x${CARD_HEIGHT}.png`
       );
       setIsExporting(false);
       setExportMessage(cT.exportSuccess);
@@ -711,7 +609,7 @@ export default function CardCreator({ onBack }) {
       renderBackCanvas();
       downloadCanvas(
         backCanvasRef.current,
-        `missafx-card-back-${CARD_FORMATS[format].width}x${CARD_FORMATS[format].height}.png`
+        `missafx-card-back-${CARD_WIDTH}x${CARD_HEIGHT}.png`
       );
       setIsExporting(false);
       setExportMessage(cT.exportSuccess);
@@ -732,48 +630,38 @@ export default function CardCreator({ onBack }) {
         return;
       }
 
-      const w = CARD_FORMATS[format].width;
-      const h = CARD_FORMATS[format].height;
+      const w = CARD_WIDTH;
+      const h = CARD_HEIGHT;
       const dualCanvas = document.createElement('canvas');
       const ctx = dualCanvas.getContext('2d');
 
-      if (format === 'horizontal') {
-        dualCanvas.width = w + 80;
-        dualCanvas.height = h * 2 + 140;
+      // Stacked vertically with trim line for standard 3.5x2 cards
+      dualCanvas.width = w + 80;
+      dualCanvas.height = h * 2 + 140;
 
-        ctx.fillStyle = '#0a0a0e';
-        ctx.fillRect(0, 0, dualCanvas.width, dualCanvas.height);
+      ctx.fillStyle = '#0a0a0e';
+      ctx.fillRect(0, 0, dualCanvas.width, dualCanvas.height);
 
-        ctx.fillStyle = '#94A3B8';
-        ctx.font = '700 16px "Outfit", sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('MISSAFX // PRINT READY DUAL-SIDE PRESS CARD (300 DPI)', dualCanvas.width / 2, 35);
+      ctx.fillStyle = '#94A3B8';
+      ctx.font = '700 16px "Outfit", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('MISSAFX // PRINT READY DUAL-SIDE PRESS CARD (300 DPI)', dualCanvas.width / 2, 35);
 
-        ctx.drawImage(frontCanvas, 40, 55);
+      ctx.drawImage(frontCanvas, 40, 55);
 
-        ctx.strokeStyle = frameColor;
-        ctx.lineWidth = 2;
-        ctx.setLineDash([8, 8]);
-        ctx.beginPath();
-        ctx.moveTo(40, h + 85);
-        ctx.lineTo(w + 40, h + 85);
-        ctx.stroke();
+      ctx.strokeStyle = frameColor;
+      ctx.lineWidth = 2;
+      ctx.setLineDash([8, 8]);
+      ctx.beginPath();
+      ctx.moveTo(40, h + 85);
+      ctx.lineTo(w + 40, h + 85);
+      ctx.stroke();
 
-        ctx.fillStyle = frameColor;
-        ctx.font = '600 12px "Outfit", monospace';
-        ctx.fillText('--- LÍNEA DE CORTE / TRIM LINE ---', dualCanvas.width / 2, h + 89);
+      ctx.fillStyle = frameColor;
+      ctx.font = '600 12px "Outfit", monospace';
+      ctx.fillText('--- LÍNEA DE CORTE / TRIM LINE ---', dualCanvas.width / 2, h + 89);
 
-        ctx.drawImage(backCanvas, 40, h + 115);
-      } else {
-        dualCanvas.width = w * 2 + 140;
-        dualCanvas.height = h + 80;
-
-        ctx.fillStyle = '#0a0a0e';
-        ctx.fillRect(0, 0, dualCanvas.width, dualCanvas.height);
-
-        ctx.drawImage(frontCanvas, 40, 40);
-        ctx.drawImage(backCanvas, w + 100, 40);
-      }
+      ctx.drawImage(backCanvas, 40, h + 115);
 
       downloadCanvas(dualCanvas, `missafx-card-dual-sheet-${dualCanvas.width}x${dualCanvas.height}.png`);
       setIsExporting(false);
@@ -934,7 +822,7 @@ export default function CardCreator({ onBack }) {
           </p>
         </div>
 
-        {/* Wizard Step Tabs (6 Steps) */}
+        {/* Wizard Step Tabs (5 Steps focused on Business Cards) */}
         <div
           style={{
             display: 'flex',
@@ -946,12 +834,11 @@ export default function CardCreator({ onBack }) {
           }}
         >
           {[
-            { id: 1, label: cT.step1, icon: Maximize2 },
-            { id: 2, label: cT.step2, icon: Type },
-            { id: 3, label: cT.step3, icon: Palette },
-            { id: 4, label: cT.step4, icon: QrCode },
-            { id: 5, label: cT.step5, icon: Layers },
-            { id: 6, label: cT.step6, icon: Download }
+            { id: 1, label: cT.step1, icon: Type },
+            { id: 2, label: cT.step2, icon: Palette },
+            { id: 3, label: cT.step3, icon: QrCode },
+            { id: 4, label: cT.step4, icon: Layers },
+            { id: 5, label: cT.step5, icon: Download }
           ].map((step) => {
             const Icon = step.icon;
             const isActive = activeStep === step.id;
@@ -1004,102 +891,48 @@ export default function CardCreator({ onBack }) {
               background: 'rgba(12, 12, 16, 0.65)'
             }}
           >
-            {/* STEP 1: Format Selection */}
+            {/* STEP 1: Info & Text */}
             {activeStep === 1 && (
               <div>
-                <h3 className="font-display" style={{ fontSize: '1.25rem', marginBottom: '8px', color: '#fff' }}>
-                  {cT.formatTitle}
-                </h3>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', marginBottom: '20px' }}>
-                  {cT.formatHint}
-                </p>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                  {Object.values(CARD_FORMATS).map((fmt) => {
-                    const Icon = fmt.icon;
-                    const isSelected = format === fmt.id;
-                    return (
-                      <div
-                        key={fmt.id}
-                        onClick={() => setFormat(fmt.id)}
-                        style={{
-                          padding: '18px 20px',
-                          borderRadius: '14px',
-                          border: isSelected
-                            ? `2px solid ${frameColor}`
-                            : '1px solid rgba(255, 255, 255, 0.08)',
-                          background: isSelected
-                            ? hexToRgba(frameColor, 0.08)
-                            : 'rgba(255, 255, 255, 0.02)',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          transition: 'all 0.2s ease'
-                        }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                          <div
-                            style={{
-                              width: '44px',
-                              height: '44px',
-                              borderRadius: '10px',
-                              background: isSelected
-                                ? hexToRgba(frameColor, 0.2)
-                                : 'rgba(255, 255, 255, 0.04)',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              color: isSelected ? frameColor : 'var(--text-muted)'
-                            }}
-                          >
-                            <Icon size={24} />
-                          </div>
-                          <div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
-                              <strong style={{ color: '#fff', fontSize: '0.98rem' }}>
-                                {cT[fmt.nameKey]}
-                              </strong>
-                              <span
-                                style={{
-                                  fontSize: '0.72rem',
-                                  padding: '2px 8px',
-                                  borderRadius: '6px',
-                                  background: 'rgba(255, 255, 255, 0.08)',
-                                  color: 'var(--text-muted)',
-                                  fontFamily: 'monospace'
-                                }}
-                              >
-                                {cT[fmt.dimKey]}
-                              </span>
-                            </div>
-                            <p style={{ fontSize: '0.82rem', color: 'var(--text-dim)', margin: 0 }}>
-                              {cT[fmt.noteKey]}
-                            </p>
-                          </div>
-                        </div>
-
-                        {isSelected && <CheckCircle2 size={20} color={frameColor} />}
-                      </div>
-                    );
-                  })}
-                </div>
-
-                <div style={{ marginTop: '28px', display: 'flex', justifyContent: 'flex-end' }}>
-                  <button
-                    onClick={() => setActiveStep(2)}
-                    className="btn btn-primary btn-sm"
-                    style={{ padding: '10px 24px', cursor: 'pointer' }}
+                {/* Official standard size notification banner */}
+                <div
+                  style={{
+                    padding: '14px 16px',
+                    borderRadius: '12px',
+                    background: 'rgba(255, 255, 255, 0.03)',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    marginBottom: '22px'
+                  }}
+                >
+                  <div
+                    style={{
+                      width: '38px',
+                      height: '38px',
+                      borderRadius: '10px',
+                      background: hexToRgba(frameColor, 0.15),
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: frameColor
+                    }}
                   >
-                    <span>Siguiente: Datos & Textos →</span>
-                  </button>
+                    <CreditCard size={20} />
+                  </div>
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
+                      <strong style={{ fontSize: '0.86rem', color: '#fff' }}>
+                        {cT.standardSizeBadge}
+                      </strong>
+                    </div>
+                    <p style={{ fontSize: '0.78rem', color: 'var(--text-dim)', margin: 0, lineHeight: 1.4 }}>
+                      {cT.standardSizeHint}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            )}
 
-            {/* STEP 2: Info & Details */}
-            {activeStep === 2 && (
-              <div>
                 <h3 className="font-display" style={{ fontSize: '1.25rem', marginBottom: '8px', color: '#fff' }}>
                   {cT.textTitle}
                 </h3>
@@ -1251,19 +1084,11 @@ export default function CardCreator({ onBack }) {
                   />
                 </div>
 
-                {/* Prev / Next */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '28px' }}>
+                <div style={{ marginTop: '28px', display: 'flex', justifyContent: 'flex-end' }}>
                   <button
-                    onClick={() => setActiveStep(1)}
-                    className="btn btn-secondary btn-sm"
-                    style={{ cursor: 'pointer' }}
-                  >
-                    <span>← Formato</span>
-                  </button>
-                  <button
-                    onClick={() => setActiveStep(3)}
+                    onClick={() => setActiveStep(2)}
                     className="btn btn-primary btn-sm"
-                    style={{ cursor: 'pointer' }}
+                    style={{ padding: '10px 24px', cursor: 'pointer' }}
                   >
                     <span>Siguiente: Colores & Estilo →</span>
                   </button>
@@ -1271,8 +1096,8 @@ export default function CardCreator({ onBack }) {
               </div>
             )}
 
-            {/* STEP 3: Colors & Style Customization */}
-            {activeStep === 3 && (
+            {/* STEP 2: Colors & Style Customization */}
+            {activeStep === 2 && (
               <div>
                 <h3 className="font-display" style={{ fontSize: '1.25rem', marginBottom: '8px', color: '#fff' }}>
                   {cT.colorsTitle}
@@ -1348,7 +1173,7 @@ export default function CardCreator({ onBack }) {
                 {/* Prev / Next */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '28px' }}>
                   <button
-                    onClick={() => setActiveStep(2)}
+                    onClick={() => setActiveStep(1)}
                     className="btn btn-secondary btn-sm"
                     style={{ cursor: 'pointer' }}
                   >
@@ -1356,7 +1181,7 @@ export default function CardCreator({ onBack }) {
                   </button>
                   <button
                     onClick={() => {
-                      setActiveStep(4);
+                      setActiveStep(3);
                       setIsFlipped(true);
                       setActiveSide('back');
                     }}
@@ -1369,8 +1194,8 @@ export default function CardCreator({ onBack }) {
               </div>
             )}
 
-            {/* STEP 4: QR Code Configuration */}
-            {activeStep === 4 && (
+            {/* STEP 3: QR Code Configuration */}
+            {activeStep === 3 && (
               <div>
                 <h3 className="font-display" style={{ fontSize: '1.25rem', marginBottom: '8px', color: '#fff' }}>
                   {cT.qrTitle}
@@ -1469,7 +1294,7 @@ export default function CardCreator({ onBack }) {
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '28px' }}>
                   <button
                     onClick={() => {
-                      setActiveStep(3);
+                      setActiveStep(2);
                       setIsFlipped(false);
                       setActiveSide('front');
                     }}
@@ -1479,7 +1304,7 @@ export default function CardCreator({ onBack }) {
                     <span>← Colores</span>
                   </button>
                   <button
-                    onClick={() => setActiveStep(5)}
+                    onClick={() => setActiveStep(4)}
                     className="btn btn-primary btn-sm"
                     style={{ cursor: 'pointer' }}
                   >
@@ -1489,8 +1314,8 @@ export default function CardCreator({ onBack }) {
               </div>
             )}
 
-            {/* STEP 5: Masks & Layers */}
-            {activeStep === 5 && (
+            {/* STEP 4: Masks & Layers */}
+            {activeStep === 4 && (
               <div>
                 <h3 className="font-display" style={{ fontSize: '1.25rem', marginBottom: '8px', color: '#fff' }}>
                   {cT.masksTitle}
@@ -1600,14 +1425,14 @@ export default function CardCreator({ onBack }) {
                 {/* Prev / Next */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '28px' }}>
                   <button
-                    onClick={() => setActiveStep(4)}
+                    onClick={() => setActiveStep(3)}
                     className="btn btn-secondary btn-sm"
                     style={{ cursor: 'pointer' }}
                   >
                     <span>← Código QR</span>
                   </button>
                   <button
-                    onClick={() => setActiveStep(6)}
+                    onClick={() => setActiveStep(5)}
                     className="btn btn-primary btn-sm"
                     style={{ cursor: 'pointer' }}
                   >
@@ -1617,8 +1442,8 @@ export default function CardCreator({ onBack }) {
               </div>
             )}
 
-            {/* STEP 6: Export & Downloads */}
-            {activeStep === 6 && (
+            {/* STEP 5: Export & Downloads */}
+            {activeStep === 5 && (
               <div>
                 <h3 className="font-display" style={{ fontSize: '1.25rem', marginBottom: '8px', color: '#fff' }}>
                   {cT.exportTitle}
@@ -1708,7 +1533,7 @@ export default function CardCreator({ onBack }) {
 
                 <div style={{ marginTop: '24px' }}>
                   <button
-                    onClick={() => setActiveStep(5)}
+                    onClick={() => setActiveStep(4)}
                     className="btn btn-secondary btn-sm"
                     style={{ cursor: 'pointer' }}
                   >
@@ -1732,7 +1557,7 @@ export default function CardCreator({ onBack }) {
             <div
               style={{
                 width: '100%',
-                maxWidth: format === 'horizontal' ? '460px' : format === 'square' ? '380px' : '340px',
+                maxWidth: '460px',
                 background: 'rgba(12, 12, 16, 0.85)',
                 padding: '20px',
                 borderRadius: '24px',
@@ -1780,7 +1605,7 @@ export default function CardCreator({ onBack }) {
                 style={{
                   perspective: '1200px',
                   width: '100%',
-                  aspectRatio: CARD_FORMATS[format].aspectRatio,
+                  aspectRatio: CARD_ASPECT_RATIO,
                   cursor: 'pointer'
                 }}
                 onClick={toggleFlip}
