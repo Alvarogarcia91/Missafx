@@ -298,6 +298,10 @@ export const translations = {
       motionLoopDuration: 'Duración del Loop / Video',
       motionLoopDefaultBadge: 'Default',
       motionLoopCustomSec: 'segundos',
+      motionFpsLabel: 'Tasa de Cuadros (FPS)',
+      motionFps30: '30 FPS (Estándar)',
+      motionFps60: '60 FPS (Recomendado)',
+      motionFps120: '120 FPS (ProMotion Ultra)',
       motionReset: 'Restablecer Efectos',
       
       // 1. Cascada
@@ -682,6 +686,10 @@ export const translations = {
       motionLoopDuration: 'Loop / Video Duration',
       motionLoopDefaultBadge: 'Default',
       motionLoopCustomSec: 'seconds',
+      motionFpsLabel: 'Framerate (FPS)',
+      motionFps30: '30 FPS (Standard)',
+      motionFps60: '60 FPS (Recommended)',
+      motionFps120: '120 FPS (ProMotion Ultra)',
       motionReset: 'Reset Effects',
 
       // 1. Cascada

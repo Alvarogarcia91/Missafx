@@ -318,6 +318,7 @@ export default function StoryCreator({ onBack }) {
   const [isMotionActive, setIsMotionActive] = useState(true);
   const [isPlaying, setIsPlaying] = useState(true);
   const [loopDuration, setLoopDuration] = useState(7); // default 7s for Instagram Stories / Reels loop
+  const [motionFps, setMotionFps] = useState(60); // 30 | 60 | 120 FPS
 
   // 1. Cascada Lateral ("MISSA MISSA")
   const [cascadeEffect, setCascadeEffect] = useState('scroll-down'); // none | scroll-down | scroll-up | breathe | glitch
@@ -355,6 +356,7 @@ export default function StoryCreator({ onBack }) {
     setAtmosphereEffect('dust-laser');
     setAtmosphereDensity(1.0);
     setLoopDuration(7);
+    setMotionFps(60);
   };
 
   // Canvas & Image refs
@@ -1113,12 +1115,12 @@ export default function StoryCreator({ onBack }) {
     }, 150);
   };
 
-  // Export 2: Video Story (MP4 / WebM at 60 FPS)
+  // Export 2: Video Story (MP4 / WebM at customizable FPS: 30 / 60 / 120)
   const handleExportVideo = async () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     setIsExporting(true);
-    setExportStatusText(`${cT.exportVideoRecording || 'Grabando video en 60 FPS...'} (${loopDuration}s)`);
+    setExportStatusText(`${cT.exportVideoRecording || 'Grabando video MP4'} @ ${motionFps} FPS (${loopDuration}s)...`);
 
     const wasSafeZonesActive = showSafeZones;
     if (wasSafeZonesActive) setShowSafeZones(false);
@@ -1138,10 +1140,11 @@ export default function StoryCreator({ onBack }) {
       setIsPlaying(true);
       setIsMotionActive(true);
 
-      const stream = canvas.captureStream(60);
+      const stream = canvas.captureStream(motionFps);
+      const targetBitrate = motionFps === 120 ? 24000000 : (motionFps === 60 ? 14000000 : 8000000);
       const recorder = new MediaRecorder(stream, {
         mimeType: MediaRecorder.isTypeSupported(selectedMime) ? selectedMime : undefined,
-        videoBitsPerSecond: 12000000
+        videoBitsPerSecond: targetBitrate
       });
 
       const chunks = [];
@@ -1155,7 +1158,7 @@ export default function StoryCreator({ onBack }) {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `missafx-story-${format}-${FORMATS[format].width}x${FORMATS[format].height}.mp4`;
+        a.download = `missafx-story-${format}-${FORMATS[format].width}x${FORMATS[format].height}-${motionFps}fps.mp4`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -3259,8 +3262,75 @@ export default function StoryCreator({ onBack }) {
                         }}
                       />
                       <span style={{ fontSize: '0.78rem', color: isPlaying ? '#22c55e' : 'var(--text-dim)', fontWeight: 600 }}>
-                        {isPlaying ? '60 FPS LIVE' : 'PAUSADO'}
+                        {isPlaying ? `${motionFps} FPS LIVE` : 'PAUSADO'}
                       </span>
+                    </div>
+                  </div>
+
+                  {/* FPS Selector */}
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      background: 'rgba(0, 0, 0, 0.25)',
+                      padding: '8px 14px',
+                      borderRadius: '12px',
+                      border: '1px solid rgba(255, 255, 255, 0.08)'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <Activity size={14} color={motionFps === 120 ? '#00F0FF' : frameColor} />
+                      <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+                        {cT.motionFpsLabel || 'FPS'}:
+                      </span>
+                      <span
+                        style={{
+                          padding: '3px 8px',
+                          borderRadius: '6px',
+                          background: motionFps === 120 ? 'rgba(0, 240, 255, 0.2)' : hexToRgba(frameColor, 0.2),
+                          border: motionFps === 120 ? '1px solid rgba(0, 240, 255, 0.5)' : `1px solid ${hexToRgba(frameColor, 0.45)}`,
+                          color: motionFps === 120 ? '#00F0FF' : frameColor,
+                          fontSize: '0.82rem',
+                          fontWeight: 800,
+                          fontFamily: 'monospace'
+                        }}
+                      >
+                        {motionFps}
+                      </span>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      {[
+                        { fps: 30, label: '30' },
+                        { fps: 60, label: '60 (Default)' },
+                        { fps: 120, label: '⚡ 120 ProMotion' }
+                      ].map(({ fps, label }) => (
+                        <button
+                          key={fps}
+                          onClick={() => setMotionFps(fps)}
+                          style={{
+                            padding: '5px 9px',
+                            borderRadius: '8px',
+                            border: motionFps === fps
+                              ? (fps === 120 ? '1px solid #00F0FF' : `1px solid ${frameColor}`)
+                              : '1px solid rgba(255, 255, 255, 0.08)',
+                            background: motionFps === fps
+                              ? (fps === 120 ? 'rgba(0, 240, 255, 0.25)' : hexToRgba(frameColor, 0.25))
+                              : 'rgba(255, 255, 255, 0.03)',
+                            color: motionFps === fps ? '#fff' : 'var(--text-muted)',
+                            fontSize: '0.74rem',
+                            fontWeight: motionFps === fps ? 700 : 500,
+                            cursor: 'pointer',
+                            boxShadow: motionFps === fps
+                              ? (fps === 120 ? '0 0 12px rgba(0, 240, 255, 0.4)' : `0 0 10px ${hexToRgba(frameColor, 0.3)}`)
+                              : 'none',
+                            transition: 'all 0.15s ease'
+                          }}
+                        >
+                          {label}
+                        </button>
+                      ))}
                     </div>
                   </div>
 
@@ -3983,9 +4053,9 @@ export default function StoryCreator({ onBack }) {
                     }}
                   >
                     <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>Efectos de Animación:</span>
-                    <strong style={{ color: '#22c55e', fontSize: '0.86rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <strong style={{ color: motionFps === 120 ? '#00F0FF' : '#22c55e', fontSize: '0.86rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <Zap size={14} />
-                      <span>{loopDuration}s Loop @ 60 FPS</span>
+                      <span>{loopDuration}s Loop @ {motionFps} FPS</span>
                     </strong>
                   </div>
                   <div
@@ -4041,12 +4111,12 @@ export default function StoryCreator({ onBack }) {
                               fontSize: '0.7rem',
                               padding: '2px 8px',
                               borderRadius: '4px',
-                              background: hexToRgba(frameColor, 0.15),
-                              color: frameColor,
+                              background: motionFps === 120 ? 'rgba(0, 240, 255, 0.2)' : hexToRgba(frameColor, 0.15),
+                              color: motionFps === 120 ? '#00F0FF' : frameColor,
                               fontWeight: 700
                             }}
                           >
-                            {loopDuration}s • 60 FPS • LOOP
+                            {loopDuration}s • {motionFps} FPS • MP4
                           </span>
                         </div>
                       </div>
@@ -4054,6 +4124,61 @@ export default function StoryCreator({ onBack }) {
                     <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: 0, lineHeight: 1.5 }}>
                       {cT.exportVideoDesc}
                     </p>
+
+                    {/* Quick FPS selector directly in export card */}
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '10px 14px',
+                        background: 'rgba(0, 0, 0, 0.3)',
+                        borderRadius: '10px',
+                        border: '1px solid rgba(255, 255, 255, 0.06)',
+                        flexWrap: 'wrap',
+                        gap: '8px'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <Activity size={14} color={motionFps === 120 ? '#00F0FF' : frameColor} />
+                        <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+                          {cT.motionFpsLabel || 'Tasa de Cuadros'}:
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        {[
+                          { fps: 30, label: '30 FPS' },
+                          { fps: 60, label: '60 FPS' },
+                          { fps: 120, label: '⚡ 120 FPS Pro' }
+                        ].map(({ fps, label }) => (
+                          <button
+                            key={fps}
+                            onClick={() => setMotionFps(fps)}
+                            style={{
+                              padding: '5px 10px',
+                              borderRadius: '6px',
+                              border: motionFps === fps
+                                ? (fps === 120 ? '1px solid #00F0FF' : `1px solid ${frameColor}`)
+                                : '1px solid rgba(255, 255, 255, 0.08)',
+                              background: motionFps === fps
+                                ? (fps === 120 ? 'rgba(0, 240, 255, 0.25)' : hexToRgba(frameColor, 0.25))
+                                : 'rgba(255, 255, 255, 0.04)',
+                              color: motionFps === fps ? '#fff' : 'var(--text-muted)',
+                              fontSize: '0.74rem',
+                              fontWeight: motionFps === fps ? 700 : 500,
+                              cursor: 'pointer',
+                              boxShadow: motionFps === fps
+                                ? (fps === 120 ? '0 0 10px rgba(0, 240, 255, 0.35)' : `0 0 8px ${hexToRgba(frameColor, 0.25)}`)
+                                : 'none',
+                              transition: 'all 0.15s ease'
+                            }}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
                     <button
                       onClick={handleExportVideo}
                       disabled={isExporting}
