@@ -26,27 +26,32 @@
     socialHub: {
       tag: 'ECOSISTEMA DIGITAL',
       title: 'REDES & CANALES OFICIALES',
-      desc: 'Sigue la actividad de Missafx en tiempo real a través de sus plataformas de streaming, música y contenido.',
+      desc: 'Conecta con Missafx en sus plataformas oficiales de música, directos y atención directa.',
       channels: {
-        soundcloud: {
-          tag: 'Sesiones & Tracks',
-          desc: 'Escucha los últimos sets completos, mezclas exclusivas y tracks de Tech House.',
-          cta: 'Escuchar en SoundCloud'
-        },
-        kick: {
-          tag: 'En Directo',
-          desc: 'Transmisiones en vivo, sesiones espontáneas de mezcla y directos interactivos.',
-          cta: 'Sintonizar Kick'
+        whatsapp: {
+          tag: 'Atención Directa',
+          desc: 'Chat directo para contrataciones, cotización de fechas en clubs y festivales.',
+          cta: 'Abrir Chat de WhatsApp'
         },
         instagram: {
           tag: 'Comunidad & Fechas',
           desc: 'Sigue el día a día en cabina, backstages de toquines y anuncios oficiales.',
           cta: 'Seguir en Instagram'
         },
+        kick: {
+          tag: 'En Directo',
+          desc: 'Transmisiones en vivo, sesiones espontáneas de mezcla y directos interactivos.',
+          cta: 'Sintonizar Kick'
+        },
         youtube: {
           tag: 'Videos & Live Sets',
           desc: 'Grabaciones de sets en vivo, videos de presentaciones y contenido audiovisual.',
           cta: 'Ver Canal de YouTube'
+        },
+        soundcloud: {
+          tag: 'Sesiones & Tracks',
+          desc: 'Escucha los últimos sets completos, mezclas exclusivas y tracks de Tech House.',
+          cta: 'Escuchar en SoundCloud'
         }
       }
     },
@@ -145,27 +150,32 @@
     socialHub: {
       tag: 'DIGITAL ECOSYSTEM',
       title: 'OFFICIAL NETWORKS & CHANNELS',
-      desc: 'Follow Missafx live across his official streaming, music, and content platforms.',
+      desc: 'Connect with Missafx across his official music, live streams, and direct booking platforms.',
       channels: {
-        soundcloud: {
-          tag: 'Sessions & Tracks',
-          desc: 'Listen to the latest full sets, exclusive mixes, and Tech House original releases.',
-          cta: 'Listen on SoundCloud'
-        },
-        kick: {
-          tag: 'Live Now',
-          desc: 'Live streams, spontaneous DJ mixing sessions, and interactive broadcasts.',
-          cta: 'Tune into Kick'
+        whatsapp: {
+          tag: 'Direct Contact',
+          desc: 'Direct chat for bookings, date quotes at clubs, venues and festivals.',
+          cta: 'Open WhatsApp Chat'
         },
         instagram: {
           tag: 'Community & Shows',
           desc: 'Follow daily DJ booth stories, behind the scenes, and official announcements.',
           cta: 'Follow on Instagram'
         },
+        kick: {
+          tag: 'Live Now',
+          desc: 'Live streams, spontaneous DJ mixing sessions, and interactive broadcasts.',
+          cta: 'Tune into Kick'
+        },
         youtube: {
           tag: 'Videos & Live Sets',
           desc: 'Live performance recordings, video recaps, and audiovisual DJ content.',
           cta: 'Visit YouTube Channel'
+        },
+        soundcloud: {
+          tag: 'Sessions & Tracks',
+          desc: 'Listen to the latest full sets, exclusive mixes, and Tech House original releases.',
+          cta: 'Listen on SoundCloud'
         }
       }
     },

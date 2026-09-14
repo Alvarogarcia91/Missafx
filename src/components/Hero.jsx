@@ -1,6 +1,7 @@
-﻿import React from 'react';
-import { Play, MessageCircle, Flame, Music, Video } from 'lucide-react';
+import React from 'react';
+import { Flame } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { InstagramIcon, WhatsAppIcon, KickIcon, YouTubeIcon, SoundCloudIcon } from './SocialIcons';
 
 export default function Hero() {
   const { t } = useLanguage();
@@ -103,7 +104,7 @@ export default function Hero() {
                 className="btn btn-primary"
                 style={{ gap: '10px' }}
               >
-                <MessageCircle size={18} /> {t.hero.btnBooking}
+                <WhatsAppIcon size={20} color="#FFFFFF" innerColor="#FF003C" /> {t.hero.btnBooking}
               </a>
               <a
                 href="https://soundcloud.com/missael-arath"
@@ -112,7 +113,7 @@ export default function Hero() {
                 className="btn btn-secondary"
                 style={{ gap: '10px' }}
               >
-                <Music size={18} color="#FF003C" /> {t.hero.btnMusic}
+                <SoundCloudIcon size={20} color="#FF7700" /> {t.hero.btnMusic}
               </a>
               <a
                 href="https://kick.com/7missa"
@@ -121,7 +122,7 @@ export default function Hero() {
                 className="btn btn-secondary"
                 style={{ gap: '10px' }}
               >
-                <Video size={18} color="#53fc18" /> {t.hero.btnKick}
+                <KickIcon size={20} color="#53fc18" /> {t.hero.btnKick}
               </a>
             </div>
 
@@ -129,9 +130,9 @@ export default function Hero() {
             <div
               style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(2, minmax(130px, 1fr))',
+                gridTemplateColumns: 'repeat(2, minmax(140px, 1fr))',
                 gap: '12px',
-                maxWidth: '420px',
+                maxWidth: '440px',
                 paddingTop: '24px',
                 borderTop: '1px solid var(--border-glass)'
               }}
@@ -145,15 +146,17 @@ export default function Hero() {
                   padding: '12px 16px',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '10px',
+                  gap: '12px',
                   textDecoration: 'none',
                   color: '#fff',
-                  borderRadius: '12px'
+                  borderRadius: '12px',
+                  border: '1px solid rgba(225, 48, 108, 0.25)',
+                  transition: 'all 0.2s ease'
                 }}
               >
-                <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#E1306C' }} />
+                <InstagramIcon size={24} color="gradient" />
                 <div>
-                  <span style={{ fontSize: '0.78rem', color: 'var(--text-dim)', display: 'block' }}>Instagram</span>
+                  <span style={{ fontSize: '0.76rem', color: 'var(--text-dim)', display: 'block' }}>Instagram</span>
                   <span style={{ fontSize: '0.88rem', fontWeight: 700 }}>@missaa.fx</span>
                 </div>
               </a>
@@ -167,15 +170,17 @@ export default function Hero() {
                   padding: '12px 16px',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '10px',
+                  gap: '12px',
                   textDecoration: 'none',
                   color: '#fff',
-                  borderRadius: '12px'
+                  borderRadius: '12px',
+                  border: '1px solid rgba(255, 0, 0, 0.25)',
+                  transition: 'all 0.2s ease'
                 }}
               >
-                <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#FF0000' }} />
+                <YouTubeIcon size={24} />
                 <div>
-                  <span style={{ fontSize: '0.78rem', color: 'var(--text-dim)', display: 'block' }}>YouTube</span>
+                  <span style={{ fontSize: '0.76rem', color: 'var(--text-dim)', display: 'block' }}>YouTube</span>
                   <span style={{ fontSize: '0.88rem', fontWeight: 700 }}>Canal Oficial</span>
                 </div>
               </a>
@@ -353,7 +358,7 @@ export default function Hero() {
                   color: '#fff'
                 }}
               >
-                <Play size={18} fill="#fff" />
+                <SoundCloudIcon size={22} color="#fff" />
               </div>
               <div>
                 <span style={{ fontSize: '0.74rem', color: '#ff7733', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block' }}>
@@ -383,7 +388,7 @@ export default function Hero() {
                 gap: '10px'
               }}
             >
-              <span className="pulse-dot" style={{ backgroundColor: '#53fc18' }} />
+              <KickIcon size={20} />
               <div>
                 <span style={{ fontSize: '0.74rem', color: '#53fc18', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block' }}>
                   {t.hero.kickTag}
@@ -413,7 +418,7 @@ export default function Hero() {
                 borderRadius: '9999px'
               }}
             >
-              <MessageCircle size={20} />
+              <WhatsAppIcon size={24} color="#FFFFFF" innerColor="#FF003C" />
               <div>
                 <span style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', opacity: 0.9 }}>
                   {t.hero.directBookingTag}

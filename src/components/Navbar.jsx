@@ -1,6 +1,7 @@
-﻿import React, { useState, useEffect } from 'react';
-import { Menu, X, MessageCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Menu, X } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { WhatsAppIcon } from './SocialIcons';
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -122,7 +123,7 @@ export default function Navbar() {
             className="btn btn-primary btn-sm"
             style={{ gap: '8px' }}
           >
-            <MessageCircle size={16} /> {t.nav.whatsapp}
+            <WhatsAppIcon size={16} color="#FFFFFF" innerColor="#FF003C" /> {t.nav.whatsapp}
           </a>
         </nav>
 
@@ -240,9 +241,9 @@ export default function Navbar() {
             rel="noreferrer"
             onClick={() => setMobileMenuOpen(false)}
             className="btn btn-primary"
-            style={{ width: '100%', marginTop: '10px' }}
+            style={{ width: '100%', marginTop: '10px', gap: '8px' }}
           >
-            <MessageCircle size={18} /> {t.nav.whatsapp}
+            <WhatsAppIcon size={18} color="#FFFFFF" innerColor="#FF003C" /> {t.nav.whatsapp}
           </a>
         </div>
       )}

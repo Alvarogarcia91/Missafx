@@ -1,6 +1,7 @@
-﻿import React from 'react';
+import React from 'react';
 import { ArrowUp } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { InstagramIcon, WhatsAppIcon, KickIcon, YouTubeIcon, SoundCloudIcon } from './SocialIcons';
 
 export default function Footer() {
   const { t } = useLanguage();
@@ -42,26 +43,35 @@ export default function Footer() {
           </div>
 
           {/* Social Links */}
-          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
             {[
-              { name: 'Instagram', url: 'https://www.instagram.com/missaa.fx/', color: '#E1306C' },
-              { name: 'SoundCloud', url: 'https://soundcloud.com/missael-arath', color: '#FF5500' },
-              { name: 'Kick', url: 'https://kick.com/7missa', color: '#53FC18' },
-              { name: 'YouTube', url: 'https://www.youtube.com/@missaelarath6364', color: '#FF0000' },
-              { name: 'WhatsApp', url: 'https://wa.me/5214443570777', color: '#25D366' }
-            ].map((social) => (
-              <a
-                key={social.name}
-                href={social.url}
-                target="_blank"
-                rel="noreferrer"
-                className="btn btn-secondary btn-sm"
-                style={{ fontSize: '0.82rem', padding: '6px 14px' }}
-              >
-                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: social.color, display: 'inline-block' }} />
-                {social.name}
-              </a>
-            ))}
+              { name: 'Instagram', url: 'https://www.instagram.com/missaa.fx/', color: '#E1306C', icon: InstagramIcon },
+              { name: 'WhatsApp', url: 'https://wa.me/5214443570777', color: '#25D366', icon: WhatsAppIcon },
+              { name: 'Kick', url: 'https://kick.com/7missa', color: '#53FC18', icon: KickIcon },
+              { name: 'YouTube', url: 'https://www.youtube.com/@missaelarath6364', color: '#FF0000', icon: YouTubeIcon },
+              { name: 'SoundCloud', url: 'https://soundcloud.com/missael-arath', color: '#FF5500', icon: SoundCloudIcon }
+            ].map((social) => {
+              const Icon = social.icon;
+              return (
+                <a
+                  key={social.name}
+                  href={social.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="btn btn-secondary btn-sm"
+                  style={{
+                    fontSize: '0.82rem',
+                    padding: '8px 14px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}
+                >
+                  <Icon size={16} color={social.name === 'Instagram' ? 'gradient' : (social.name === 'WhatsApp' ? '#25D366' : (social.name === 'SoundCloud' ? '#FF5500' : undefined))} />
+                  <span>{social.name}</span>
+                </a>
+              );
+            })}
           </div>
 
           {/* Back to top button */}

@@ -1,30 +1,21 @@
 ﻿import React from 'react';
-import { ExternalLink, Radio, Video, Instagram, Music } from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { InstagramIcon, WhatsAppIcon, KickIcon, YouTubeIcon, SoundCloudIcon } from './SocialIcons';
 
 export default function SocialHub() {
   const { t } = useLanguage();
 
   const SOCIAL_CHANNELS = [
     {
-      name: 'SoundCloud',
-      tag: t.socialHub.channels.soundcloud.tag,
-      handle: 'soundcloud.com/missael-arath',
-      url: 'https://soundcloud.com/missael-arath',
-      description: t.socialHub.channels.soundcloud.desc,
-      color: '#FF5500',
-      icon: Music,
-      cta: t.socialHub.channels.soundcloud.cta
-    },
-    {
-      name: 'Kick Live Stream',
-      tag: t.socialHub.channels.kick.tag,
-      handle: 'kick.com/7missa',
-      url: 'https://kick.com/7missa',
-      description: t.socialHub.channels.kick.desc,
-      color: '#53FC18',
-      icon: Radio,
-      cta: t.socialHub.channels.kick.cta
+      name: 'WhatsApp',
+      tag: t.socialHub.channels.whatsapp.tag,
+      handle: '+52 1 444 357 0777',
+      url: 'https://wa.me/5214443570777?text=Hola%20Missa,%20me%20gustar%C3%ADa%20cotizar%20una%20fecha%20o%20evento',
+      description: t.socialHub.channels.whatsapp.desc,
+      color: '#25D366',
+      icon: WhatsAppIcon,
+      cta: t.socialHub.channels.whatsapp.cta
     },
     {
       name: 'Instagram',
@@ -33,8 +24,18 @@ export default function SocialHub() {
       url: 'https://www.instagram.com/missaa.fx/',
       description: t.socialHub.channels.instagram.desc,
       color: '#E1306C',
-      icon: Instagram,
+      icon: InstagramIcon,
       cta: t.socialHub.channels.instagram.cta
+    },
+    {
+      name: 'Kick Live Stream',
+      tag: t.socialHub.channels.kick.tag,
+      handle: 'kick.com/7missa',
+      url: 'https://kick.com/7missa',
+      description: t.socialHub.channels.kick.desc,
+      color: '#53FC18',
+      icon: KickIcon,
+      cta: t.socialHub.channels.kick.cta
     },
     {
       name: 'YouTube',
@@ -43,8 +44,18 @@ export default function SocialHub() {
       url: 'https://www.youtube.com/@missaelarath6364',
       description: t.socialHub.channels.youtube.desc,
       color: '#FF0000',
-      icon: Video,
+      icon: YouTubeIcon,
       cta: t.socialHub.channels.youtube.cta
+    },
+    {
+      name: 'SoundCloud',
+      tag: t.socialHub.channels.soundcloud.tag,
+      handle: 'soundcloud.com/missael-arath',
+      url: 'https://soundcloud.com/missael-arath',
+      description: t.socialHub.channels.soundcloud.desc,
+      color: '#FF5500',
+      icon: SoundCloudIcon,
+      cta: t.socialHub.channels.soundcloud.cta
     }
   ];
 
@@ -60,7 +71,7 @@ export default function SocialHub() {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(270px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
             gap: '24px'
           }}
         >
@@ -71,7 +82,7 @@ export default function SocialHub() {
                 key={item.name}
                 className="glass-panel"
                 style={{
-                  padding: '32px 24px',
+                  padding: '30px 22px',
                   display: 'flex',
                   flexDirection: 'column',
                   justifyContent: 'space-between',
@@ -103,23 +114,23 @@ export default function SocialHub() {
                   >
                     <div
                       style={{
-                        width: '46px',
-                        height: '46px',
+                        width: '48px',
+                        height: '48px',
                         borderRadius: '12px',
                         background: `${item.color}15`,
                         border: `1px solid ${item.color}35`,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        color: item.color
+                        boxShadow: `0 0 16px ${item.color}25`
                       }}
                     >
-                      <Icon size={22} />
+                      <Icon size={26} color={item.name === 'Instagram' ? 'gradient' : item.color} />
                     </div>
 
                     <span
                       style={{
-                        fontSize: '0.75rem',
+                        fontSize: '0.74rem',
                         fontWeight: 700,
                         textTransform: 'uppercase',
                         letterSpacing: '0.08em',
@@ -136,16 +147,16 @@ export default function SocialHub() {
 
                   <h3
                     className="font-display"
-                    style={{ fontSize: '1.35rem', color: '#fff', marginBottom: '4px' }}
+                    style={{ fontSize: '1.3rem', color: '#fff', marginBottom: '4px' }}
                   >
                     {item.name}
                   </h3>
 
                   <p
                     style={{
-                      fontSize: '0.85rem',
+                      fontSize: '0.84rem',
                       color: 'var(--text-dim)',
-                      marginBottom: '14px',
+                      marginBottom: '12px',
                       fontFamily: 'monospace'
                     }}
                   >
@@ -154,10 +165,10 @@ export default function SocialHub() {
 
                   <p
                     style={{
-                      fontSize: '0.92rem',
+                      fontSize: '0.9rem',
                       color: 'var(--text-muted)',
                       lineHeight: 1.6,
-                      marginBottom: '28px'
+                      marginBottom: '26px'
                     }}
                   >
                     {item.description}
@@ -172,11 +183,11 @@ export default function SocialHub() {
                   style={{
                     width: '100%',
                     justifyContent: 'space-between',
-                    borderColor: `${item.color}30`
+                    borderColor: `${item.color}35`
                   }}
                 >
                   <span>{item.cta}</span>
-                  <ExternalLink size={15} />
+                  <ExternalLink size={14} />
                 </a>
               </div>
             );

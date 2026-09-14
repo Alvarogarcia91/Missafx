@@ -1,6 +1,7 @@
-﻿import React, { useState } from 'react';
-import { Send, Phone, MessageCircle, Instagram, CheckCircle, Sparkles } from 'lucide-react';
+import React, { useState } from 'react';
+import { CheckCircle, Sparkles } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { WhatsAppIcon, InstagramIcon } from './SocialIcons';
 
 export default function Booking() {
   const { t } = useLanguage();
@@ -71,17 +72,17 @@ export default function Booking() {
               >
                 <div
                   style={{
-                    width: '46px',
-                    height: '46px',
+                    width: '48px',
+                    height: '48px',
                     borderRadius: '12px',
                     background: 'rgba(37, 211, 102, 0.15)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    color: '#25D366'
+                    boxShadow: '0 0 16px rgba(37, 211, 102, 0.2)'
                   }}
                 >
-                  <MessageCircle size={24} />
+                  <WhatsAppIcon size={26} />
                 </div>
                 <div>
                   <span style={{ fontSize: '0.78rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block' }}>
@@ -110,17 +111,17 @@ export default function Booking() {
               >
                 <div
                   style={{
-                    width: '46px',
-                    height: '46px',
+                    width: '48px',
+                    height: '48px',
                     borderRadius: '12px',
                     background: 'rgba(225, 48, 108, 0.15)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    color: '#E1306C'
+                    boxShadow: '0 0 16px rgba(225, 48, 108, 0.2)'
                   }}
                 >
-                  <Instagram size={24} />
+                  <InstagramIcon size={26} color="gradient" />
                 </div>
                 <div>
                   <span style={{ fontSize: '0.78rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block' }}>
@@ -295,7 +296,7 @@ export default function Booking() {
                   className="btn btn-primary"
                   style={{ width: '100%', gap: '10px', marginTop: '6px' }}
                 >
-                  <MessageCircle size={18} /> {t.booking.submitBtn}
+                  <WhatsAppIcon size={20} color="#FFFFFF" innerColor="#FF003C" /> {t.booking.submitBtn}
                 </button>
               </form>
             )}
