@@ -14,7 +14,12 @@ import {
   Palette,
   Share2,
   Check,
-  CreditCard
+  CreditCard,
+  Upload,
+  Image as ImageIcon,
+  ZoomIn,
+  Move,
+  Sliders
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -22,6 +27,11 @@ import { useLanguage } from '../context/LanguageContext';
 const CARD_WIDTH = 1050;
 const CARD_HEIGHT = 600;
 const CARD_ASPECT_RATIO = '1050 / 600';
+
+const DEFAULT_PRESETS = [
+  { id: 'capture2', nameKey: 'photoPreset2', src: '/missa-capture-2.jpg' },
+  { id: 'capture1', nameKey: 'photoPreset1', src: '/missa-capture.jpg' }
+];
 
 const QR_PRESETS = [
   { id: 'whatsapp', labelKey: 'presetWhatsapp', url: 'https://wa.me/5214443570777' },
@@ -73,7 +83,7 @@ export default function CardCreator({ onBack }) {
   const { t } = useLanguage();
   const cT = t.cardCreator;
 
-  // Wizard active step (1 to 5)
+  // Wizard active step (1 to 6)
   const [activeStep, setActiveStep] = useState(1);
 
   // Active side for preview ('front' | 'back')
@@ -87,6 +97,16 @@ export default function CardCreator({ onBack }) {
   const [phoneWhatsapp, setPhoneWhatsapp] = useState('+52 1 444 357 0777');
   const [cityLocation, setCityLocation] = useState('San Luis Potosí, México');
   const [tagline, setTagline] = useState('Tech House • Club Dates • Festivals');
+
+  // Photo & Framing State
+  const [photoSrc, setPhotoSrc] = useState('/missa-capture-2.jpg');
+  const [photoScale, setPhotoScale] = useState(1.1);
+  const [photoPanX, setPhotoPanX] = useState(0);
+  const [photoPanY, setPhotoPanY] = useState(0);
+  const [photoOpacity, setPhotoOpacity] = useState(0.32);
+  const [photoFilter, setPhotoFilter] = useState('cyberpunk'); // 'cyberpunk' | 'contrast' | 'normal'
+  const [showPhotoBack, setShowPhotoBack] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   // Granular Color Customization State
   const [frameColor, setFrameColor] = useState('#FF003C');
@@ -119,16 +139,47 @@ export default function CardCreator({ onBack }) {
   const backCanvasRef = useRef(null);
   const bgImageRef = useRef(null);
 
-  // Load subtle background photo
+  // Load background photo dynamically
   useEffect(() => {
+    setImageLoaded(false);
     const img = new Image();
     img.crossOrigin = 'anonymous';
-    img.src = '/missa-capture-2.jpg';
+    img.src = photoSrc;
     img.onload = () => {
       bgImageRef.current = img;
+      setImageLoaded(true);
       renderAllCanvases();
     };
-  }, []);
+    img.onerror = () => {
+      console.warn('Error loading card photo:', photoSrc);
+    };
+  }, [photoSrc]);
+
+  // Handle Photo Upload from local device
+  const handlePhotoUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (uploadEvent) => {
+      const result = uploadEvent.target?.result;
+      if (typeof result === 'string') {
+        setPhotoSrc(result);
+        setPhotoScale(1.1);
+        setPhotoPanX(0);
+        setPhotoPanY(0);
+        setShowPhotoBg(true);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Reset Photo Position
+  const handleResetPosition = () => {
+    setPhotoScale(1.1);
+    setPhotoPanX(0);
+    setPhotoPanY(0);
+  };
 
   // Generate QR code Data URL dynamically
   useEffect(() => {
@@ -189,24 +240,30 @@ export default function CardCreator({ onBack }) {
     ctx.fillStyle = '#060608';
     ctx.fillRect(0, 0, w, h);
 
-    // 2. Subtle photo background if enabled
+    // 2. Photo background if enabled
     if (showPhotoBg && bgImageRef.current) {
       ctx.save();
-      ctx.globalAlpha = 0.28;
-      ctx.filter = 'grayscale(100%) contrast(140%) brightness(70%)';
+      ctx.globalAlpha = photoOpacity;
+      if (photoFilter === 'contrast') {
+        ctx.filter = 'contrast(140%) brightness(85%) saturate(110%)';
+      } else if (photoFilter === 'cyberpunk') {
+        ctx.filter = 'grayscale(100%) contrast(150%) brightness(75%)';
+      } else {
+        ctx.filter = 'none';
+      }
 
       const img = bgImageRef.current;
       const imgRatio = img.width / img.height;
       const canvasRatio = w / h;
       let dW, dH;
       if (imgRatio > canvasRatio) {
-        dH = h;
-        dW = h * imgRatio;
+        dH = h * photoScale;
+        dW = dH * imgRatio;
       } else {
-        dW = w;
-        dH = w / imgRatio;
+        dW = w * photoScale;
+        dH = dW / imgRatio;
       }
-      ctx.drawImage(img, (w - dW) / 2, (h - dH) / 2, dW, dH);
+      ctx.drawImage(img, (w - dW) / 2 + photoPanX, (h - dH) / 2 + photoPanY, dW, dH);
       ctx.restore();
     }
 
@@ -400,7 +457,12 @@ export default function CardCreator({ onBack }) {
     glowColor,
     showCyberFrame,
     showTechAccents,
-    showPhotoBg
+    showPhotoBg,
+    photoScale,
+    photoPanX,
+    photoPanY,
+    photoOpacity,
+    photoFilter
   ]);
 
   // Render BACK Canvas
@@ -421,6 +483,33 @@ export default function CardCreator({ onBack }) {
     // 1. Dark Base Background
     ctx.fillStyle = '#060608';
     ctx.fillRect(0, 0, w, h);
+
+    // Optional subtle photo background on back
+    if (showPhotoBack && bgImageRef.current) {
+      ctx.save();
+      ctx.globalAlpha = Math.min(photoOpacity * 0.5, 0.18); // very subtle on back so QR and contact details remain 100% sharp
+      if (photoFilter === 'contrast') {
+        ctx.filter = 'contrast(140%) brightness(85%) saturate(110%)';
+      } else if (photoFilter === 'cyberpunk') {
+        ctx.filter = 'grayscale(100%) contrast(150%) brightness(70%)';
+      } else {
+        ctx.filter = 'none';
+      }
+
+      const img = bgImageRef.current;
+      const imgRatio = img.width / img.height;
+      const canvasRatio = w / h;
+      let dW, dH;
+      if (imgRatio > canvasRatio) {
+        dH = h * photoScale;
+        dW = dH * imgRatio;
+      } else {
+        dW = w * photoScale;
+        dH = dW / imgRatio;
+      }
+      ctx.drawImage(img, (w - dW) / 2 + photoPanX, (h - dH) / 2 + photoPanY, dW, dH);
+      ctx.restore();
+    }
 
     // Subtle technical grid
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
@@ -608,7 +697,13 @@ export default function CardCreator({ onBack }) {
     showQr,
     showCyberFrame,
     showTechAccents,
-    showSocialBadges
+    showSocialBadges,
+    showPhotoBack,
+    photoScale,
+    photoPanX,
+    photoPanY,
+    photoOpacity,
+    photoFilter
   ]);
 
   // Master render
@@ -865,7 +960,7 @@ export default function CardCreator({ onBack }) {
           </p>
         </div>
 
-        {/* Wizard Step Tabs (5 Steps focused on Business Cards) */}
+        {/* Wizard Step Tabs (6 Steps focused on Business Cards) */}
         <div
           style={{
             display: 'flex',
@@ -878,17 +973,27 @@ export default function CardCreator({ onBack }) {
         >
           {[
             { id: 1, label: cT.step1, icon: Type },
-            { id: 2, label: cT.step2, icon: Palette },
-            { id: 3, label: cT.step3, icon: QrCode },
-            { id: 4, label: cT.step4, icon: Layers },
-            { id: 5, label: cT.step5, icon: Download }
+            { id: 2, label: cT.step2, icon: ImageIcon },
+            { id: 3, label: cT.step3, icon: Palette },
+            { id: 4, label: cT.step4, icon: QrCode },
+            { id: 5, label: cT.step5, icon: Layers },
+            { id: 6, label: cT.step6, icon: Download }
           ].map((step) => {
             const Icon = step.icon;
             const isActive = activeStep === step.id;
             return (
               <button
                 key={step.id}
-                onClick={() => setActiveStep(step.id)}
+                onClick={() => {
+                  setActiveStep(step.id);
+                  if (step.id === 4) {
+                    setIsFlipped(true);
+                    setActiveSide('back');
+                  } else if (step.id === 1 || step.id === 2 || step.id === 3) {
+                    setIsFlipped(false);
+                    setActiveSide('front');
+                  }
+                }}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -1133,14 +1238,323 @@ export default function CardCreator({ onBack }) {
                     className="btn btn-primary btn-sm"
                     style={{ padding: '10px 24px', cursor: 'pointer' }}
                   >
+                    <span>Siguiente: Foto de Artista →</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* STEP 2: Photo & Framing */}
+            {activeStep === 2 && (
+              <div>
+                <h3 className="font-display" style={{ fontSize: '1.25rem', marginBottom: '8px', color: '#fff' }}>
+                  {cT.photoTitle}
+                </h3>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', marginBottom: '20px' }}>
+                  {cT.photoHint}
+                </p>
+
+                {/* Upload Custom Photo */}
+                <div style={{ marginBottom: '22px' }}>
+                  <label
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      padding: '24px 16px',
+                      border: '2px dashed rgba(255, 255, 255, 0.18)',
+                      borderRadius: '14px',
+                      background: 'rgba(255, 255, 255, 0.02)',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      textAlign: 'center'
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.borderColor = frameColor)}
+                    onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.18)')}
+                  >
+                    <Upload size={24} color={frameColor} style={{ marginBottom: '8px' }} />
+                    <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#fff' }}>
+                      {cT.photoUpload}
+                    </span>
+                    <span style={{ fontSize: '0.76rem', color: 'var(--text-dim)', marginTop: '4px' }}>
+                      {cT.photoUploadSub}
+                    </span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handlePhotoUpload}
+                      style={{ display: 'none' }}
+                    />
+                  </label>
+                </div>
+
+                {/* Presets Grid */}
+                <div style={{ marginBottom: '22px' }}>
+                  <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: '10px' }}>
+                    {cT.photoPresets}
+                  </label>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    {DEFAULT_PRESETS.map((preset) => {
+                      const isChosen = photoSrc === preset.src;
+                      return (
+                        <div
+                          key={preset.id}
+                          onClick={() => {
+                            setPhotoSrc(preset.src);
+                            setShowPhotoBg(true);
+                            handleResetPosition();
+                          }}
+                          style={{
+                            borderRadius: '12px',
+                            overflow: 'hidden',
+                            border: isChosen
+                              ? `2px solid ${frameColor}`
+                              : '1px solid rgba(255, 255, 255, 0.1)',
+                            background: '#000',
+                            cursor: 'pointer',
+                            position: 'relative',
+                            transition: 'all 0.2s ease'
+                          }}
+                        >
+                          <img
+                            src={preset.src}
+                            alt={preset.nameKey}
+                            style={{
+                              width: '100%',
+                              height: '80px',
+                              objectFit: 'cover',
+                              display: 'block',
+                              opacity: isChosen ? 1 : 0.6
+                            }}
+                          />
+                          <div
+                            style={{
+                              padding: '6px 8px',
+                              fontSize: '0.74rem',
+                              fontWeight: 600,
+                              color: isChosen ? frameColor : '#fff',
+                              background: 'rgba(12, 12, 16, 0.9)',
+                              textAlign: 'center'
+                            }}
+                          >
+                            {cT[preset.nameKey]}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Framing & Position Adjustments */}
+                <div
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.02)',
+                    padding: '18px',
+                    borderRadius: '14px',
+                    border: '1px solid rgba(255, 255, 255, 0.06)',
+                    marginBottom: '20px'
+                  }}
+                >
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      marginBottom: '14px'
+                    }}
+                  >
+                    <span style={{ fontSize: '0.84rem', fontWeight: 600, color: '#fff' }}>
+                      Ajuste de Encuadre & Posición
+                    </span>
+                    <button
+                      onClick={handleResetPosition}
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        color: frameColor,
+                        fontSize: '0.78rem',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px'
+                      }}
+                    >
+                      <RefreshCw size={12} />
+                      <span>{cT.centerPhoto}</span>
+                    </button>
+                  </div>
+
+                  {/* Zoom Slider */}
+                  <div style={{ marginBottom: '14px' }}>
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        fontSize: '0.78rem',
+                        color: 'var(--text-muted)',
+                        marginBottom: '6px'
+                      }}
+                    >
+                      <span>{cT.photoScale}</span>
+                      <span style={{ fontFamily: 'monospace' }}>{photoScale.toFixed(2)}x</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0.6"
+                      max="2.5"
+                      step="0.05"
+                      value={photoScale}
+                      onChange={(e) => setPhotoScale(parseFloat(e.target.value))}
+                      style={{ width: '100%', accentColor: frameColor }}
+                    />
+                  </div>
+
+                  {/* Vertical Position (Subir / Bajar) */}
+                  <div style={{ marginBottom: '14px' }}>
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        fontSize: '0.78rem',
+                        color: 'var(--text-muted)',
+                        marginBottom: '6px'
+                      }}
+                    >
+                      <span>{cT.photoY}</span>
+                      <span style={{ fontFamily: 'monospace' }}>
+                        {photoPanY > 0 ? `+${photoPanY}px (Bajar)` : photoPanY < 0 ? `${photoPanY}px (Subir)` : '0px (Centro)'}
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min="-350"
+                      max="350"
+                      step="5"
+                      value={photoPanY}
+                      onChange={(e) => setPhotoPanY(parseInt(e.target.value))}
+                      style={{ width: '100%', accentColor: frameColor }}
+                    />
+                  </div>
+
+                  {/* Horizontal Position (X) */}
+                  <div style={{ marginBottom: '14px' }}>
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        fontSize: '0.78rem',
+                        color: 'var(--text-muted)',
+                        marginBottom: '6px'
+                      }}
+                    >
+                      <span>{cT.photoX}</span>
+                      <span style={{ fontFamily: 'monospace' }}>{photoPanX}px</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="-400"
+                      max="400"
+                      step="5"
+                      value={photoPanX}
+                      onChange={(e) => setPhotoPanX(parseInt(e.target.value))}
+                      style={{ width: '100%', accentColor: frameColor }}
+                    />
+                  </div>
+
+                  {/* Opacity Slider */}
+                  <div>
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        fontSize: '0.78rem',
+                        color: 'var(--text-muted)',
+                        marginBottom: '6px'
+                      }}
+                    >
+                      <span>{cT.photoOpacity}</span>
+                      <span style={{ fontFamily: 'monospace' }}>{Math.round(photoOpacity * 100)}%</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0.10"
+                      max="0.90"
+                      step="0.02"
+                      value={photoOpacity}
+                      onChange={(e) => setPhotoOpacity(parseFloat(e.target.value))}
+                      style={{ width: '100%', accentColor: frameColor }}
+                    />
+                  </div>
+                </div>
+
+                {/* Color Filters */}
+                <div style={{ marginBottom: '24px' }}>
+                  <label
+                    style={{
+                      fontSize: '0.82rem',
+                      fontWeight: 600,
+                      color: 'var(--text-muted)',
+                      display: 'block',
+                      marginBottom: '10px'
+                    }}
+                  >
+                    {cT.photoFilter}
+                  </label>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+                    {[
+                      { id: 'cyberpunk', label: cT.filterCyberpunk },
+                      { id: 'contrast', label: cT.filterContrast },
+                      { id: 'normal', label: cT.filterOriginal }
+                    ].map((f) => (
+                      <button
+                        key={f.id}
+                        onClick={() => setPhotoFilter(f.id)}
+                        style={{
+                          padding: '8px 10px',
+                          borderRadius: '8px',
+                          fontSize: '0.76rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          border:
+                            photoFilter === f.id
+                              ? `1px solid ${frameColor}`
+                              : '1px solid rgba(255, 255, 255, 0.08)',
+                          background:
+                            photoFilter === f.id
+                              ? hexToRgba(frameColor, 0.15)
+                              : 'rgba(255, 255, 255, 0.03)',
+                          color: photoFilter === f.id ? '#fff' : 'var(--text-muted)'
+                        }}
+                      >
+                        {f.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Prev / Next */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '28px' }}>
+                  <button
+                    onClick={() => setActiveStep(1)}
+                    className="btn btn-secondary btn-sm"
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <span>← Textos</span>
+                  </button>
+                  <button
+                    onClick={() => setActiveStep(3)}
+                    className="btn btn-primary btn-sm"
+                    style={{ cursor: 'pointer' }}
+                  >
                     <span>Siguiente: Colores & Estilo →</span>
                   </button>
                 </div>
               </div>
             )}
 
-            {/* STEP 2: Colors & Style Customization */}
-            {activeStep === 2 && (
+            {/* STEP 3: Colors & Style Customization */}
+            {activeStep === 3 && (
               <div>
                 <h3 className="font-display" style={{ fontSize: '1.25rem', marginBottom: '8px', color: '#fff' }}>
                   {cT.colorsTitle}
@@ -1241,15 +1655,15 @@ export default function CardCreator({ onBack }) {
                 {/* Prev / Next */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '28px' }}>
                   <button
-                    onClick={() => setActiveStep(1)}
+                    onClick={() => setActiveStep(2)}
                     className="btn btn-secondary btn-sm"
                     style={{ cursor: 'pointer' }}
                   >
-                    <span>← Textos</span>
+                    <span>← Foto de Artista</span>
                   </button>
                   <button
                     onClick={() => {
-                      setActiveStep(3);
+                      setActiveStep(4);
                       setIsFlipped(true);
                       setActiveSide('back');
                     }}
@@ -1262,8 +1676,8 @@ export default function CardCreator({ onBack }) {
               </div>
             )}
 
-            {/* STEP 3: QR Code Configuration */}
-            {activeStep === 3 && (
+            {/* STEP 4: QR Code Configuration */}
+            {activeStep === 4 && (
               <div>
                 <h3 className="font-display" style={{ fontSize: '1.25rem', marginBottom: '8px', color: '#fff' }}>
                   {cT.qrTitle}
@@ -1362,7 +1776,7 @@ export default function CardCreator({ onBack }) {
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '28px' }}>
                   <button
                     onClick={() => {
-                      setActiveStep(2);
+                      setActiveStep(3);
                       setIsFlipped(false);
                       setActiveSide('front');
                     }}
@@ -1372,7 +1786,7 @@ export default function CardCreator({ onBack }) {
                     <span>← Colores</span>
                   </button>
                   <button
-                    onClick={() => setActiveStep(4)}
+                    onClick={() => setActiveStep(5)}
                     className="btn btn-primary btn-sm"
                     style={{ cursor: 'pointer' }}
                   >
@@ -1382,8 +1796,8 @@ export default function CardCreator({ onBack }) {
               </div>
             )}
 
-            {/* STEP 4: Masks & Layers */}
-            {activeStep === 4 && (
+            {/* STEP 5: Masks & Layers */}
+            {activeStep === 5 && (
               <div>
                 <h3 className="font-display" style={{ fontSize: '1.25rem', marginBottom: '8px', color: '#fff' }}>
                   {cT.masksTitle}
@@ -1423,6 +1837,12 @@ export default function CardCreator({ onBack }) {
                       label: cT.maskPhotoBg,
                       active: showPhotoBg,
                       toggle: () => setShowPhotoBg(!showPhotoBg)
+                    },
+                    {
+                      id: 'photoBack',
+                      label: cT.maskPhotoBack,
+                      active: showPhotoBack,
+                      toggle: () => setShowPhotoBack(!showPhotoBack)
                     }
                   ].map((layer) => (
                     <div
@@ -1493,14 +1913,14 @@ export default function CardCreator({ onBack }) {
                 {/* Prev / Next */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '28px' }}>
                   <button
-                    onClick={() => setActiveStep(3)}
+                    onClick={() => setActiveStep(4)}
                     className="btn btn-secondary btn-sm"
                     style={{ cursor: 'pointer' }}
                   >
                     <span>← Código QR</span>
                   </button>
                   <button
-                    onClick={() => setActiveStep(5)}
+                    onClick={() => setActiveStep(6)}
                     className="btn btn-primary btn-sm"
                     style={{ cursor: 'pointer' }}
                   >
@@ -1510,8 +1930,8 @@ export default function CardCreator({ onBack }) {
               </div>
             )}
 
-            {/* STEP 5: Export & Downloads */}
-            {activeStep === 5 && (
+            {/* STEP 6: Export & Downloads */}
+            {activeStep === 6 && (
               <div>
                 <h3 className="font-display" style={{ fontSize: '1.25rem', marginBottom: '8px', color: '#fff' }}>
                   {cT.exportTitle}
@@ -1601,7 +2021,7 @@ export default function CardCreator({ onBack }) {
 
                 <div style={{ marginTop: '24px' }}>
                   <button
-                    onClick={() => setActiveStep(4)}
+                    onClick={() => setActiveStep(5)}
                     className="btn btn-secondary btn-sm"
                     style={{ cursor: 'pointer' }}
                   >
