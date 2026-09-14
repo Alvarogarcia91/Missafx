@@ -188,6 +188,37 @@ export default function StoryCreator({ onBack }) {
   const [bookingTextAlign, setBookingTextAlign] = useState('center');
   const [bookingTextUpper, setBookingTextUpper] = useState(true);
 
+  // 7. Top Badge / Tag ("PIONEER DJ PRO SESSION")
+  const [badgeTagText, setBadgeTagText] = useState('PIONEER DJ PRO SESSION');
+  const [badgeTagSize, setBadgeTagSize] = useState(14);
+  const [badgeTagOffsetY, setBadgeTagOffsetY] = useState(0);
+  const [badgeTagOffsetX, setBadgeTagOffsetX] = useState(0);
+  const [badgeTagTracking, setBadgeTagTracking] = useState(0);
+  const [badgeTagAlign, setBadgeTagAlign] = useState('center');
+  const [badgeTagUpper, setBadgeTagUpper] = useState(true);
+
+  // 8. Audio Spec / Sub-badge ("• 48kHz / 24-BIT MASTER AUDIO •")
+  const [audioSpecText, setAudioSpecText] = useState('• 48kHz / 24-BIT MASTER AUDIO •');
+  const [audioSpecSize, setAudioSpecSize] = useState(12);
+  const [audioSpecOffsetY, setAudioSpecOffsetY] = useState(0);
+  const [audioSpecOffsetX, setAudioSpecOffsetX] = useState(0);
+  const [audioSpecTracking, setAudioSpecTracking] = useState(1);
+  const [audioSpecAlign, setAudioSpecAlign] = useState('center');
+  const [audioSpecUpper, setAudioSpecUpper] = useState(true);
+
+  // 9. HUD Technical Coordinates ("[ 22° 09' N // 100° 58' W ]")
+  const [hudCoordsText, setHudCoordsText] = useState('[ 22° 09\' N // 100° 58\' W ]');
+  const [hudCoordsSize, setHudCoordsSize] = useState(13);
+  const [hudCoordsOffsetY, setHudCoordsOffsetY] = useState(0);
+  const [hudCoordsOffsetX, setHudCoordsOffsetX] = useState(0);
+  const [hudCoordsTracking, setHudCoordsTracking] = useState(1);
+  const [hudCoordsUpper, setHudCoordsUpper] = useState(true);
+
+  // 10. Graphic Equalizer (EQ) Position & Scale
+  const [eqOffsetX, setEqOffsetX] = useState(0);
+  const [eqOffsetY, setEqOffsetY] = useState(0);
+  const [eqScale, setEqScale] = useState(1.0);
+
   // Expandable accordion section state (null or element id)
   const [expandedTextSection, setExpandedTextSection] = useState(null);
 
@@ -245,6 +276,34 @@ export default function StoryCreator({ onBack }) {
         setBookingTextAlign('center');
         setBookingTextUpper(true);
         break;
+      case 'badgeTag':
+        setBadgeTagSize(14);
+        setBadgeTagOffsetY(0);
+        setBadgeTagOffsetX(0);
+        setBadgeTagTracking(0);
+        setBadgeTagAlign('center');
+        setBadgeTagUpper(true);
+        break;
+      case 'audioSpec':
+        setAudioSpecSize(12);
+        setAudioSpecOffsetY(0);
+        setAudioSpecOffsetX(0);
+        setAudioSpecTracking(1);
+        setAudioSpecAlign('center');
+        setAudioSpecUpper(true);
+        break;
+      case 'hudCoords':
+        setHudCoordsSize(13);
+        setHudCoordsOffsetY(0);
+        setHudCoordsOffsetX(0);
+        setHudCoordsTracking(1);
+        setHudCoordsUpper(true);
+        break;
+      case 'eq':
+        setEqOffsetX(0);
+        setEqOffsetY(0);
+        setEqScale(1.0);
+        break;
       default:
         break;
     }
@@ -292,6 +351,30 @@ export default function StoryCreator({ onBack }) {
     setBookingTextTracking(1);
     setBookingTextAlign('center');
     setBookingTextUpper(true);
+
+    setBadgeTagSize(14);
+    setBadgeTagOffsetY(0);
+    setBadgeTagOffsetX(0);
+    setBadgeTagTracking(0);
+    setBadgeTagAlign('center');
+    setBadgeTagUpper(true);
+
+    setAudioSpecSize(12);
+    setAudioSpecOffsetY(0);
+    setAudioSpecOffsetX(0);
+    setAudioSpecTracking(1);
+    setAudioSpecAlign('center');
+    setAudioSpecUpper(true);
+
+    setHudCoordsSize(13);
+    setHudCoordsOffsetY(0);
+    setHudCoordsOffsetX(0);
+    setHudCoordsTracking(1);
+    setHudCoordsUpper(true);
+
+    setEqOffsetX(0);
+    setEqOffsetY(0);
+    setEqScale(1.0);
   };
 
   // Granular Color Customization State
@@ -328,7 +411,14 @@ export default function StoryCreator({ onBack }) {
   const [showCyberFrame, setShowCyberFrame] = useState(true);
   const [showTechAccents, setShowTechAccents] = useState(true);
   const [showBadges, setShowBadges] = useState(true);
+  const [showAudioSpec, setShowAudioSpec] = useState(true);
+  const [showHudCoords, setShowHudCoords] = useState(true);
+  const [showEq, setShowEq] = useState(true);
+  const [showDividerLine, setShowDividerLine] = useState(true);
+  const [showSubtitleBox, setShowSubtitleBox] = useState(true);
+  const [showTitleGlow, setShowTitleGlow] = useState(true);
   const [showVignette, setShowVignette] = useState(true);
+  const [showPhotoLayer, setShowPhotoLayer] = useState(true);
 
   // Preview overlay guide
   const [showSafeZones, setShowSafeZones] = useState(false);
@@ -447,7 +537,7 @@ export default function StoryCreator({ onBack }) {
 
       // 2. Draw Photo Layer (Element #4 FX)
       const img = imageRef.current;
-      if (img && imageLoaded) {
+      if (img && imageLoaded && showPhotoLayer) {
         ctx.save();
 
         let animScale = photoScale;
@@ -833,8 +923,8 @@ export default function StoryCreator({ onBack }) {
         ctx.restore();
       }
 
-      // 7. Technical Accents & Overlays (Element #3 FX: Equalizer)
-      if (showTechAccents) {
+      // 7. Technical Accents & HUD Coordinates
+      if (showHudCoords) {
         ctx.save();
         ctx.fillStyle = '#94A3B8';
         ctx.font = '600 13px "Outfit", monospace';
@@ -859,46 +949,59 @@ export default function StoryCreator({ onBack }) {
           ctx.stroke();
         });
 
-        ctx.fillStyle = '#F8FAFC';
-        ctx.fillText('[ 22° 09\' N // 100° 58\' W ]', 110, 80);
+        if (hudCoordsText.trim()) {
+          const coordsToRender = hudCoordsUpper ? hudCoordsText.trim().toUpperCase() : hudCoordsText.trim();
+          ctx.font = `600 ${hudCoordsSize}px "Outfit", monospace`;
+          if (ctx.letterSpacing !== undefined) {
+            ctx.letterSpacing = `${hudCoordsTracking}px`;
+          }
+          ctx.fillStyle = '#F8FAFC';
+          ctx.fillText(coordsToRender, 110 + hudCoordsOffsetX, 80 + hudCoordsOffsetY);
+        }
 
-        const eqX = width - 220;
-        const eqY = 70;
+        ctx.restore();
+      }
+
+      // 7b. Graphic Equalizer Overlay (Element #3 FX: Equalizer)
+      if (showEq) {
+        ctx.save();
+        const baseEqX = width - 220 + eqOffsetX;
+        const baseEqY = 70 + eqOffsetY;
         const barCount = 12;
         const baseHeights = [14, 22, 10, 26, 18, 12, 28, 20, 16, 24, 15, 8];
 
         for (let i = 0; i < barCount; i++) {
-          let barH = baseHeights[i];
+          let barH = baseHeights[i] * eqScale;
           if (isMotionActive) {
             if (eqEffect === 'vu-bounce') {
-              barH = Math.min(28, Math.max(4, Math.abs(Math.sin(time * 7 * eqSpeed + i * 0.65)) * 24 * eqIntensity));
+              barH = Math.min(28 * eqScale, Math.max(4, Math.abs(Math.sin(time * 7 * eqSpeed + i * 0.65)) * 24 * eqIntensity * eqScale));
             } else if (eqEffect === 'wave-flow') {
-              barH = Math.min(28, Math.max(4, ((Math.sin(time * 5 * eqSpeed + i * 0.5) * 0.5 + 0.5) * 25 * eqIntensity)));
+              barH = Math.min(28 * eqScale, Math.max(4, ((Math.sin(time * 5 * eqSpeed + i * 0.5) * 0.5 + 0.5) * 25 * eqIntensity * eqScale)));
             } else if (eqEffect === 'bass-pulse') {
               const bassHit = Math.pow(Math.sin(Math.PI * beatPhase), 4);
-              barH = Math.min(28, Math.max(4, bassHit * 22 * eqIntensity + Math.sin(time * 12 + i) * 5));
+              barH = Math.min(28 * eqScale, Math.max(4, (bassHit * 22 * eqIntensity + Math.sin(time * 12 + i) * 5) * eqScale));
             } else if (eqEffect === 'peak-meter') {
               const bounce = Math.abs(Math.sin(time * 7.5 * eqSpeed + i * 0.7));
-              barH = Math.min(26, Math.max(4, bounce * 23 * eqIntensity));
+              barH = Math.min(26 * eqScale, Math.max(4, bounce * 23 * eqIntensity * eqScale));
             } else if (eqEffect === 'center-split') {
               const wave = Math.abs(Math.sin(time * 6 * eqSpeed + i * 0.5));
-              barH = Math.min(26, Math.max(4, wave * 24 * eqIntensity));
+              barH = Math.min(26 * eqScale, Math.max(4, wave * 24 * eqIntensity * eqScale));
             }
           }
 
           if (eqEffect === 'center-split') {
             const halfH = barH / 2;
             ctx.fillStyle = i % 3 === 0 ? techColor : 'rgba(255, 255, 255, 0.7)';
-            ctx.fillRect(eqX + i * 8, eqY + 14 - halfH, 5, halfH * 2);
+            ctx.fillRect(baseEqX + i * 8 * eqScale, baseEqY + (14 * eqScale) - halfH, 5 * eqScale, halfH * 2);
           } else {
             ctx.fillStyle = i % 3 === 0 ? techColor : 'rgba(255, 255, 255, 0.7)';
-            ctx.fillRect(eqX + i * 8, eqY + (28 - barH), 5, barH);
+            ctx.fillRect(baseEqX + i * 8 * eqScale, baseEqY + (28 * eqScale - barH), 5 * eqScale, barH);
 
             if (eqEffect === 'peak-meter') {
-              const peakOffset = ((Math.sin(time * 3.5 * eqSpeed + i * 0.9) * 0.5 + 0.5) * 4);
-              const peakY = Math.max(eqY, eqY + (28 - barH) - 3 - peakOffset);
+              const peakOffset = ((Math.sin(time * 3.5 * eqSpeed + i * 0.9) * 0.5 + 0.5) * 4 * eqScale);
+              const peakY = Math.max(baseEqY, baseEqY + (28 * eqScale - barH) - (3 * eqScale) - peakOffset);
               ctx.fillStyle = '#FFFFFF';
-              ctx.fillRect(eqX + i * 8, peakY, 5, 2);
+              ctx.fillRect(baseEqX + i * 8 * eqScale, peakY, 5 * eqScale, 2 * eqScale);
             }
           }
         }
@@ -906,17 +1009,23 @@ export default function StoryCreator({ onBack }) {
         ctx.restore();
       }
 
-      // 8. Badges & Logos (if enabled)
-      if (showBadges) {
+      // 8. Top Badge & Logos (if enabled)
+      if (showBadges && badgeTagText.trim()) {
         ctx.save();
 
-        const tagText = 'PIONEER DJ PRO SESSION';
-        ctx.font = '700 14px "Outfit", sans-serif';
+        const tagText = badgeTagUpper ? badgeTagText.trim().toUpperCase() : badgeTagText.trim();
+        ctx.font = `700 ${badgeTagSize}px "Outfit", sans-serif`;
+        if (ctx.letterSpacing !== undefined) {
+          ctx.letterSpacing = `${badgeTagTracking}px`;
+        }
         const tagMetrics = ctx.measureText(tagText);
-        const tagW = tagMetrics.width + 36;
-        const tagH = 34;
-        const tagX = (width - tagW) / 2;
-        const tagY = height * 0.08;
+        const tagW = tagMetrics.width + (badgeTagSize * 2.5);
+        const tagH = Math.round(badgeTagSize * 2.4);
+
+        let tagX = (width - tagW) / 2 + badgeTagOffsetX;
+        if (badgeTagAlign === 'left') tagX = width * 0.12 + badgeTagOffsetX;
+        if (badgeTagAlign === 'right') tagX = width * 0.88 - tagW + badgeTagOffsetX;
+        const tagY = height * 0.08 + badgeTagOffsetY;
 
         ctx.fillStyle = 'rgba(12, 12, 16, 0.85)';
         ctx.strokeStyle = badgeColor;
@@ -927,21 +1036,38 @@ export default function StoryCreator({ onBack }) {
         ctx.fill();
         ctx.stroke();
 
-        const dotRadius = isMotionActive ? 4 + Math.sin(omega * 3) * 1.2 : 4;
+        const dotRadius = isMotionActive ? (badgeTagSize * 0.28) + Math.sin(omega * 3) * 1.2 : (badgeTagSize * 0.28);
         ctx.fillStyle = badgeColor;
         ctx.beginPath();
-        ctx.arc(tagX + 16, tagY + tagH / 2, dotRadius, 0, Math.PI * 2);
+        ctx.arc(tagX + (badgeTagSize * 1.1), tagY + tagH / 2, dotRadius, 0, Math.PI * 2);
         ctx.fill();
 
         ctx.fillStyle = '#FFFFFF';
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
-        ctx.fillText(tagText, tagX + 26, tagY + tagH / 2);
+        ctx.fillText(tagText, tagX + (badgeTagSize * 1.8), tagY + tagH / 2);
 
-        ctx.font = '600 12px "Outfit", monospace';
+        ctx.restore();
+      }
+
+      // 8b. Audio Spec / Sub-badge
+      if (showAudioSpec && audioSpecText.trim()) {
+        ctx.save();
+        const specText = audioSpecUpper ? audioSpecText.trim().toUpperCase() : audioSpecText.trim();
+        ctx.font = `600 ${audioSpecSize}px "Outfit", monospace`;
+        if (ctx.letterSpacing !== undefined) {
+          ctx.letterSpacing = `${audioSpecTracking}px`;
+        }
         ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-        ctx.textAlign = 'center';
-        ctx.fillText('• 48kHz / 24-BIT MASTER AUDIO •', width / 2, tagY + tagH + 18);
+        ctx.textBaseline = 'middle';
+
+        let specX = width / 2 + audioSpecOffsetX;
+        if (audioSpecAlign === 'left') specX = width * 0.12 + audioSpecOffsetX;
+        if (audioSpecAlign === 'right') specX = width * 0.88 + audioSpecOffsetX;
+        ctx.textAlign = audioSpecAlign;
+
+        const specY = height * 0.08 + (badgeTagSize * 2.4) + 16 + audioSpecOffsetY;
+        ctx.fillText(specText, specX, specY);
 
         ctx.restore();
       }
@@ -1013,17 +1139,19 @@ export default function StoryCreator({ onBack }) {
       }
 
       // Glow background behind title (follows title dynamically across full canvas)
-      const glowGrad = ctx.createRadialGradient(
-        titleX, titleY, 10,
-        titleX, titleY, width * 0.48
-      );
-      const bgGlowAlpha = isMotionActive && titleEffect === 'neon-breathe'
-        ? 0.15 + (Math.sin(2 * Math.PI * (titleBpm / 60) * time) * 0.5 + 0.5) * 0.15
-        : 0.22;
-      glowGrad.addColorStop(0, hexToRgba(titleColor, bgGlowAlpha));
-      glowGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-      ctx.fillStyle = glowGrad;
-      ctx.fillRect(titleX - width * 0.5, titleY - 180, width, 360);
+      if (showTitleGlow) {
+        const glowGrad = ctx.createRadialGradient(
+          titleX, titleY, 10,
+          titleX, titleY, width * 0.48
+        );
+        const bgGlowAlpha = isMotionActive && titleEffect === 'neon-breathe'
+          ? 0.15 + (Math.sin(2 * Math.PI * (titleBpm / 60) * time) * 0.5 + 0.5) * 0.15
+          : 0.22;
+        glowGrad.addColorStop(0, hexToRgba(titleColor, bgGlowAlpha));
+        glowGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = glowGrad;
+        ctx.fillRect(titleX - width * 0.5, titleY - 180, width, 360);
+      }
 
       // Subtitle Pill
       if (subTitle.trim()) {
@@ -1054,12 +1182,14 @@ export default function StoryCreator({ onBack }) {
           effectiveBadgeTextColor = '#FFFFFF';
         }
 
-        ctx.fillStyle = badgeColor;
-        ctx.beginPath();
-        ctx.roundRect(subX, subY, subW, subH, 6);
-        ctx.fill();
+        if (showSubtitleBox) {
+          ctx.fillStyle = badgeColor;
+          ctx.beginPath();
+          ctx.roundRect(subX, subY, subW, subH, 6);
+          ctx.fill();
+        }
 
-        ctx.fillStyle = effectiveBadgeTextColor;
+        ctx.fillStyle = showSubtitleBox ? effectiveBadgeTextColor : badgeColor;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(textToRender, subCenterX, subY + subH / 2);
@@ -1129,14 +1259,16 @@ export default function StoryCreator({ onBack }) {
       }
 
       // Divider Line
-      ctx.shadowBlur = 0;
-      ctx.globalAlpha = 1.0;
-      ctx.strokeStyle = hexToRgba(textColor, 0.2);
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(width * 0.15 + eventDateOffsetX, bottomBase - 30 + eventDateOffsetY);
-      ctx.lineTo(width * 0.85 + eventDateOffsetX, bottomBase - 30 + eventDateOffsetY);
-      ctx.stroke();
+      if (showDividerLine) {
+        ctx.shadowBlur = 0;
+        ctx.globalAlpha = 1.0;
+        ctx.strokeStyle = hexToRgba(textColor, 0.2);
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(width * 0.15 + eventDateOffsetX, bottomBase - 30 + eventDateOffsetY);
+        ctx.lineTo(width * 0.85 + eventDateOffsetX, bottomBase - 30 + eventDateOffsetY);
+        ctx.stroke();
+      }
 
       // Event Date & Venue Info
       ctx.textBaseline = 'middle';
@@ -1268,11 +1400,41 @@ export default function StoryCreator({ onBack }) {
       badgeTextColor,
       textColor,
       techColor,
+      badgeTagText,
+      badgeTagSize,
+      badgeTagOffsetY,
+      badgeTagOffsetX,
+      badgeTagTracking,
+      badgeTagAlign,
+      badgeTagUpper,
+      audioSpecText,
+      audioSpecSize,
+      audioSpecOffsetY,
+      audioSpecOffsetX,
+      audioSpecTracking,
+      audioSpecAlign,
+      audioSpecUpper,
+      hudCoordsText,
+      hudCoordsSize,
+      hudCoordsOffsetY,
+      hudCoordsOffsetX,
+      hudCoordsTracking,
+      hudCoordsUpper,
+      eqOffsetX,
+      eqOffsetY,
+      eqScale,
       showRepeatText,
       showCyberFrame,
       showTechAccents,
       showBadges,
+      showAudioSpec,
+      showHudCoords,
+      showEq,
+      showDividerLine,
+      showSubtitleBox,
+      showTitleGlow,
       showVignette,
+      showPhotoLayer,
       showSafeZones,
       isMotionActive,
       loopDuration,
@@ -3504,6 +3666,790 @@ export default function StoryCreator({ onBack }) {
                       </div>
                     )}
                   </div>
+
+                  {/* 7. Top Badge / Tag */}
+                  <div
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.02)',
+                      border: expandedTextSection === 'badgeTag' ? `1px solid ${hexToRgba(frameColor, 0.35)}` : '1px solid rgba(255, 255, 255, 0.08)',
+                      borderRadius: '14px',
+                      padding: '14px 16px',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontSize: '0.84rem', fontWeight: 700, color: '#fff' }}>
+                          {cT.badgeTagLabel}
+                        </span>
+                        <span
+                          style={{
+                            fontSize: '0.72rem',
+                            color: 'rgba(255, 255, 255, 0.7)',
+                            background: 'rgba(255, 255, 255, 0.08)',
+                            padding: '2px 8px',
+                            borderRadius: '6px',
+                            fontWeight: 700,
+                            fontFamily: 'monospace'
+                          }}
+                        >
+                          {badgeTagSize}px • {badgeTagAlign.toUpperCase()}
+                        </span>
+                      </div>
+
+                      <button
+                        onClick={() => toggleTextSection('badgeTag')}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          padding: '5px 10px',
+                          borderRadius: '8px',
+                          border: expandedTextSection === 'badgeTag' ? `1px solid ${frameColor}` : '1px solid rgba(255, 255, 255, 0.1)',
+                          background: expandedTextSection === 'badgeTag' ? hexToRgba(frameColor, 0.2) : 'rgba(255, 255, 255, 0.04)',
+                          color: expandedTextSection === 'badgeTag' ? '#fff' : 'var(--text-muted)',
+                          fontSize: '0.74rem',
+                          fontWeight: 600,
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <Sliders size={13} />
+                        <span>{expandedTextSection === 'badgeTag' ? 'Ocultar' : cT.textAdvancedToggle}</span>
+                        <ChevronDown size={13} style={{ transform: expandedTextSection === 'badgeTag' ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+                      </button>
+                    </div>
+
+                    <input
+                      type="text"
+                      value={badgeTagText}
+                      maxLength={40}
+                      onChange={(e) => setBadgeTagText(e.target.value)}
+                      placeholder={cT.badgeTagPlaceholder}
+                      style={{
+                        width: '100%',
+                        padding: '10px 14px',
+                        background: 'rgba(0, 0, 0, 0.4)',
+                        border: '1px solid rgba(255, 255, 255, 0.12)',
+                        borderRadius: '10px',
+                        color: '#fff',
+                        fontSize: '0.9rem',
+                        outline: 'none'
+                      }}
+                    />
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-dim)', marginTop: '4px', paddingLeft: '2px' }}>
+                      {cT.badgeTagHelp}
+                    </div>
+
+                    {expandedTextSection === 'badgeTag' && (
+                      <div
+                        style={{
+                          marginTop: '14px',
+                          padding: '14px',
+                          background: 'rgba(0, 0, 0, 0.35)',
+                          borderRadius: '10px',
+                          border: '1px solid rgba(255, 255, 255, 0.05)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '12px'
+                        }}
+                      >
+                        {/* Size */}
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                            <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>{cT.fontSizeLabel}:</span>
+                            <span style={{ fontSize: '0.76rem', color: '#fff', fontFamily: 'monospace', fontWeight: 700 }}>{badgeTagSize} px</span>
+                          </div>
+                          <input
+                            type="range"
+                            min="9"
+                            max="36"
+                            step="1"
+                            value={badgeTagSize}
+                            onChange={(e) => setBadgeTagSize(parseInt(e.target.value, 10))}
+                            style={{ width: '100%', accentColor: frameColor, cursor: 'pointer' }}
+                          />
+                        </div>
+
+                        {/* Position Y */}
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                            <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>{cT.positionYLabel} (Subir / Bajar):</span>
+                            <span style={{ fontSize: '0.76rem', color: '#fff', fontFamily: 'monospace', fontWeight: 700 }}>{badgeTagOffsetY > 0 ? `+${badgeTagOffsetY}` : badgeTagOffsetY} px</span>
+                          </div>
+                          <input
+                            type="range"
+                            min="-1650"
+                            max="450"
+                            step="5"
+                            value={badgeTagOffsetY}
+                            onChange={(e) => setBadgeTagOffsetY(parseInt(e.target.value, 10))}
+                            style={{ width: '100%', accentColor: frameColor, cursor: 'pointer' }}
+                          />
+                        </div>
+
+                        {/* Position X */}
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                            <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>{cT.positionXLabel} (Izquierda / Derecha):</span>
+                            <span style={{ fontSize: '0.76rem', color: '#fff', fontFamily: 'monospace', fontWeight: 700 }}>{badgeTagOffsetX > 0 ? `+${badgeTagOffsetX}` : badgeTagOffsetX} px</span>
+                          </div>
+                          <input
+                            type="range"
+                            min="-650"
+                            max="650"
+                            step="5"
+                            value={badgeTagOffsetX}
+                            onChange={(e) => setBadgeTagOffsetX(parseInt(e.target.value, 10))}
+                            style={{ width: '100%', accentColor: frameColor, cursor: 'pointer' }}
+                          />
+                        </div>
+
+                        {/* Tracking */}
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                            <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>{cT.letterSpacingLabel}:</span>
+                            <span style={{ fontSize: '0.76rem', color: '#fff', fontFamily: 'monospace', fontWeight: 700 }}>{badgeTagTracking} px</span>
+                          </div>
+                          <input
+                            type="range"
+                            min="0"
+                            max="20"
+                            step="1"
+                            value={badgeTagTracking}
+                            onChange={(e) => setBadgeTagTracking(parseInt(e.target.value, 10))}
+                            style={{ width: '100%', accentColor: frameColor, cursor: 'pointer' }}
+                          />
+                        </div>
+
+                        {/* Alignment */}
+                        <div>
+                          <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>{cT.alignLabel}:</span>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px' }}>
+                            {[
+                              { id: 'left', label: cT.alignLeft, icon: AlignLeft },
+                              { id: 'center', label: cT.alignCenter, icon: AlignCenter },
+                              { id: 'right', label: cT.alignRight, icon: AlignRight }
+                            ].map((al) => {
+                              const Icon = al.icon;
+                              const isActive = badgeTagAlign === al.id;
+                              return (
+                                <button
+                                  key={al.id}
+                                  onClick={() => setBadgeTagAlign(al.id)}
+                                  style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '5px',
+                                    padding: '6px 10px',
+                                    borderRadius: '8px',
+                                    border: isActive ? `1px solid ${frameColor}` : '1px solid rgba(255, 255, 255, 0.08)',
+                                    background: isActive ? hexToRgba(frameColor, 0.2) : 'rgba(255, 255, 255, 0.04)',
+                                    color: isActive ? '#fff' : 'var(--text-muted)',
+                                    fontSize: '0.74rem',
+                                    fontWeight: 600,
+                                    cursor: 'pointer'
+                                  }}
+                                >
+                                  <Icon size={12} />
+                                  <span>{al.label}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Toggle Uppercase & Reset */}
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '6px', borderTop: '1px solid rgba(255, 255, 255, 0.06)' }}>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.76rem', color: 'var(--text-muted)' }}>
+                            <input
+                              type="checkbox"
+                              checked={badgeTagUpper}
+                              onChange={(e) => setBadgeTagUpper(e.target.checked)}
+                              style={{ accentColor: frameColor, cursor: 'pointer' }}
+                            />
+                            <span>{cT.uppercaseLabel}</span>
+                          </label>
+
+                          <button
+                            onClick={() => handleResetText('badgeTag')}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '5px',
+                              background: 'none',
+                              border: 'none',
+                              color: 'var(--text-dim)',
+                              fontSize: '0.72rem',
+                              cursor: 'pointer',
+                              padding: '2px 6px'
+                            }}
+                          >
+                            <RotateCcw size={11} />
+                            <span>{cT.textResetThis}</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 8. Audio Spec / Sub-badge */}
+                  <div
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.02)',
+                      border: expandedTextSection === 'audioSpec' ? `1px solid ${hexToRgba(frameColor, 0.35)}` : '1px solid rgba(255, 255, 255, 0.08)',
+                      borderRadius: '14px',
+                      padding: '14px 16px',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontSize: '0.84rem', fontWeight: 700, color: '#fff' }}>
+                          {cT.audioSpecLabel}
+                        </span>
+                        <span
+                          style={{
+                            fontSize: '0.72rem',
+                            color: 'rgba(255, 255, 255, 0.7)',
+                            background: 'rgba(255, 255, 255, 0.08)',
+                            padding: '2px 8px',
+                            borderRadius: '6px',
+                            fontWeight: 700,
+                            fontFamily: 'monospace'
+                          }}
+                        >
+                          {audioSpecSize}px • {audioSpecAlign.toUpperCase()}
+                        </span>
+                      </div>
+
+                      <button
+                        onClick={() => toggleTextSection('audioSpec')}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          padding: '5px 10px',
+                          borderRadius: '8px',
+                          border: expandedTextSection === 'audioSpec' ? `1px solid ${frameColor}` : '1px solid rgba(255, 255, 255, 0.1)',
+                          background: expandedTextSection === 'audioSpec' ? hexToRgba(frameColor, 0.2) : 'rgba(255, 255, 255, 0.04)',
+                          color: expandedTextSection === 'audioSpec' ? '#fff' : 'var(--text-muted)',
+                          fontSize: '0.74rem',
+                          fontWeight: 600,
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <Sliders size={13} />
+                        <span>{expandedTextSection === 'audioSpec' ? 'Ocultar' : cT.textAdvancedToggle}</span>
+                        <ChevronDown size={13} style={{ transform: expandedTextSection === 'audioSpec' ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+                      </button>
+                    </div>
+
+                    <input
+                      type="text"
+                      value={audioSpecText}
+                      maxLength={50}
+                      onChange={(e) => setAudioSpecText(e.target.value)}
+                      placeholder={cT.audioSpecPlaceholder}
+                      style={{
+                        width: '100%',
+                        padding: '10px 14px',
+                        background: 'rgba(0, 0, 0, 0.4)',
+                        border: '1px solid rgba(255, 255, 255, 0.12)',
+                        borderRadius: '10px',
+                        color: '#fff',
+                        fontSize: '0.9rem',
+                        outline: 'none'
+                      }}
+                    />
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-dim)', marginTop: '4px', paddingLeft: '2px' }}>
+                      {cT.audioSpecHelp}
+                    </div>
+
+                    {expandedTextSection === 'audioSpec' && (
+                      <div
+                        style={{
+                          marginTop: '14px',
+                          padding: '14px',
+                          background: 'rgba(0, 0, 0, 0.35)',
+                          borderRadius: '10px',
+                          border: '1px solid rgba(255, 255, 255, 0.05)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '12px'
+                        }}
+                      >
+                        {/* Size */}
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                            <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>{cT.fontSizeLabel}:</span>
+                            <span style={{ fontSize: '0.76rem', color: '#fff', fontFamily: 'monospace', fontWeight: 700 }}>{audioSpecSize} px</span>
+                          </div>
+                          <input
+                            type="range"
+                            min="8"
+                            max="30"
+                            step="1"
+                            value={audioSpecSize}
+                            onChange={(e) => setAudioSpecSize(parseInt(e.target.value, 10))}
+                            style={{ width: '100%', accentColor: frameColor, cursor: 'pointer' }}
+                          />
+                        </div>
+
+                        {/* Position Y */}
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                            <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>{cT.positionYLabel} (Subir / Bajar):</span>
+                            <span style={{ fontSize: '0.76rem', color: '#fff', fontFamily: 'monospace', fontWeight: 700 }}>{audioSpecOffsetY > 0 ? `+${audioSpecOffsetY}` : audioSpecOffsetY} px</span>
+                          </div>
+                          <input
+                            type="range"
+                            min="-1650"
+                            max="450"
+                            step="5"
+                            value={audioSpecOffsetY}
+                            onChange={(e) => setAudioSpecOffsetY(parseInt(e.target.value, 10))}
+                            style={{ width: '100%', accentColor: frameColor, cursor: 'pointer' }}
+                          />
+                        </div>
+
+                        {/* Position X */}
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                            <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>{cT.positionXLabel} (Izquierda / Derecha):</span>
+                            <span style={{ fontSize: '0.76rem', color: '#fff', fontFamily: 'monospace', fontWeight: 700 }}>{audioSpecOffsetX > 0 ? `+${audioSpecOffsetX}` : audioSpecOffsetX} px</span>
+                          </div>
+                          <input
+                            type="range"
+                            min="-650"
+                            max="650"
+                            step="5"
+                            value={audioSpecOffsetX}
+                            onChange={(e) => setAudioSpecOffsetX(parseInt(e.target.value, 10))}
+                            style={{ width: '100%', accentColor: frameColor, cursor: 'pointer' }}
+                          />
+                        </div>
+
+                        {/* Tracking */}
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                            <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>{cT.letterSpacingLabel}:</span>
+                            <span style={{ fontSize: '0.76rem', color: '#fff', fontFamily: 'monospace', fontWeight: 700 }}>{audioSpecTracking} px</span>
+                          </div>
+                          <input
+                            type="range"
+                            min="0"
+                            max="20"
+                            step="1"
+                            value={audioSpecTracking}
+                            onChange={(e) => setAudioSpecTracking(parseInt(e.target.value, 10))}
+                            style={{ width: '100%', accentColor: frameColor, cursor: 'pointer' }}
+                          />
+                        </div>
+
+                        {/* Alignment */}
+                        <div>
+                          <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>{cT.alignLabel}:</span>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px' }}>
+                            {[
+                              { id: 'left', label: cT.alignLeft, icon: AlignLeft },
+                              { id: 'center', label: cT.alignCenter, icon: AlignCenter },
+                              { id: 'right', label: cT.alignRight, icon: AlignRight }
+                            ].map((al) => {
+                              const Icon = al.icon;
+                              const isActive = audioSpecAlign === al.id;
+                              return (
+                                <button
+                                  key={al.id}
+                                  onClick={() => setAudioSpecAlign(al.id)}
+                                  style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '5px',
+                                    padding: '6px 10px',
+                                    borderRadius: '8px',
+                                    border: isActive ? `1px solid ${frameColor}` : '1px solid rgba(255, 255, 255, 0.08)',
+                                    background: isActive ? hexToRgba(frameColor, 0.2) : 'rgba(255, 255, 255, 0.04)',
+                                    color: isActive ? '#fff' : 'var(--text-muted)',
+                                    fontSize: '0.74rem',
+                                    fontWeight: 600,
+                                    cursor: 'pointer'
+                                  }}
+                                >
+                                  <Icon size={12} />
+                                  <span>{al.label}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Toggle Uppercase & Reset */}
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '6px', borderTop: '1px solid rgba(255, 255, 255, 0.06)' }}>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.76rem', color: 'var(--text-muted)' }}>
+                            <input
+                              type="checkbox"
+                              checked={audioSpecUpper}
+                              onChange={(e) => setAudioSpecUpper(e.target.checked)}
+                              style={{ accentColor: frameColor, cursor: 'pointer' }}
+                            />
+                            <span>{cT.uppercaseLabel}</span>
+                          </label>
+
+                          <button
+                            onClick={() => handleResetText('audioSpec')}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '5px',
+                              background: 'none',
+                              border: 'none',
+                              color: 'var(--text-dim)',
+                              fontSize: '0.72rem',
+                              cursor: 'pointer',
+                              padding: '2px 6px'
+                            }}
+                          >
+                            <RotateCcw size={11} />
+                            <span>{cT.textResetThis}</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 9. Technical Coordinates / HUD */}
+                  <div
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.02)',
+                      border: expandedTextSection === 'hudCoords' ? `1px solid ${hexToRgba(frameColor, 0.35)}` : '1px solid rgba(255, 255, 255, 0.08)',
+                      borderRadius: '14px',
+                      padding: '14px 16px',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontSize: '0.84rem', fontWeight: 700, color: '#fff' }}>
+                          {cT.hudCoordsLabel}
+                        </span>
+                        <span
+                          style={{
+                            fontSize: '0.72rem',
+                            color: 'rgba(255, 255, 255, 0.7)',
+                            background: 'rgba(255, 255, 255, 0.08)',
+                            padding: '2px 8px',
+                            borderRadius: '6px',
+                            fontWeight: 700,
+                            fontFamily: 'monospace'
+                          }}
+                        >
+                          {hudCoordsSize}px
+                        </span>
+                      </div>
+
+                      <button
+                        onClick={() => toggleTextSection('hudCoords')}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          padding: '5px 10px',
+                          borderRadius: '8px',
+                          border: expandedTextSection === 'hudCoords' ? `1px solid ${frameColor}` : '1px solid rgba(255, 255, 255, 0.1)',
+                          background: expandedTextSection === 'hudCoords' ? hexToRgba(frameColor, 0.2) : 'rgba(255, 255, 255, 0.04)',
+                          color: expandedTextSection === 'hudCoords' ? '#fff' : 'var(--text-muted)',
+                          fontSize: '0.74rem',
+                          fontWeight: 600,
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <Sliders size={13} />
+                        <span>{expandedTextSection === 'hudCoords' ? 'Ocultar' : cT.textAdvancedToggle}</span>
+                        <ChevronDown size={13} style={{ transform: expandedTextSection === 'hudCoords' ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+                      </button>
+                    </div>
+
+                    <input
+                      type="text"
+                      value={hudCoordsText}
+                      maxLength={45}
+                      onChange={(e) => setHudCoordsText(e.target.value)}
+                      placeholder={cT.hudCoordsPlaceholder}
+                      style={{
+                        width: '100%',
+                        padding: '10px 14px',
+                        background: 'rgba(0, 0, 0, 0.4)',
+                        border: '1px solid rgba(255, 255, 255, 0.12)',
+                        borderRadius: '10px',
+                        color: '#fff',
+                        fontSize: '0.9rem',
+                        outline: 'none'
+                      }}
+                    />
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-dim)', marginTop: '4px', paddingLeft: '2px' }}>
+                      {cT.hudCoordsHelp}
+                    </div>
+
+                    {expandedTextSection === 'hudCoords' && (
+                      <div
+                        style={{
+                          marginTop: '14px',
+                          padding: '14px',
+                          background: 'rgba(0, 0, 0, 0.35)',
+                          borderRadius: '10px',
+                          border: '1px solid rgba(255, 255, 255, 0.05)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '12px'
+                        }}
+                      >
+                        {/* Size */}
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                            <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>{cT.fontSizeLabel}:</span>
+                            <span style={{ fontSize: '0.76rem', color: '#fff', fontFamily: 'monospace', fontWeight: 700 }}>{hudCoordsSize} px</span>
+                          </div>
+                          <input
+                            type="range"
+                            min="8"
+                            max="30"
+                            step="1"
+                            value={hudCoordsSize}
+                            onChange={(e) => setHudCoordsSize(parseInt(e.target.value, 10))}
+                            style={{ width: '100%', accentColor: frameColor, cursor: 'pointer' }}
+                          />
+                        </div>
+
+                        {/* Position Y */}
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                            <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>{cT.positionYLabel} (Subir / Bajar):</span>
+                            <span style={{ fontSize: '0.76rem', color: '#fff', fontFamily: 'monospace', fontWeight: 700 }}>{hudCoordsOffsetY > 0 ? `+${hudCoordsOffsetY}` : hudCoordsOffsetY} px</span>
+                          </div>
+                          <input
+                            type="range"
+                            min="-1650"
+                            max="450"
+                            step="5"
+                            value={hudCoordsOffsetY}
+                            onChange={(e) => setHudCoordsOffsetY(parseInt(e.target.value, 10))}
+                            style={{ width: '100%', accentColor: frameColor, cursor: 'pointer' }}
+                          />
+                        </div>
+
+                        {/* Position X */}
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                            <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>{cT.positionXLabel} (Izquierda / Derecha):</span>
+                            <span style={{ fontSize: '0.76rem', color: '#fff', fontFamily: 'monospace', fontWeight: 700 }}>{hudCoordsOffsetX > 0 ? `+${hudCoordsOffsetX}` : hudCoordsOffsetX} px</span>
+                          </div>
+                          <input
+                            type="range"
+                            min="-650"
+                            max="650"
+                            step="5"
+                            value={hudCoordsOffsetX}
+                            onChange={(e) => setHudCoordsOffsetX(parseInt(e.target.value, 10))}
+                            style={{ width: '100%', accentColor: frameColor, cursor: 'pointer' }}
+                          />
+                        </div>
+
+                        {/* Tracking */}
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                            <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>{cT.letterSpacingLabel}:</span>
+                            <span style={{ fontSize: '0.76rem', color: '#fff', fontFamily: 'monospace', fontWeight: 700 }}>{hudCoordsTracking} px</span>
+                          </div>
+                          <input
+                            type="range"
+                            min="0"
+                            max="20"
+                            step="1"
+                            value={hudCoordsTracking}
+                            onChange={(e) => setHudCoordsTracking(parseInt(e.target.value, 10))}
+                            style={{ width: '100%', accentColor: frameColor, cursor: 'pointer' }}
+                          />
+                        </div>
+
+                        {/* Toggle Uppercase & Reset */}
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '6px', borderTop: '1px solid rgba(255, 255, 255, 0.06)' }}>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.76rem', color: 'var(--text-muted)' }}>
+                            <input
+                              type="checkbox"
+                              checked={hudCoordsUpper}
+                              onChange={(e) => setHudCoordsUpper(e.target.checked)}
+                              style={{ accentColor: frameColor, cursor: 'pointer' }}
+                            />
+                            <span>{cT.uppercaseLabel}</span>
+                          </label>
+
+                          <button
+                            onClick={() => handleResetText('hudCoords')}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '5px',
+                              background: 'none',
+                              border: 'none',
+                              color: 'var(--text-dim)',
+                              fontSize: '0.72rem',
+                              cursor: 'pointer',
+                              padding: '2px 6px'
+                            }}
+                          >
+                            <RotateCcw size={11} />
+                            <span>{cT.textResetThis}</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 10. Graphic Equalizer Position & Scale */}
+                  <div
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.02)',
+                      border: expandedTextSection === 'eq' ? `1px solid ${hexToRgba(frameColor, 0.35)}` : '1px solid rgba(255, 255, 255, 0.08)',
+                      borderRadius: '14px',
+                      padding: '14px 16px',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontSize: '0.84rem', fontWeight: 700, color: '#fff' }}>
+                          {cT.eqSettingsLabel}
+                        </span>
+                        <span
+                          style={{
+                            fontSize: '0.72rem',
+                            color: 'rgba(255, 255, 255, 0.7)',
+                            background: 'rgba(255, 255, 255, 0.08)',
+                            padding: '2px 8px',
+                            borderRadius: '6px',
+                            fontWeight: 700,
+                            fontFamily: 'monospace'
+                          }}
+                        >
+                          {eqScale.toFixed(1)}x
+                        </span>
+                      </div>
+
+                      <button
+                        onClick={() => toggleTextSection('eq')}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          padding: '5px 10px',
+                          borderRadius: '8px',
+                          border: expandedTextSection === 'eq' ? `1px solid ${frameColor}` : '1px solid rgba(255, 255, 255, 0.1)',
+                          background: expandedTextSection === 'eq' ? hexToRgba(frameColor, 0.2) : 'rgba(255, 255, 255, 0.04)',
+                          color: expandedTextSection === 'eq' ? '#fff' : 'var(--text-muted)',
+                          fontSize: '0.74rem',
+                          fontWeight: 600,
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <Sliders size={13} />
+                        <span>{expandedTextSection === 'eq' ? 'Ocultar' : cT.textAdvancedToggle}</span>
+                        <ChevronDown size={13} style={{ transform: expandedTextSection === 'eq' ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+                      </button>
+                    </div>
+
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-dim)', marginTop: '4px', paddingLeft: '2px' }}>
+                      {cT.eqSettingsHelp}
+                    </div>
+
+                    {expandedTextSection === 'eq' && (
+                      <div
+                        style={{
+                          marginTop: '14px',
+                          padding: '14px',
+                          background: 'rgba(0, 0, 0, 0.35)',
+                          borderRadius: '10px',
+                          border: '1px solid rgba(255, 255, 255, 0.05)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '12px'
+                        }}
+                      >
+                        {/* Scale */}
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                            <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>Escala / Tamaño:</span>
+                            <span style={{ fontSize: '0.76rem', color: '#fff', fontFamily: 'monospace', fontWeight: 700 }}>{eqScale.toFixed(1)}x</span>
+                          </div>
+                          <input
+                            type="range"
+                            min="0.5"
+                            max="2.5"
+                            step="0.1"
+                            value={eqScale}
+                            onChange={(e) => setEqScale(parseFloat(e.target.value))}
+                            style={{ width: '100%', accentColor: frameColor, cursor: 'pointer' }}
+                          />
+                        </div>
+
+                        {/* Position Y */}
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                            <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>{cT.positionYLabel} (Subir / Bajar):</span>
+                            <span style={{ fontSize: '0.76rem', color: '#fff', fontFamily: 'monospace', fontWeight: 700 }}>{eqOffsetY > 0 ? `+${eqOffsetY}` : eqOffsetY} px</span>
+                          </div>
+                          <input
+                            type="range"
+                            min="-1650"
+                            max="450"
+                            step="5"
+                            value={eqOffsetY}
+                            onChange={(e) => setEqOffsetY(parseInt(e.target.value, 10))}
+                            style={{ width: '100%', accentColor: frameColor, cursor: 'pointer' }}
+                          />
+                        </div>
+
+                        {/* Position X */}
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                            <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>{cT.positionXLabel} (Izquierda / Derecha):</span>
+                            <span style={{ fontSize: '0.76rem', color: '#fff', fontFamily: 'monospace', fontWeight: 700 }}>{eqOffsetX > 0 ? `+${eqOffsetX}` : eqOffsetX} px</span>
+                          </div>
+                          <input
+                            type="range"
+                            min="-650"
+                            max="650"
+                            step="5"
+                            value={eqOffsetX}
+                            onChange={(e) => setEqOffsetX(parseInt(e.target.value, 10))}
+                            style={{ width: '100%', accentColor: frameColor, cursor: 'pointer' }}
+                          />
+                        </div>
+
+                        {/* Reset */}
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '6px', borderTop: '1px solid rgba(255, 255, 255, 0.06)' }}>
+                          <button
+                            onClick={() => handleResetText('eq')}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '5px',
+                              background: 'none',
+                              border: 'none',
+                              color: 'var(--text-dim)',
+                              fontSize: '0.72rem',
+                              cursor: 'pointer',
+                              padding: '2px 6px'
+                            }}
+                          >
+                            <RotateCcw size={11} />
+                            <span>{cT.textResetThis}</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Next / Prev */}
@@ -4326,22 +5272,58 @@ export default function StoryCreator({ onBack }) {
                       toggle: () => setShowCyberFrame(!showCyberFrame)
                     },
                     {
-                      id: 'techAccents',
-                      label: cT.maskTechAccents,
-                      active: showTechAccents,
-                      toggle: () => setShowTechAccents(!showTechAccents)
-                    },
-                    {
                       id: 'badges',
                       label: cT.maskBadges,
                       active: showBadges,
                       toggle: () => setShowBadges(!showBadges)
                     },
                     {
+                      id: 'audioSpec',
+                      label: cT.maskAudioSpec,
+                      active: showAudioSpec,
+                      toggle: () => setShowAudioSpec(!showAudioSpec)
+                    },
+                    {
+                      id: 'hudCoords',
+                      label: cT.maskHudCoords,
+                      active: showHudCoords,
+                      toggle: () => setShowHudCoords(!showHudCoords)
+                    },
+                    {
+                      id: 'eq',
+                      label: cT.maskEq,
+                      active: showEq,
+                      toggle: () => setShowEq(!showEq)
+                    },
+                    {
+                      id: 'dividerLine',
+                      label: cT.maskDividerLine,
+                      active: showDividerLine,
+                      toggle: () => setShowDividerLine(!showDividerLine)
+                    },
+                    {
+                      id: 'subtitleBox',
+                      label: cT.maskSubtitleBox,
+                      active: showSubtitleBox,
+                      toggle: () => setShowSubtitleBox(!showSubtitleBox)
+                    },
+                    {
+                      id: 'titleGlow',
+                      label: cT.maskTitleGlow,
+                      active: showTitleGlow,
+                      toggle: () => setShowTitleGlow(!showTitleGlow)
+                    },
+                    {
                       id: 'vignette',
                       label: cT.maskVignette,
                       active: showVignette,
                       toggle: () => setShowVignette(!showVignette)
+                    },
+                    {
+                      id: 'photoLayer',
+                      label: cT.maskPhotoLayer,
+                      active: showPhotoLayer,
+                      toggle: () => setShowPhotoLayer(!showPhotoLayer)
                     }
                   ].map((layer) => (
                     <div
@@ -4546,7 +5528,7 @@ export default function StoryCreator({ onBack }) {
                   >
                     <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>Capas Gráficas Activas:</span>
                     <strong style={{ color: '#fff', fontSize: '0.86rem' }}>
-                      {[showRepeatText, showCyberFrame, showTechAccents, showBadges, showVignette].filter(Boolean).length} / 5
+                      {[showRepeatText, showCyberFrame, showBadges, showAudioSpec, showHudCoords, showEq, showDividerLine, showSubtitleBox, showTitleGlow, showVignette, showPhotoLayer].filter(Boolean).length} / 11
                     </strong>
                   </div>
                 </div>
