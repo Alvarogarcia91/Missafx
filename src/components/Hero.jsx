@@ -1,27 +1,11 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Flame } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { InstagramIcon, WhatsAppIcon, KickIcon, YouTubeIcon, SoundCloudIcon } from './SocialIcons';
 
 export default function Hero() {
   const { t } = useLanguage();
-  const [activePhoto, setActivePhoto] = useState(0);
   const whatsappUrl = "https://wa.me/5214443570777?text=Hola%20Missa,%20me%20gustar%C3%ADa%20cotizar%20una%20fecha%20o%20evento";
-
-  const photos = [
-    {
-      src: '/missa-capture.jpg',
-      tag: t.hero.photoTab1,
-      sub: t.hero.sessionTag,
-      objectPosition: 'center 20%'
-    },
-    {
-      src: '/missa-capture-2.jpg',
-      tag: t.hero.photoTab2,
-      sub: 'TECH HOUSE SESSIONS',
-      objectPosition: 'center center'
-    }
-  ];
 
   return (
     <section
@@ -369,52 +353,6 @@ export default function Hero() {
                 boxShadow: '0 25px 60px rgba(0, 0, 0, 0.8), 0 0 45px rgba(255, 0, 60, 0.18)'
               }}
             >
-              {/* Photo Selector Tabs */}
-              <div
-                style={{
-                  padding: '10px 12px',
-                  display: 'flex',
-                  gap: '8px',
-                  background: 'rgba(10, 10, 14, 0.92)',
-                  borderBottom: '1px solid rgba(255, 255, 255, 0.08)'
-                }}
-              >
-                {photos.map((p, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => setActivePhoto(idx)}
-                    style={{
-                      flex: 1,
-                      padding: '7px 10px',
-                      fontSize: '0.72rem',
-                      fontWeight: 800,
-                      letterSpacing: '0.07em',
-                      borderRadius: '8px',
-                      border: activePhoto === idx ? '1px solid #FF003C' : '1px solid rgba(255, 255, 255, 0.1)',
-                      background: activePhoto === idx ? 'rgba(255, 0, 60, 0.22)' : 'rgba(255, 255, 255, 0.04)',
-                      color: activePhoto === idx ? '#fff' : 'var(--text-dim)',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '6px'
-                    }}
-                  >
-                    <span
-                      style={{
-                        width: '6px',
-                        height: '6px',
-                        borderRadius: '50%',
-                        background: activePhoto === idx ? '#FF003C' : 'rgba(255, 255, 255, 0.3)',
-                        boxShadow: activePhoto === idx ? '0 0 8px #FF003C' : 'none'
-                      }}
-                    />
-                    {p.tag}
-                  </button>
-                ))}
-              </div>
-
               {/* Photo Frame */}
               <div
                 style={{
@@ -425,16 +363,14 @@ export default function Hero() {
                 }}
               >
                 <img
-                  src={photos[activePhoto].src}
-                  alt="DJ Missa"
-                  key={activePhoto}
+                  src="/missa-capture.jpg"
+                  alt="DJ Missa en vivo en Pioneer CDJs"
                   style={{
                     width: '100%',
                     height: '100%',
                     objectFit: 'cover',
-                    objectPosition: photos[activePhoto].objectPosition,
-                    filter: 'contrast(1.08) brightness(0.95)',
-                    transition: 'all 0.3s ease'
+                    objectPosition: 'center 20%',
+                    filter: 'contrast(1.08) brightness(0.95)'
                   }}
                 />
 
@@ -497,7 +433,7 @@ export default function Hero() {
                     <span className="eq-bar" />
                   </div>
                   <span style={{ fontSize: '0.82rem', fontWeight: 700, letterSpacing: '0.05em' }}>
-                    {photos[activePhoto].sub}
+                    {t.hero.sessionTag}
                   </span>
                 </div>
               </div>
