@@ -348,9 +348,9 @@ body {
    CYBERPUNK CAROUSEL: "TRANSICIÓN BIEN PERRA"
    =================================================== */
 
-/* Continuous Ken Burns cinematic drift during the 7 seconds */
+/* Continuous Ken Burns cinematic drift during the 10 seconds */
 .carousel-ken-burns {
-  animation: kenBurnsDrift 7s ease-out forwards;
+  animation: kenBurnsDrift 10s ease-out forwards;
 }
 
 @keyframes kenBurnsDrift {
@@ -469,7 +469,7 @@ body {
   }
 }
 
-/* 7-Second Countdown Bar */
+/* 10-Second Countdown Bar */
 .carousel-countdown-bar {
   height: 3px;
   background: linear-gradient(90deg, #FF003C 0%, #FF2E63 70%, #FFFFFF 100%);
@@ -478,7 +478,7 @@ body {
 }
 
 .carousel-countdown-bar.running {
-  animation: countdownProgress 7s linear infinite;
+  animation: countdownProgress 10s linear infinite;
 }
 
 @keyframes countdownProgress {

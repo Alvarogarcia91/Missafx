@@ -65,7 +65,6 @@ export default function Navbar() {
         >
           <a href="#home" className="nav-link">{t.nav.home}</a>
           <a href="#social-hub" className="nav-link">{t.nav.socials}</a>
-          <a href="#gallery" className="nav-link">{t.nav.gallery}</a>
           <a href="#about" className="nav-link">{t.nav.about}</a>
           <a href="#contact" className="nav-link">{t.nav.contact}</a>
 
@@ -219,14 +218,6 @@ export default function Navbar() {
             style={{ fontSize: '1.1rem' }}
           >
             {t.nav.socials}
-          </a>
-          <a
-            href="#gallery"
-            onClick={() => setMobileMenuOpen(false)}
-            className="nav-link"
-            style={{ fontSize: '1.1rem' }}
-          >
-            {t.nav.gallery}
           </a>
           <a
             href="#about"

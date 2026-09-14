@@ -4,15 +4,15 @@ import { useLanguage } from '../context/LanguageContext';
 import { InstagramIcon, WhatsAppIcon, KickIcon, YouTubeIcon, SoundCloudIcon } from './SocialIcons';
 
 const HERO_PHOTOS = [
-  { src: '/gallery/missa-01.jpg', tag: 'PIONEER CDJ BOOTH' },
-  { src: '/gallery/missa-02.jpg', tag: 'CLUBBER ART' },
-  { src: '/gallery/missa-03.png', tag: 'STUDIO BRANDING' },
-  { src: '/gallery/missa-04.jpg', tag: 'CLUB RESIDENCY' },
-  { src: '/gallery/missa-05.jpg', tag: 'STAGE LIGHTS' },
-  { src: '/gallery/missa-06.jpg', tag: 'NIGHTCLUB CROWD' },
-  { src: '/gallery/missa-07.jpg', tag: 'HEADLINER SET' },
-  { src: '/gallery/missa-08.jpg', tag: 'PEAK TECH HOUSE' },
-  { src: '/gallery/missa-09.jpg', tag: 'HARDWARE & FX' }
+  '/gallery/missa-01.jpg',
+  '/gallery/missa-02.jpg',
+  '/gallery/missa-03.png',
+  '/gallery/missa-04.jpg',
+  '/gallery/missa-05.jpg',
+  '/gallery/missa-06.jpg',
+  '/gallery/missa-07.jpg',
+  '/gallery/missa-08.jpg',
+  '/gallery/missa-09.jpg'
 ];
 
 export default function Hero() {
@@ -52,7 +52,7 @@ export default function Hero() {
   useEffect(() => {
     const timer = setInterval(() => {
       triggerHeroTransition(getNextHeroIndex(photoIndex));
-    }, 7000);
+    }, 10000);
     return () => clearInterval(timer);
   }, [photoIndex, getNextHeroIndex, triggerHeroTransition]);
 
@@ -403,18 +403,13 @@ export default function Hero() {
               }}
             >
               {/* Photo Frame */}
-              <a
-                href="#gallery"
-                title="Ver galería en vivo completa"
+              <div
                 style={{
                   display: 'block',
                   position: 'relative',
                   width: '100%',
                   aspectRatio: '1/1.08',
-                  overflow: 'hidden',
-                  cursor: 'pointer',
-                  textDecoration: 'none',
-                  color: 'inherit'
+                  overflow: 'hidden'
                 }}
               >
                 {/* Laser scanline that sweeps across during transition */}
@@ -424,7 +419,7 @@ export default function Hero() {
                 {prevPhotoIndex !== null && isTransitioning && (
                   <img
                     key={`hero-prev-${prevPhotoIndex}`}
-                    src={HERO_PHOTOS[prevPhotoIndex].src}
+                    src={HERO_PHOTOS[prevPhotoIndex]}
                     alt="DJ Missa en vivo"
                     className="carousel-slide-exit"
                     style={{
@@ -441,8 +436,8 @@ export default function Hero() {
                 {/* CURRENT ACTIVE SLIDE */}
                 <img
                   key={`hero-curr-${photoIndex}-${progressKey}`}
-                  src={HERO_PHOTOS[photoIndex].src}
-                  alt={`DJ Missa - ${HERO_PHOTOS[photoIndex].tag}`}
+                  src={HERO_PHOTOS[photoIndex]}
+                  alt="DJ Missa en vivo"
                   className={isTransitioning ? 'carousel-slide-enter' : 'carousel-ken-burns'}
                   style={{
                     position: 'absolute',
@@ -493,69 +488,9 @@ export default function Hero() {
                     zIndex: 5
                   }}
                 />
+              </div>
 
-                {/* Top REC Indicator */}
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: '16px',
-                    right: '16px',
-                    background: 'rgba(10, 10, 14, 0.85)',
-                    backdropFilter: 'blur(8px)',
-                    border: '1px solid rgba(255, 0, 60, 0.35)',
-                    borderRadius: '999px',
-                    padding: '4px 10px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    zIndex: 6
-                  }}
-                >
-                  <span
-                    style={{
-                      width: '6px',
-                      height: '6px',
-                      borderRadius: '50%',
-                      background: '#FF003C',
-                      boxShadow: '0 0 8px #FF003C',
-                      animation: 'pulseAnimation 1.5s infinite'
-                    }}
-                  />
-                  <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#FF003C', letterSpacing: '0.06em' }}>
-                    7s LIVE SHUFFLE
-                  </span>
-                </div>
-
-                {/* Live Performance Badge on Photo */}
-                <div
-                  style={{
-                    position: 'absolute',
-                    bottom: '18px',
-                    left: '18px',
-                    background: 'rgba(10, 10, 14, 0.90)',
-                    backdropFilter: 'blur(10px)',
-                    border: '1px solid rgba(255, 255, 255, 0.12)',
-                    borderRadius: '12px',
-                    padding: '8px 14px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '10px',
-                    zIndex: 6
-                  }}
-                >
-                  <div className="eq-bars">
-                    <span className="eq-bar" />
-                    <span className="eq-bar" />
-                    <span className="eq-bar" />
-                    <span className="eq-bar" />
-                  </div>
-                  <span style={{ fontSize: '0.82rem', fontWeight: 700, letterSpacing: '0.05em' }}>
-                    {HERO_PHOTOS[photoIndex].tag}
-                  </span>
-                </div>
-              </a>
-
-              {/* 7-Second countdown bar */}
+              {/* 10-Second countdown bar */}
               <div style={{ width: '100%', height: '3px', background: 'rgba(255, 255, 255, 0.08)' }}>
                 <div
                   key={`hero-progress-${photoIndex}-${progressKey}`}
