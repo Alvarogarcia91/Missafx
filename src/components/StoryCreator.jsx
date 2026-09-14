@@ -719,12 +719,15 @@ export default function StoryCreator({ onBack }) {
         }
 
         ctx.beginPath();
-        ctx.rect(0, startY - 20, width * 0.85, endY - startY + 40);
+        ctx.rect(0, 0, width, height);
         ctx.clip();
 
+        const loopMinY = Math.min(-stepY * 2, startY - stepY * 4);
+        const loopMaxY = Math.max(height + stepY * 2, endY + stepY * 4);
+
         let count = 0;
-        const scanPos = ((time * 190 * cascadeSpeed) % (endY - startY + stepY * 2)) + startY - stepY;
-        for (let y = startY - stepY; y <= endY + stepY; y += stepY) {
+        const scanPos = ((time * 190 * cascadeSpeed) % (height + stepY * 2)) - stepY;
+        for (let y = loopMinY; y <= loopMaxY; y += stepY) {
           const curY = y + shiftY;
           let curX = posX + jitterX;
           if (cascadeEffect === 'wave-sine') {
@@ -974,10 +977,21 @@ export default function StoryCreator({ onBack }) {
         }
       }
 
-      // Glow background behind title
+      // Calculate dynamic title position for glow & rendering
+      const titleY = bottomBase - 90 + mainTitleOffsetY + titleShakeY;
+      let titleX = width / 2 + mainTitleOffsetX + titleGlitchOffset;
+      const titleAlign = mainTitleAlign;
+
+      if (titleAlign === 'left') {
+        titleX = width * 0.12 + mainTitleOffsetX + titleGlitchOffset;
+      } else if (titleAlign === 'right') {
+        titleX = width * 0.88 + mainTitleOffsetX + titleGlitchOffset;
+      }
+
+      // Glow background behind title (follows title dynamically across full canvas)
       const glowGrad = ctx.createRadialGradient(
-        width / 2, bottomBase - 85, 10,
-        width / 2, bottomBase - 85, width * 0.42
+        titleX, titleY, 10,
+        titleX, titleY, width * 0.48
       );
       const bgGlowAlpha = isMotionActive && titleEffect === 'neon-breathe'
         ? 0.15 + (Math.sin(2 * Math.PI * (titleBpm / 60) * time) * 0.5 + 0.5) * 0.15
@@ -985,7 +999,7 @@ export default function StoryCreator({ onBack }) {
       glowGrad.addColorStop(0, hexToRgba(titleColor, bgGlowAlpha));
       glowGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
       ctx.fillStyle = glowGrad;
-      ctx.fillRect(0, bottomBase - 260, width, 360);
+      ctx.fillRect(titleX - width * 0.5, titleY - 180, width, 360);
 
       // Subtitle Pill
       if (subTitle.trim()) {
@@ -1038,16 +1052,6 @@ export default function StoryCreator({ onBack }) {
         ctx.shadowColor = titleShadowColor;
         ctx.shadowBlur = titleGlowBlur;
         ctx.globalAlpha = titleAlpha;
-
-        const titleY = bottomBase - 90 + mainTitleOffsetY + titleShakeY;
-        let titleX = width / 2 + mainTitleOffsetX + titleGlitchOffset;
-        let titleAlign = mainTitleAlign;
-
-        if (titleAlign === 'left') {
-          titleX = width * 0.12 + mainTitleOffsetX + titleGlitchOffset;
-        } else if (titleAlign === 'right') {
-          titleX = width * 0.88 + mainTitleOffsetX + titleGlitchOffset;
-        }
 
         const drawTitlePass = (curX, curY, colMissa, colFx) => {
           if (titleText.startsWith('MISSA') && titleText.endsWith('FX') && titleText.length >= 7) {
@@ -1106,8 +1110,8 @@ export default function StoryCreator({ onBack }) {
       ctx.strokeStyle = hexToRgba(textColor, 0.2);
       ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.moveTo(width * 0.15, bottomBase - 30 + eventDateOffsetY);
-      ctx.lineTo(width * 0.85, bottomBase - 30 + eventDateOffsetY);
+      ctx.moveTo(width * 0.15 + eventDateOffsetX, bottomBase - 30 + eventDateOffsetY);
+      ctx.lineTo(width * 0.85 + eventDateOffsetX, bottomBase - 30 + eventDateOffsetY);
       ctx.stroke();
 
       // Event Date & Venue Info
@@ -2229,9 +2233,9 @@ export default function StoryCreator({ onBack }) {
                           </div>
                           <input
                             type="range"
-                            min="40"
-                            max="140"
-                            step="1"
+                            min="20"
+                            max="220"
+                            step="2"
                             value={repeatedTextSize}
                             onChange={(e) => setRepeatedTextSize(parseInt(e.target.value, 10))}
                             style={{ width: '100%', accentColor: frameColor, cursor: 'pointer' }}
@@ -2246,8 +2250,8 @@ export default function StoryCreator({ onBack }) {
                           </div>
                           <input
                             type="range"
-                            min="50"
-                            max="180"
+                            min="25"
+                            max="320"
                             step="2"
                             value={repeatedTextSpacing}
                             onChange={(e) => setRepeatedTextSpacing(parseInt(e.target.value, 10))}
@@ -2263,8 +2267,8 @@ export default function StoryCreator({ onBack }) {
                           </div>
                           <input
                             type="range"
-                            min="0"
-                            max="350"
+                            min="-150"
+                            max="1050"
                             step="5"
                             value={repeatedTextPosX}
                             onChange={(e) => setRepeatedTextPosX(parseInt(e.target.value, 10))}
@@ -2280,8 +2284,8 @@ export default function StoryCreator({ onBack }) {
                           </div>
                           <input
                             type="range"
-                            min="-200"
-                            max="200"
+                            min="-950"
+                            max="950"
                             step="5"
                             value={repeatedTextPosY}
                             onChange={(e) => setRepeatedTextPosY(parseInt(e.target.value, 10))}
@@ -2298,7 +2302,7 @@ export default function StoryCreator({ onBack }) {
                           <input
                             type="range"
                             min="0"
-                            max="20"
+                            max="40"
                             step="1"
                             value={repeatedTextTracking}
                             onChange={(e) => setRepeatedTextTracking(parseInt(e.target.value, 10))}
@@ -2432,9 +2436,9 @@ export default function StoryCreator({ onBack }) {
                           </div>
                           <input
                             type="range"
-                            min="50"
-                            max="170"
-                            step="1"
+                            min="24"
+                            max="250"
+                            step="2"
                             value={mainTitleSize}
                             onChange={(e) => setMainTitleSize(parseInt(e.target.value, 10))}
                             style={{ width: '100%', accentColor: frameColor, cursor: 'pointer' }}
@@ -2449,8 +2453,8 @@ export default function StoryCreator({ onBack }) {
                           </div>
                           <input
                             type="range"
-                            min="-250"
-                            max="250"
+                            min="-1550"
+                            max="450"
                             step="5"
                             value={mainTitleOffsetY}
                             onChange={(e) => setMainTitleOffsetY(parseInt(e.target.value, 10))}
@@ -2466,8 +2470,8 @@ export default function StoryCreator({ onBack }) {
                           </div>
                           <input
                             type="range"
-                            min="-300"
-                            max="300"
+                            min="-650"
+                            max="650"
                             step="5"
                             value={mainTitleOffsetX}
                             onChange={(e) => setMainTitleOffsetX(parseInt(e.target.value, 10))}
@@ -2483,8 +2487,8 @@ export default function StoryCreator({ onBack }) {
                           </div>
                           <input
                             type="range"
-                            min="0"
-                            max="25"
+                            min="-4"
+                            max="40"
                             step="1"
                             value={mainTitleTracking}
                             onChange={(e) => setMainTitleTracking(parseInt(e.target.value, 10))}
@@ -2656,8 +2660,8 @@ export default function StoryCreator({ onBack }) {
                           </div>
                           <input
                             type="range"
-                            min="12"
-                            max="36"
+                            min="10"
+                            max="90"
                             step="1"
                             value={subTitleSize}
                             onChange={(e) => setSubTitleSize(parseInt(e.target.value, 10))}
@@ -2673,8 +2677,8 @@ export default function StoryCreator({ onBack }) {
                           </div>
                           <input
                             type="range"
-                            min="-200"
-                            max="200"
+                            min="-1550"
+                            max="450"
                             step="5"
                             value={subTitleOffsetY}
                             onChange={(e) => setSubTitleOffsetY(parseInt(e.target.value, 10))}
@@ -2690,8 +2694,8 @@ export default function StoryCreator({ onBack }) {
                           </div>
                           <input
                             type="range"
-                            min="-300"
-                            max="300"
+                            min="-650"
+                            max="650"
                             step="5"
                             value={subTitleOffsetX}
                             onChange={(e) => setSubTitleOffsetX(parseInt(e.target.value, 10))}
@@ -2708,7 +2712,7 @@ export default function StoryCreator({ onBack }) {
                           <input
                             type="range"
                             min="0"
-                            max="15"
+                            max="30"
                             step="1"
                             value={subTitleTracking}
                             onChange={(e) => setSubTitleTracking(parseInt(e.target.value, 10))}
@@ -2880,8 +2884,8 @@ export default function StoryCreator({ onBack }) {
                           </div>
                           <input
                             type="range"
-                            min="14"
-                            max="44"
+                            min="10"
+                            max="100"
                             step="1"
                             value={eventDateSize}
                             onChange={(e) => setEventDateSize(parseInt(e.target.value, 10))}
@@ -2897,8 +2901,8 @@ export default function StoryCreator({ onBack }) {
                           </div>
                           <input
                             type="range"
-                            min="-150"
-                            max="150"
+                            min="-1650"
+                            max="450"
                             step="5"
                             value={eventDateOffsetY}
                             onChange={(e) => setEventDateOffsetY(parseInt(e.target.value, 10))}
@@ -2914,8 +2918,8 @@ export default function StoryCreator({ onBack }) {
                           </div>
                           <input
                             type="range"
-                            min="-250"
-                            max="250"
+                            min="-650"
+                            max="650"
                             step="5"
                             value={eventDateOffsetX}
                             onChange={(e) => setEventDateOffsetX(parseInt(e.target.value, 10))}
@@ -2932,7 +2936,7 @@ export default function StoryCreator({ onBack }) {
                           <input
                             type="range"
                             min="0"
-                            max="15"
+                            max="30"
                             step="1"
                             value={eventDateTracking}
                             onChange={(e) => setEventDateTracking(parseInt(e.target.value, 10))}
@@ -3104,8 +3108,8 @@ export default function StoryCreator({ onBack }) {
                           </div>
                           <input
                             type="range"
-                            min="12"
-                            max="32"
+                            min="10"
+                            max="90"
                             step="1"
                             value={eventVenueSize}
                             onChange={(e) => setEventVenueSize(parseInt(e.target.value, 10))}
@@ -3121,8 +3125,8 @@ export default function StoryCreator({ onBack }) {
                           </div>
                           <input
                             type="range"
-                            min="-150"
-                            max="150"
+                            min="-1650"
+                            max="450"
                             step="5"
                             value={eventVenueOffsetY}
                             onChange={(e) => setEventVenueOffsetY(parseInt(e.target.value, 10))}
@@ -3138,8 +3142,8 @@ export default function StoryCreator({ onBack }) {
                           </div>
                           <input
                             type="range"
-                            min="-250"
-                            max="250"
+                            min="-650"
+                            max="650"
                             step="5"
                             value={eventVenueOffsetX}
                             onChange={(e) => setEventVenueOffsetX(parseInt(e.target.value, 10))}
@@ -3156,7 +3160,7 @@ export default function StoryCreator({ onBack }) {
                           <input
                             type="range"
                             min="0"
-                            max="15"
+                            max="30"
                             step="1"
                             value={eventVenueTracking}
                             onChange={(e) => setEventVenueTracking(parseInt(e.target.value, 10))}
