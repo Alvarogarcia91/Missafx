@@ -256,6 +256,7 @@ export const translations = {
       alignCenter: 'Centro',
       alignRight: 'Derecha',
       uppercaseLabel: 'Forzar Mayúsculas',
+      textColorLabel: 'Color del Texto',
       cascadeSpacingLabel: 'Separación de Cascada',
       cascadePosXLabel: 'Margen Lateral (Eje X)',
       cascadePosYLabel: 'Desplazamiento Vertical (Eje Y)',
@@ -302,6 +303,12 @@ export const translations = {
       colorBadgeText: 'Color del Texto de la Insignia',
       colorText: 'Color de Textos y Fecha (Información)',
       colorTech: 'Acentos Técnicos, Ecualizador & Booking',
+      colorDateText: 'Color de la Fecha / Evento',
+      colorVenueText: 'Color de la Ubicación / Club',
+      colorBookingText: 'Color de Booking / Contacto',
+      colorBadgeTagText: 'Color del Badge Superior',
+      colorAudioSpecText: 'Color de Formato de Audio',
+      colorHudCoordsText: 'Color de Coordenadas HUD',
       contrastNotice: '💡 Protección de contraste inteligente: Si el fondo es blanco o muy claro, el texto se adapta automáticamente para evitar que se empalme.',
       
       // Motion FX & Animación
@@ -681,6 +688,7 @@ export const translations = {
       alignCenter: 'Center',
       alignRight: 'Right',
       uppercaseLabel: 'Force Uppercase',
+      textColorLabel: 'Text Color',
       cascadeSpacingLabel: 'Cascade Step Spacing',
       cascadePosXLabel: 'Lateral Margin (X Axis)',
       cascadePosYLabel: 'Vertical Shift (Y Axis)',
@@ -727,6 +735,12 @@ export const translations = {
       colorBadgeText: 'Genre Badge Text Color',
       colorText: 'Event Info & Date Text Color',
       colorTech: 'Tech Accents, Equalizer & Booking',
+      colorDateText: 'Date & Event Text Color',
+      colorVenueText: 'Venue / Club Text Color',
+      colorBookingText: 'Booking / Contact Text Color',
+      colorBadgeTagText: 'Top Badge Tag Text Color',
+      colorAudioSpecText: 'Audio Spec Format Color',
+      colorHudCoordsText: 'HUD Technical Coordinates Color',
       contrastNotice: '💡 Smart contrast protection: If the background is white or light, text adapts automatically to prevent disappearing.',
       
       // Motion FX & Animation

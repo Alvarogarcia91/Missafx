@@ -145,6 +145,7 @@ export default function StoryCreator({ onBack }) {
   const [repeatedTextPosY, setRepeatedTextPosY] = useState(0);
   const [repeatedTextSpacing, setRepeatedTextSpacing] = useState(104);
   const [repeatedTextTracking, setRepeatedTextTracking] = useState(0);
+  const [repeatedTextAlign, setRepeatedTextAlign] = useState('left');
   const [repeatedTextUpper, setRepeatedTextUpper] = useState(true);
 
   // 2. Main Title ("MISSAFX")
@@ -162,6 +163,7 @@ export default function StoryCreator({ onBack }) {
   const [subTitleTracking, setSubTitleTracking] = useState(2);
   const [subTitleAlign, setSubTitleAlign] = useState('center');
   const [subTitleUpper, setSubTitleUpper] = useState(true);
+  const [subTitleColor, setSubTitleColor] = useState('');
 
   // 4. Date / Tagline ("SÁBADO // LIVE SET")
   const [eventDateSize, setEventDateSize] = useState(32);
@@ -170,6 +172,7 @@ export default function StoryCreator({ onBack }) {
   const [eventDateTracking, setEventDateTracking] = useState(1);
   const [eventDateAlign, setEventDateAlign] = useState('center');
   const [eventDateUpper, setEventDateUpper] = useState(true);
+  const [eventDateColor, setEventDateColor] = useState('#FFFFFF');
 
   // 5. Venue / City ("SAN LUIS POTOSÍ • MÉXICO")
   const [eventVenueSize, setEventVenueSize] = useState(26);
@@ -178,6 +181,7 @@ export default function StoryCreator({ onBack }) {
   const [eventVenueTracking, setEventVenueTracking] = useState(1);
   const [eventVenueAlign, setEventVenueAlign] = useState('center');
   const [eventVenueUpper, setEventVenueUpper] = useState(true);
+  const [eventVenueColor, setEventVenueColor] = useState('#CBD5E1');
 
   // 6. Booking / Contact Info ("BOOKING DIRECTO • WA +52 1 444 357 0777")
   const [bookingText, setBookingText] = useState('BOOKING DIRECTO • WA +52 1 444 357 0777');
@@ -187,6 +191,7 @@ export default function StoryCreator({ onBack }) {
   const [bookingTextTracking, setBookingTextTracking] = useState(1);
   const [bookingTextAlign, setBookingTextAlign] = useState('center');
   const [bookingTextUpper, setBookingTextUpper] = useState(true);
+  const [bookingTextColor, setBookingTextColor] = useState('#FF003C');
 
   // 7. Top Badge / Tag ("PIONEER DJ PRO SESSION")
   const [badgeTagText, setBadgeTagText] = useState('PIONEER DJ PRO SESSION');
@@ -196,6 +201,7 @@ export default function StoryCreator({ onBack }) {
   const [badgeTagTracking, setBadgeTagTracking] = useState(0);
   const [badgeTagAlign, setBadgeTagAlign] = useState('center');
   const [badgeTagUpper, setBadgeTagUpper] = useState(true);
+  const [badgeTagTextColor, setBadgeTagTextColor] = useState('#FFFFFF');
 
   // 8. Audio Spec / Sub-badge ("• 48kHz / 24-BIT MASTER AUDIO •")
   const [audioSpecText, setAudioSpecText] = useState('• 48kHz / 24-BIT MASTER AUDIO •');
@@ -205,6 +211,7 @@ export default function StoryCreator({ onBack }) {
   const [audioSpecTracking, setAudioSpecTracking] = useState(1);
   const [audioSpecAlign, setAudioSpecAlign] = useState('center');
   const [audioSpecUpper, setAudioSpecUpper] = useState(true);
+  const [audioSpecColor, setAudioSpecColor] = useState('rgba(255, 255, 255, 0.7)');
 
   // 9. HUD Technical Coordinates ("[ 22° 09' N // 100° 58' W ]")
   const [hudCoordsText, setHudCoordsText] = useState('[ 22° 09\' N // 100° 58\' W ]');
@@ -212,7 +219,9 @@ export default function StoryCreator({ onBack }) {
   const [hudCoordsOffsetY, setHudCoordsOffsetY] = useState(0);
   const [hudCoordsOffsetX, setHudCoordsOffsetX] = useState(0);
   const [hudCoordsTracking, setHudCoordsTracking] = useState(1);
+  const [hudCoordsAlign, setHudCoordsAlign] = useState('left');
   const [hudCoordsUpper, setHudCoordsUpper] = useState(true);
+  const [hudCoordsColor, setHudCoordsColor] = useState('#F8FAFC');
 
   // 10. Graphic Equalizer (EQ) Position & Scale
   const [eqOffsetX, setEqOffsetX] = useState(0);
@@ -234,7 +243,9 @@ export default function StoryCreator({ onBack }) {
         setRepeatedTextPosY(0);
         setRepeatedTextSpacing(104);
         setRepeatedTextTracking(0);
+        setRepeatedTextAlign('left');
         setRepeatedTextUpper(true);
+        setRepeatTextColor(frameColor);
         break;
       case 'title':
         setMainTitleSize(110);
@@ -243,6 +254,8 @@ export default function StoryCreator({ onBack }) {
         setMainTitleTracking(0);
         setMainTitleAlign('center');
         setMainTitleUpper(true);
+        setTitleColor(frameColor);
+        setTitleFxColor('#FFFFFF');
         break;
       case 'subTitle':
         setSubTitleSize(24);
@@ -251,6 +264,7 @@ export default function StoryCreator({ onBack }) {
         setSubTitleTracking(2);
         setSubTitleAlign('center');
         setSubTitleUpper(true);
+        setSubTitleColor('');
         break;
       case 'eventDate':
         setEventDateSize(32);
@@ -259,6 +273,7 @@ export default function StoryCreator({ onBack }) {
         setEventDateTracking(1);
         setEventDateAlign('center');
         setEventDateUpper(true);
+        setEventDateColor('#FFFFFF');
         break;
       case 'eventVenue':
         setEventVenueSize(26);
@@ -267,6 +282,7 @@ export default function StoryCreator({ onBack }) {
         setEventVenueTracking(1);
         setEventVenueAlign('center');
         setEventVenueUpper(true);
+        setEventVenueColor('#CBD5E1');
         break;
       case 'booking':
         setBookingTextSize(20);
@@ -275,6 +291,7 @@ export default function StoryCreator({ onBack }) {
         setBookingTextTracking(1);
         setBookingTextAlign('center');
         setBookingTextUpper(true);
+        setBookingTextColor(techColor);
         break;
       case 'badgeTag':
         setBadgeTagSize(22);
@@ -283,6 +300,7 @@ export default function StoryCreator({ onBack }) {
         setBadgeTagTracking(0);
         setBadgeTagAlign('center');
         setBadgeTagUpper(true);
+        setBadgeTagTextColor('#FFFFFF');
         break;
       case 'audioSpec':
         setAudioSpecSize(18);
@@ -291,13 +309,16 @@ export default function StoryCreator({ onBack }) {
         setAudioSpecTracking(1);
         setAudioSpecAlign('center');
         setAudioSpecUpper(true);
+        setAudioSpecColor('rgba(255, 255, 255, 0.7)');
         break;
       case 'hudCoords':
         setHudCoordsSize(18);
         setHudCoordsOffsetY(0);
         setHudCoordsOffsetX(0);
         setHudCoordsTracking(1);
+        setHudCoordsAlign('left');
         setHudCoordsUpper(true);
+        setHudCoordsColor('#F8FAFC');
         break;
       case 'eq':
         setEqOffsetX(0);
@@ -315,7 +336,9 @@ export default function StoryCreator({ onBack }) {
     setRepeatedTextPosY(0);
     setRepeatedTextSpacing(104);
     setRepeatedTextTracking(0);
+    setRepeatedTextAlign('left');
     setRepeatedTextUpper(true);
+    setRepeatTextColor(frameColor);
 
     setMainTitleSize(110);
     setMainTitleOffsetY(0);
@@ -323,6 +346,8 @@ export default function StoryCreator({ onBack }) {
     setMainTitleTracking(0);
     setMainTitleAlign('center');
     setMainTitleUpper(true);
+    setTitleColor(frameColor);
+    setTitleFxColor('#FFFFFF');
 
     setSubTitleSize(24);
     setSubTitleOffsetY(0);
@@ -330,6 +355,7 @@ export default function StoryCreator({ onBack }) {
     setSubTitleTracking(2);
     setSubTitleAlign('center');
     setSubTitleUpper(true);
+    setSubTitleColor('');
 
     setEventDateSize(32);
     setEventDateOffsetY(0);
@@ -337,6 +363,7 @@ export default function StoryCreator({ onBack }) {
     setEventDateTracking(1);
     setEventDateAlign('center');
     setEventDateUpper(true);
+    setEventDateColor('#FFFFFF');
 
     setEventVenueSize(26);
     setEventVenueOffsetY(0);
@@ -344,6 +371,7 @@ export default function StoryCreator({ onBack }) {
     setEventVenueTracking(1);
     setEventVenueAlign('center');
     setEventVenueUpper(true);
+    setEventVenueColor('#CBD5E1');
 
     setBookingTextSize(20);
     setBookingTextOffsetY(0);
@@ -351,6 +379,7 @@ export default function StoryCreator({ onBack }) {
     setBookingTextTracking(1);
     setBookingTextAlign('center');
     setBookingTextUpper(true);
+    setBookingTextColor(techColor);
 
     setBadgeTagSize(22);
     setBadgeTagOffsetY(0);
@@ -358,6 +387,7 @@ export default function StoryCreator({ onBack }) {
     setBadgeTagTracking(0);
     setBadgeTagAlign('center');
     setBadgeTagUpper(true);
+    setBadgeTagTextColor('#FFFFFF');
 
     setAudioSpecSize(18);
     setAudioSpecOffsetY(0);
@@ -365,12 +395,15 @@ export default function StoryCreator({ onBack }) {
     setAudioSpecTracking(1);
     setAudioSpecAlign('center');
     setAudioSpecUpper(true);
+    setAudioSpecColor('rgba(255, 255, 255, 0.7)');
 
     setHudCoordsSize(18);
     setHudCoordsOffsetY(0);
     setHudCoordsOffsetX(0);
     setHudCoordsTracking(1);
+    setHudCoordsAlign('left');
     setHudCoordsUpper(true);
+    setHudCoordsColor('#F8FAFC');
 
     setEqOffsetX(0);
     setEqOffsetY(0);
@@ -394,15 +427,20 @@ export default function StoryCreator({ onBack }) {
     setRepeatTextColor(hex);
     setBadgeColor(hex);
     setTechColor(hex);
+    setBookingTextColor(hex);
     // Anti-empalme: automatically set badge text to dark if background is white/light
     const contrastText = getAutoContrastColor(hex);
     setBadgeTextColor(contrastText);
     if (hex === '#FFFFFF') {
       setTitleFxColor('#FF003C');
       setTextColor('#FFFFFF');
+      setEventDateColor('#FFFFFF');
+      setEventVenueColor('#CBD5E1');
     } else {
       setTitleFxColor('#FFFFFF');
       setTextColor('#FFFFFF');
+      setEventDateColor('#FFFFFF');
+      setEventVenueColor('#CBD5E1');
     }
   };
 
@@ -806,7 +844,16 @@ export default function StoryCreator({ onBack }) {
         const startY = height * 0.14 + repeatedTextPosY;
         const endY = height * 0.82 + repeatedTextPosY;
         const stepY = Math.max(30, repeatedTextSpacing);
-        const posX = repeatedTextPosX;
+        let curBaseX = repeatedTextPosX;
+        if (repeatedTextAlign === 'center') {
+          curBaseX = width / 2 + (repeatedTextPosX - 60);
+          ctx.textAlign = 'center';
+        } else if (repeatedTextAlign === 'right') {
+          curBaseX = width - 60 + (repeatedTextPosX - 60);
+          ctx.textAlign = 'right';
+        } else {
+          ctx.textAlign = 'left';
+        }
 
         let shiftY = 0;
         let dynamicLineWidth = 2.5;
@@ -844,7 +891,7 @@ export default function StoryCreator({ onBack }) {
         const scanPos = ((time * 190 * cascadeSpeed) % (height + stepY * 2)) - stepY;
         for (let y = loopMinY; y <= loopMaxY; y += stepY) {
           const curY = y + shiftY;
-          let curX = posX + jitterX;
+          let curX = curBaseX + jitterX;
           if (cascadeEffect === 'wave-sine') {
             curX += Math.sin(time * 3.2 * cascadeSpeed + count * 0.75) * 22;
           }
@@ -959,10 +1006,18 @@ export default function StoryCreator({ onBack }) {
           if (ctx.letterSpacing !== undefined) {
             ctx.letterSpacing = `${hudCoordsTracking}px`;
           }
-          ctx.fillStyle = '#F8FAFC';
+          ctx.fillStyle = hudCoordsColor || '#F8FAFC';
           ctx.textBaseline = 'middle';
-          const hudBaseY = format === 'story' ? 245 : 80;
-          ctx.fillText(coordsToRender, 110 + hudCoordsOffsetX, hudBaseY + hudCoordsOffsetY);
+          const hudBaseY = (format === 'story' && frameFitSafeZone) ? 245 : 80;
+
+          let hudX = 110 + hudCoordsOffsetX;
+          if (hudCoordsAlign === 'center') {
+            hudX = width / 2 + hudCoordsOffsetX;
+          } else if (hudCoordsAlign === 'right') {
+            hudX = width - 110 + hudCoordsOffsetX;
+          }
+          ctx.textAlign = hudCoordsAlign;
+          ctx.fillText(coordsToRender, hudX, hudBaseY + hudCoordsOffsetY);
         }
 
         ctx.restore();
@@ -1049,7 +1104,7 @@ export default function StoryCreator({ onBack }) {
         ctx.arc(tagX + (badgeTagSize * 1.1), tagY + tagH / 2, dotRadius, 0, Math.PI * 2);
         ctx.fill();
 
-        ctx.fillStyle = '#FFFFFF';
+        ctx.fillStyle = badgeTagTextColor || '#FFFFFF';
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
         ctx.fillText(tagText, tagX + (badgeTagSize * 1.8), tagY + tagH / 2);
@@ -1065,7 +1120,7 @@ export default function StoryCreator({ onBack }) {
         if (ctx.letterSpacing !== undefined) {
           ctx.letterSpacing = `${audioSpecTracking}px`;
         }
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+        ctx.fillStyle = audioSpecColor || 'rgba(255, 255, 255, 0.7)';
         ctx.textBaseline = 'middle';
 
         let specX = width / 2 + audioSpecOffsetX;
@@ -1183,11 +1238,13 @@ export default function StoryCreator({ onBack }) {
         const subX = subCenterX - subW / 2;
         const subY = bottomBase - 205 + subTitleOffsetY;
 
-        let effectiveBadgeTextColor = badgeTextColor;
-        if (isLightColor(badgeColor) && isLightColor(badgeTextColor)) {
-          effectiveBadgeTextColor = '#060608';
-        } else if (!isLightColor(badgeColor) && !isLightColor(badgeTextColor)) {
-          effectiveBadgeTextColor = '#FFFFFF';
+        let effectiveBadgeTextColor = subTitleColor || badgeTextColor;
+        if (!subTitleColor) {
+          if (isLightColor(badgeColor) && isLightColor(badgeTextColor)) {
+            effectiveBadgeTextColor = '#060608';
+          } else if (!isLightColor(badgeColor) && !isLightColor(badgeTextColor)) {
+            effectiveBadgeTextColor = '#FFFFFF';
+          }
         }
 
         if (showSubtitleBox) {
@@ -1197,7 +1254,7 @@ export default function StoryCreator({ onBack }) {
           ctx.fill();
         }
 
-        ctx.fillStyle = showSubtitleBox ? effectiveBadgeTextColor : badgeColor;
+        ctx.fillStyle = showSubtitleBox ? effectiveBadgeTextColor : (subTitleColor || badgeColor);
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(textToRender, subCenterX, subY + subH / 2);
@@ -1292,7 +1349,7 @@ export default function StoryCreator({ onBack }) {
         if (eventDateAlign === 'right') dateX = width * 0.88 + eventDateOffsetX;
 
         ctx.textAlign = eventDateAlign;
-        ctx.fillStyle = textColor;
+        ctx.fillStyle = eventDateColor || textColor;
         ctx.fillText(textToRender, dateX, bottomBase + 12 + eventDateOffsetY);
       }
 
@@ -1307,7 +1364,7 @@ export default function StoryCreator({ onBack }) {
         if (eventVenueAlign === 'right') venueX = width * 0.88 + eventVenueOffsetX;
 
         ctx.textAlign = eventVenueAlign;
-        ctx.fillStyle = hexToRgba(textColor, 0.75);
+        ctx.fillStyle = eventVenueColor || hexToRgba(textColor, 0.75);
         ctx.fillText(textToRender, venueX, bottomBase + 55 + eventVenueOffsetY);
       }
 
@@ -1323,7 +1380,7 @@ export default function StoryCreator({ onBack }) {
         if (bookingTextAlign === 'right') bookX = width * 0.88 + bookingTextOffsetX;
 
         ctx.textAlign = bookingTextAlign;
-        ctx.fillStyle = techColor;
+        ctx.fillStyle = bookingTextColor || techColor;
         ctx.fillText(textToRender, bookX, bottomBase + 92 + bookingTextOffsetY);
       }
 
@@ -1364,6 +1421,7 @@ export default function StoryCreator({ onBack }) {
       repeatedTextPosY,
       repeatedTextSpacing,
       repeatedTextTracking,
+      repeatedTextAlign,
       repeatedTextUpper,
       mainTitle,
       mainTitleSize,
@@ -1379,6 +1437,7 @@ export default function StoryCreator({ onBack }) {
       subTitleTracking,
       subTitleAlign,
       subTitleUpper,
+      subTitleColor,
       eventDate,
       eventDateSize,
       eventDateOffsetY,
@@ -1386,6 +1445,7 @@ export default function StoryCreator({ onBack }) {
       eventDateTracking,
       eventDateAlign,
       eventDateUpper,
+      eventDateColor,
       eventVenue,
       eventVenueSize,
       eventVenueOffsetY,
@@ -1393,6 +1453,7 @@ export default function StoryCreator({ onBack }) {
       eventVenueTracking,
       eventVenueAlign,
       eventVenueUpper,
+      eventVenueColor,
       bookingText,
       bookingTextSize,
       bookingTextOffsetY,
@@ -1400,6 +1461,7 @@ export default function StoryCreator({ onBack }) {
       bookingTextTracking,
       bookingTextAlign,
       bookingTextUpper,
+      bookingTextColor,
       frameColor,
       titleColor,
       titleFxColor,
@@ -1415,6 +1477,7 @@ export default function StoryCreator({ onBack }) {
       badgeTagTracking,
       badgeTagAlign,
       badgeTagUpper,
+      badgeTagTextColor,
       audioSpecText,
       audioSpecSize,
       audioSpecOffsetY,
@@ -1422,12 +1485,15 @@ export default function StoryCreator({ onBack }) {
       audioSpecTracking,
       audioSpecAlign,
       audioSpecUpper,
+      audioSpecColor,
       hudCoordsText,
       hudCoordsSize,
       hudCoordsOffsetY,
       hudCoordsOffsetX,
       hudCoordsTracking,
+      hudCoordsAlign,
       hudCoordsUpper,
+      hudCoordsColor,
       eqOffsetX,
       eqOffsetY,
       eqScale,
@@ -1721,6 +1787,95 @@ export default function StoryCreator({ onBack }) {
           style={{
             width: '28px',
             height: '28px',
+            border: 'none',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            background: 'transparent',
+            padding: 0
+          }}
+        />
+      </div>
+    </div>
+  );
+
+  // Reusable helper for Alignment buttons (Left, Center, Right) across all text elements
+  const renderAlignmentSelector = (currentAlign, setAlign) => (
+    <div>
+      <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>
+        {cT.alignLabel}:
+      </span>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px' }}>
+        {[
+          { id: 'left', label: cT.alignLeft, icon: AlignLeft },
+          { id: 'center', label: cT.alignCenter, icon: AlignCenter },
+          { id: 'right', label: cT.alignRight, icon: AlignRight }
+        ].map((al) => {
+          const Icon = al.icon;
+          const isActive = currentAlign === al.id;
+          return (
+            <button
+              key={al.id}
+              type="button"
+              onClick={() => setAlign(al.id)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '5px',
+                padding: '6px 10px',
+                borderRadius: '8px',
+                border: isActive ? `1px solid ${frameColor}` : '1px solid rgba(255, 255, 255, 0.08)',
+                background: isActive ? hexToRgba(frameColor, 0.2) : 'rgba(255, 255, 255, 0.04)',
+                color: isActive ? '#fff' : 'var(--text-muted)',
+                fontSize: '0.74rem',
+                fontWeight: 600,
+                cursor: 'pointer'
+              }}
+            >
+              <Icon size={12} />
+              <span>{al.label}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  // Reusable helper for Inline Color Picker inside typography drawers
+  const renderInlineColorPicker = (label, currentColor, setColor, defaultColors = ['#FF003C', '#53FC18', '#A855F7', '#00F0FF', '#EAB308', '#FFFFFF', '#CBD5E1']) => (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+        <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>{label}:</span>
+        <span style={{ fontSize: '0.74rem', color: '#fff', fontFamily: 'monospace', fontWeight: 700 }}>
+          {currentColor ? currentColor.toUpperCase() : '#DEFAULT'}
+        </span>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+        {defaultColors.map((c) => (
+          <button
+            key={c}
+            type="button"
+            onClick={() => setColor(c)}
+            style={{
+              width: '20px',
+              height: '20px',
+              borderRadius: '50%',
+              background: c,
+              border: currentColor?.toUpperCase() === c ? '2px solid #fff' : '1px solid rgba(0,0,0,0.5)',
+              cursor: 'pointer',
+              padding: 0,
+              boxShadow: currentColor?.toUpperCase() === c ? `0 0 8px ${c}` : 'none'
+            }}
+          />
+        ))}
+        <input
+          type="color"
+          value={currentColor?.startsWith('#') ? currentColor : '#FFFFFF'}
+          onChange={(e) => setColor(e.target.value)}
+          title="Color personalizado"
+          style={{
+            width: '26px',
+            height: '26px',
             border: 'none',
             borderRadius: '6px',
             cursor: 'pointer',
@@ -2373,7 +2528,7 @@ export default function StoryCreator({ onBack }) {
                             fontFamily: 'monospace'
                           }}
                         >
-                          {repeatedTextSize}px • {repeatedTextSpacing}px
+                          {repeatedTextSize}px • {repeatedTextAlign.toUpperCase()}
                         </span>
                       </div>
 
@@ -2402,7 +2557,7 @@ export default function StoryCreator({ onBack }) {
                     <input
                       type="text"
                       value={repeatedText}
-                      maxLength={15}
+                      maxLength={120}
                       onChange={(e) => setRepeatedText(e.target.value)}
                       placeholder={cT.textRepeatPlaceholder}
                       style={{
@@ -2468,23 +2623,6 @@ export default function StoryCreator({ onBack }) {
                           />
                         </div>
 
-                        {/* Position X */}
-                        <div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                            <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>{cT.cascadePosXLabel}:</span>
-                            <span style={{ fontSize: '0.76rem', color: '#fff', fontFamily: 'monospace', fontWeight: 700 }}>{repeatedTextPosX} px</span>
-                          </div>
-                          <input
-                            type="range"
-                            min="-150"
-                            max="1050"
-                            step="5"
-                            value={repeatedTextPosX}
-                            onChange={(e) => setRepeatedTextPosX(parseInt(e.target.value, 10))}
-                            style={{ width: '100%', accentColor: frameColor, cursor: 'pointer' }}
-                          />
-                        </div>
-
                         {/* Position Y */}
                         <div>
                           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
@@ -2493,11 +2631,28 @@ export default function StoryCreator({ onBack }) {
                           </div>
                           <input
                             type="range"
-                            min="-950"
-                            max="950"
+                            min="-1650"
+                            max="1650"
                             step="5"
                             value={repeatedTextPosY}
                             onChange={(e) => setRepeatedTextPosY(parseInt(e.target.value, 10))}
+                            style={{ width: '100%', accentColor: frameColor, cursor: 'pointer' }}
+                          />
+                        </div>
+
+                        {/* Position X */}
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                            <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>{cT.cascadePosXLabel}:</span>
+                            <span style={{ fontSize: '0.76rem', color: '#fff', fontFamily: 'monospace', fontWeight: 700 }}>{repeatedTextPosX} px</span>
+                          </div>
+                          <input
+                            type="range"
+                            min="-650"
+                            max="1100"
+                            step="5"
+                            value={repeatedTextPosX}
+                            onChange={(e) => setRepeatedTextPosX(parseInt(e.target.value, 10))}
                             style={{ width: '100%', accentColor: frameColor, cursor: 'pointer' }}
                           />
                         </div>
@@ -2518,6 +2673,12 @@ export default function StoryCreator({ onBack }) {
                             style={{ width: '100%', accentColor: frameColor, cursor: 'pointer' }}
                           />
                         </div>
+
+                        {/* Alignment */}
+                        {renderAlignmentSelector(repeatedTextAlign, setRepeatedTextAlign)}
+
+                        {/* Dedicated Color */}
+                        {renderInlineColorPicker(cT.colorRepeatText || 'Color del Texto Repetido', repeatTextColor, setRepeatTextColor)}
 
                         {/* Toggle Uppercase & Reset */}
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '6px', borderTop: '1px solid rgba(255, 255, 255, 0.06)' }}>
@@ -2608,7 +2769,7 @@ export default function StoryCreator({ onBack }) {
                     <input
                       type="text"
                       value={mainTitle}
-                      maxLength={20}
+                      maxLength={120}
                       onChange={(e) => setMainTitle(e.target.value)}
                       placeholder={cT.mainTitlePlaceholder}
                       style={{
@@ -2662,7 +2823,7 @@ export default function StoryCreator({ onBack }) {
                           </div>
                           <input
                             type="range"
-                            min="-1550"
+                            min="-1650"
                             max="450"
                             step="5"
                             value={mainTitleOffsetY}
@@ -2706,41 +2867,12 @@ export default function StoryCreator({ onBack }) {
                         </div>
 
                         {/* Alignment */}
-                        <div>
-                          <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>{cT.alignLabel}:</span>
-                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px' }}>
-                            {[
-                              { id: 'left', label: cT.alignLeft, icon: AlignLeft },
-                              { id: 'center', label: cT.alignCenter, icon: AlignCenter },
-                              { id: 'right', label: cT.alignRight, icon: AlignRight }
-                            ].map((al) => {
-                              const Icon = al.icon;
-                              const isActive = mainTitleAlign === al.id;
-                              return (
-                                <button
-                                  key={al.id}
-                                  onClick={() => setMainTitleAlign(al.id)}
-                                  style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    gap: '5px',
-                                    padding: '6px 10px',
-                                    borderRadius: '8px',
-                                    border: isActive ? `1px solid ${frameColor}` : '1px solid rgba(255, 255, 255, 0.08)',
-                                    background: isActive ? hexToRgba(frameColor, 0.2) : 'rgba(255, 255, 255, 0.04)',
-                                    color: isActive ? '#fff' : 'var(--text-muted)',
-                                    fontSize: '0.74rem',
-                                    fontWeight: 600,
-                                    cursor: 'pointer'
-                                  }}
-                                >
-                                  <Icon size={12} />
-                                  <span>{al.label}</span>
-                                </button>
-                              );
-                            })}
-                          </div>
+                        {renderAlignmentSelector(mainTitleAlign, setMainTitleAlign)}
+
+                        {/* Colors for Main Title: Primary (MISSA) and Suffix (FX) */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          {renderInlineColorPicker(cT.colorTitle || 'Color del Título (MISSA)', titleColor, setTitleColor)}
+                          {renderInlineColorPicker(cT.colorTitleFx || 'Color del Sufijo (FX)', titleFxColor, setTitleFxColor)}
                         </div>
 
                         {/* Toggle Uppercase & Reset */}
@@ -2832,7 +2964,7 @@ export default function StoryCreator({ onBack }) {
                     <input
                       type="text"
                       value={subTitle}
-                      maxLength={25}
+                      maxLength={120}
                       onChange={(e) => setSubTitle(e.target.value)}
                       placeholder={cT.genrePlaceholder}
                       style={{
@@ -2886,7 +3018,7 @@ export default function StoryCreator({ onBack }) {
                           </div>
                           <input
                             type="range"
-                            min="-1550"
+                            min="-1650"
                             max="450"
                             step="5"
                             value={subTitleOffsetY}
@@ -2930,42 +3062,10 @@ export default function StoryCreator({ onBack }) {
                         </div>
 
                         {/* Alignment */}
-                        <div>
-                          <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>{cT.alignLabel}:</span>
-                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px' }}>
-                            {[
-                              { id: 'left', label: cT.alignLeft, icon: AlignLeft },
-                              { id: 'center', label: cT.alignCenter, icon: AlignCenter },
-                              { id: 'right', label: cT.alignRight, icon: AlignRight }
-                            ].map((al) => {
-                              const Icon = al.icon;
-                              const isActive = subTitleAlign === al.id;
-                              return (
-                                <button
-                                  key={al.id}
-                                  onClick={() => setSubTitleAlign(al.id)}
-                                  style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    gap: '5px',
-                                    padding: '6px 10px',
-                                    borderRadius: '8px',
-                                    border: isActive ? `1px solid ${frameColor}` : '1px solid rgba(255, 255, 255, 0.08)',
-                                    background: isActive ? hexToRgba(frameColor, 0.2) : 'rgba(255, 255, 255, 0.04)',
-                                    color: isActive ? '#fff' : 'var(--text-muted)',
-                                    fontSize: '0.74rem',
-                                    fontWeight: 600,
-                                    cursor: 'pointer'
-                                  }}
-                                >
-                                  <Icon size={12} />
-                                  <span>{al.label}</span>
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
+                        {renderAlignmentSelector(subTitleAlign, setSubTitleAlign)}
+
+                        {/* Color for Subtitle */}
+                        {renderInlineColorPicker(cT.colorBadgeText || 'Color del Texto', subTitleColor || badgeTextColor || '#FDE047', setSubTitleColor)}
 
                         {/* Toggle Uppercase & Reset */}
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '6px', borderTop: '1px solid rgba(255, 255, 255, 0.06)' }}>
@@ -3056,7 +3156,7 @@ export default function StoryCreator({ onBack }) {
                     <input
                       type="text"
                       value={eventDate}
-                      maxLength={30}
+                      maxLength={120}
                       onChange={(e) => setEventDate(e.target.value)}
                       placeholder={cT.datePlaceholder}
                       style={{
@@ -3154,42 +3254,10 @@ export default function StoryCreator({ onBack }) {
                         </div>
 
                         {/* Alignment */}
-                        <div>
-                          <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>{cT.alignLabel}:</span>
-                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px' }}>
-                            {[
-                              { id: 'left', label: cT.alignLeft, icon: AlignLeft },
-                              { id: 'center', label: cT.alignCenter, icon: AlignCenter },
-                              { id: 'right', label: cT.alignRight, icon: AlignRight }
-                            ].map((al) => {
-                              const Icon = al.icon;
-                              const isActive = eventDateAlign === al.id;
-                              return (
-                                <button
-                                  key={al.id}
-                                  onClick={() => setEventDateAlign(al.id)}
-                                  style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    gap: '5px',
-                                    padding: '6px 10px',
-                                    borderRadius: '8px',
-                                    border: isActive ? `1px solid ${frameColor}` : '1px solid rgba(255, 255, 255, 0.08)',
-                                    background: isActive ? hexToRgba(frameColor, 0.2) : 'rgba(255, 255, 255, 0.04)',
-                                    color: isActive ? '#fff' : 'var(--text-muted)',
-                                    fontSize: '0.74rem',
-                                    fontWeight: 600,
-                                    cursor: 'pointer'
-                                  }}
-                                >
-                                  <Icon size={12} />
-                                  <span>{al.label}</span>
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
+                        {renderAlignmentSelector(eventDateAlign, setEventDateAlign)}
+
+                        {/* Color for Event Date */}
+                        {renderInlineColorPicker(cT.colorDateText || 'Color de Fecha / Evento', eventDateColor, setEventDateColor)}
 
                         {/* Toggle Uppercase & Reset */}
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '6px', borderTop: '1px solid rgba(255, 255, 255, 0.06)' }}>
@@ -3280,7 +3348,7 @@ export default function StoryCreator({ onBack }) {
                     <input
                       type="text"
                       value={eventVenue}
-                      maxLength={35}
+                      maxLength={120}
                       onChange={(e) => setEventVenue(e.target.value)}
                       placeholder={cT.venuePlaceholder}
                       style={{
@@ -3378,42 +3446,10 @@ export default function StoryCreator({ onBack }) {
                         </div>
 
                         {/* Alignment */}
-                        <div>
-                          <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>{cT.alignLabel}:</span>
-                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px' }}>
-                            {[
-                              { id: 'left', label: cT.alignLeft, icon: AlignLeft },
-                              { id: 'center', label: cT.alignCenter, icon: AlignCenter },
-                              { id: 'right', label: cT.alignRight, icon: AlignRight }
-                            ].map((al) => {
-                              const Icon = al.icon;
-                              const isActive = eventVenueAlign === al.id;
-                              return (
-                                <button
-                                  key={al.id}
-                                  onClick={() => setEventVenueAlign(al.id)}
-                                  style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    gap: '5px',
-                                    padding: '6px 10px',
-                                    borderRadius: '8px',
-                                    border: isActive ? `1px solid ${frameColor}` : '1px solid rgba(255, 255, 255, 0.08)',
-                                    background: isActive ? hexToRgba(frameColor, 0.2) : 'rgba(255, 255, 255, 0.04)',
-                                    color: isActive ? '#fff' : 'var(--text-muted)',
-                                    fontSize: '0.74rem',
-                                    fontWeight: 600,
-                                    cursor: 'pointer'
-                                  }}
-                                >
-                                  <Icon size={12} />
-                                  <span>{al.label}</span>
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
+                        {renderAlignmentSelector(eventVenueAlign, setEventVenueAlign)}
+
+                        {/* Color for Event Venue */}
+                        {renderInlineColorPicker(cT.colorVenueText || 'Color de Ubicación / Club', eventVenueColor, setEventVenueColor)}
 
                         {/* Toggle Uppercase & Reset */}
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '6px', borderTop: '1px solid rgba(255, 255, 255, 0.06)' }}>
@@ -3504,7 +3540,7 @@ export default function StoryCreator({ onBack }) {
                     <input
                       type="text"
                       value={bookingText}
-                      maxLength={60}
+                      maxLength={120}
                       onChange={(e) => setBookingText(e.target.value)}
                       placeholder={cT.bookingPlaceholder}
                       style={{
@@ -3605,42 +3641,10 @@ export default function StoryCreator({ onBack }) {
                         </div>
 
                         {/* Alignment */}
-                        <div>
-                          <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>{cT.alignLabel}:</span>
-                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px' }}>
-                            {[
-                              { id: 'left', label: cT.alignLeft, icon: AlignLeft },
-                              { id: 'center', label: cT.alignCenter, icon: AlignCenter },
-                              { id: 'right', label: cT.alignRight, icon: AlignRight }
-                            ].map((al) => {
-                              const Icon = al.icon;
-                              const isActive = bookingTextAlign === al.id;
-                              return (
-                                <button
-                                  key={al.id}
-                                  onClick={() => setBookingTextAlign(al.id)}
-                                  style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    gap: '5px',
-                                    padding: '6px 10px',
-                                    borderRadius: '8px',
-                                    border: isActive ? `1px solid ${frameColor}` : '1px solid rgba(255, 255, 255, 0.08)',
-                                    background: isActive ? hexToRgba(frameColor, 0.2) : 'rgba(255, 255, 255, 0.04)',
-                                    color: isActive ? '#fff' : 'var(--text-muted)',
-                                    fontSize: '0.74rem',
-                                    fontWeight: 600,
-                                    cursor: 'pointer'
-                                  }}
-                                >
-                                  <Icon size={12} />
-                                  <span>{al.label}</span>
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
+                        {renderAlignmentSelector(bookingTextAlign, setBookingTextAlign)}
+
+                        {/* Color for Booking Text */}
+                        {renderInlineColorPicker(cT.colorBookingText || 'Color de Booking / Contacto', bookingTextColor, setBookingTextColor)}
 
                         {/* Toggle Uppercase & Reset */}
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '6px', borderTop: '1px solid rgba(255, 255, 255, 0.06)' }}>
@@ -3731,7 +3735,7 @@ export default function StoryCreator({ onBack }) {
                     <input
                       type="text"
                       value={badgeTagText}
-                      maxLength={40}
+                      maxLength={120}
                       onChange={(e) => setBadgeTagText(e.target.value)}
                       placeholder={cT.badgeTagPlaceholder}
                       style={{
@@ -3831,42 +3835,10 @@ export default function StoryCreator({ onBack }) {
                         </div>
 
                         {/* Alignment */}
-                        <div>
-                          <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>{cT.alignLabel}:</span>
-                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px' }}>
-                            {[
-                              { id: 'left', label: cT.alignLeft, icon: AlignLeft },
-                              { id: 'center', label: cT.alignCenter, icon: AlignCenter },
-                              { id: 'right', label: cT.alignRight, icon: AlignRight }
-                            ].map((al) => {
-                              const Icon = al.icon;
-                              const isActive = badgeTagAlign === al.id;
-                              return (
-                                <button
-                                  key={al.id}
-                                  onClick={() => setBadgeTagAlign(al.id)}
-                                  style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    gap: '5px',
-                                    padding: '6px 10px',
-                                    borderRadius: '8px',
-                                    border: isActive ? `1px solid ${frameColor}` : '1px solid rgba(255, 255, 255, 0.08)',
-                                    background: isActive ? hexToRgba(frameColor, 0.2) : 'rgba(255, 255, 255, 0.04)',
-                                    color: isActive ? '#fff' : 'var(--text-muted)',
-                                    fontSize: '0.74rem',
-                                    fontWeight: 600,
-                                    cursor: 'pointer'
-                                  }}
-                                >
-                                  <Icon size={12} />
-                                  <span>{al.label}</span>
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
+                        {renderAlignmentSelector(badgeTagAlign, setBadgeTagAlign)}
+
+                        {/* Color for Top Badge */}
+                        {renderInlineColorPicker(cT.colorBadgeTagText || 'Color del Badge Superior', badgeTagTextColor, setBadgeTagTextColor)}
 
                         {/* Toggle Uppercase & Reset */}
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '6px', borderTop: '1px solid rgba(255, 255, 255, 0.06)' }}>
@@ -3957,7 +3929,7 @@ export default function StoryCreator({ onBack }) {
                     <input
                       type="text"
                       value={audioSpecText}
-                      maxLength={50}
+                      maxLength={120}
                       onChange={(e) => setAudioSpecText(e.target.value)}
                       placeholder={cT.audioSpecPlaceholder}
                       style={{
@@ -4057,42 +4029,10 @@ export default function StoryCreator({ onBack }) {
                         </div>
 
                         {/* Alignment */}
-                        <div>
-                          <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>{cT.alignLabel}:</span>
-                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px' }}>
-                            {[
-                              { id: 'left', label: cT.alignLeft, icon: AlignLeft },
-                              { id: 'center', label: cT.alignCenter, icon: AlignCenter },
-                              { id: 'right', label: cT.alignRight, icon: AlignRight }
-                            ].map((al) => {
-                              const Icon = al.icon;
-                              const isActive = audioSpecAlign === al.id;
-                              return (
-                                <button
-                                  key={al.id}
-                                  onClick={() => setAudioSpecAlign(al.id)}
-                                  style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    gap: '5px',
-                                    padding: '6px 10px',
-                                    borderRadius: '8px',
-                                    border: isActive ? `1px solid ${frameColor}` : '1px solid rgba(255, 255, 255, 0.08)',
-                                    background: isActive ? hexToRgba(frameColor, 0.2) : 'rgba(255, 255, 255, 0.04)',
-                                    color: isActive ? '#fff' : 'var(--text-muted)',
-                                    fontSize: '0.74rem',
-                                    fontWeight: 600,
-                                    cursor: 'pointer'
-                                  }}
-                                >
-                                  <Icon size={12} />
-                                  <span>{al.label}</span>
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
+                        {renderAlignmentSelector(audioSpecAlign, setAudioSpecAlign)}
+
+                        {/* Color for Audio Spec */}
+                        {renderInlineColorPicker(cT.colorAudioSpecText || 'Color de Formato de Audio', audioSpecColor, setAudioSpecColor)}
 
                         {/* Toggle Uppercase & Reset */}
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '6px', borderTop: '1px solid rgba(255, 255, 255, 0.06)' }}>
@@ -4154,7 +4094,7 @@ export default function StoryCreator({ onBack }) {
                             fontFamily: 'monospace'
                           }}
                         >
-                          {hudCoordsSize}px
+                          {hudCoordsSize}px • {hudCoordsAlign.toUpperCase()}
                         </span>
                       </div>
 
@@ -4183,7 +4123,7 @@ export default function StoryCreator({ onBack }) {
                     <input
                       type="text"
                       value={hudCoordsText}
-                      maxLength={45}
+                      maxLength={120}
                       onChange={(e) => setHudCoordsText(e.target.value)}
                       placeholder={cT.hudCoordsPlaceholder}
                       style={{
@@ -4281,6 +4221,12 @@ export default function StoryCreator({ onBack }) {
                             style={{ width: '100%', accentColor: frameColor, cursor: 'pointer' }}
                           />
                         </div>
+
+                        {/* Alignment */}
+                        {renderAlignmentSelector(hudCoordsAlign, setHudCoordsAlign)}
+
+                        {/* Color for Technical HUD */}
+                        {renderInlineColorPicker(cT.colorHudCoordsText || 'Color de Coordenadas HUD', hudCoordsColor, setHudCoordsColor)}
 
                         {/* Toggle Uppercase & Reset */}
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '6px', borderTop: '1px solid rgba(255, 255, 255, 0.06)' }}>
@@ -4575,15 +4521,30 @@ export default function StoryCreator({ onBack }) {
                   })}
 
                   {/* 5. Subtitle / Genre Badge Text */}
-                  {renderColorItem(cT.colorBadgeText, badgeTextColor, setBadgeTextColor)}
+                  {renderColorItem(cT.colorBadgeText, subTitleColor || badgeTextColor, setSubTitleColor)}
 
-                  {/* 6. Event Info & Date Text */}
-                  {renderColorItem(cT.colorText, textColor, setTextColor)}
+                  {/* 6. Event Date Text */}
+                  {renderColorItem(cT.colorDateText || 'Color de Fecha / Evento', eventDateColor, setEventDateColor)}
 
-                  {/* 7. Lateral Repeated Text */}
+                  {/* 7. Event Venue / Location Text */}
+                  {renderColorItem(cT.colorVenueText || 'Color de Ubicación / Club', eventVenueColor, setEventVenueColor)}
+
+                  {/* 8. Booking / Contact Info */}
+                  {renderColorItem(cT.colorBookingText || 'Color de Booking / Contacto', bookingTextColor, setBookingTextColor)}
+
+                  {/* 9. Top Badge Tag Text */}
+                  {renderColorItem(cT.colorBadgeTagText || 'Color del Badge Superior', badgeTagTextColor, setBadgeTagTextColor)}
+
+                  {/* 10. Audio Spec Text */}
+                  {renderColorItem(cT.colorAudioSpecText || 'Color de Formato de Audio', audioSpecColor, setAudioSpecColor)}
+
+                  {/* 11. Lateral Repeated Text */}
                   {renderColorItem(cT.colorRepeatText, repeatTextColor, setRepeatTextColor)}
 
-                  {/* 8. Tech Accents, EQ & Booking */}
+                  {/* 12. Technical HUD Coordinates */}
+                  {renderColorItem(cT.colorHudCoordsText || 'Color de Coordenadas HUD', hudCoordsColor, setHudCoordsColor)}
+
+                  {/* 13. Tech Accents, Graphic EQ */}
                   {renderColorItem(cT.colorTech, techColor, setTechColor)}
                 </div>
 
