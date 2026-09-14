@@ -141,34 +141,16 @@ export default function Hero() {
               {t.hero.desc}
             </p>
 
-            {/* Main Action Buttons */}
-            <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', marginBottom: '34px' }}>
+            {/* Main Action Button: WhatsApp Direct Booking */}
+            <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', marginBottom: '30px' }}>
               <a
                 href={whatsappUrl}
                 target="_blank"
                 rel="noreferrer"
                 className="btn btn-primary"
-                style={{ gap: '10px' }}
+                style={{ gap: '10px', padding: '14px 28px', fontSize: '1rem' }}
               >
-                <WhatsAppIcon size={20} color="#FFFFFF" innerColor="#FF003C" /> {t.hero.btnBooking}
-              </a>
-              <a
-                href="https://kick.com/7missa"
-                target="_blank"
-                rel="noreferrer"
-                className="btn btn-secondary"
-                style={{ gap: '10px' }}
-              >
-                <KickIcon size={20} color="#53fc18" /> {t.hero.btnKick}
-              </a>
-              <a
-                href="https://soundcloud.com/missael-arath"
-                target="_blank"
-                rel="noreferrer"
-                className="btn btn-secondary"
-                style={{ gap: '10px' }}
-              >
-                <SoundCloudIcon size={20} color="#FF7700" /> {t.hero.btnMusic}
+                <WhatsAppIcon size={22} color="#FFFFFF" innerColor="#FF003C" /> {t.hero.btnBooking}
               </a>
             </div>
 
@@ -521,78 +503,7 @@ export default function Hero() {
               </div>
             </div>
 
-            {/* FLOATING BADGE 1: SoundCloud */}
-            <a
-              href="https://soundcloud.com/missael-arath"
-              target="_blank"
-              rel="noreferrer"
-              className="floating-badge float-anim-1"
-              style={{
-                top: '-15px',
-                left: '-12px',
-                background: 'rgba(18, 16, 22, 0.94)',
-                border: '1px solid rgba(255, 85, 0, 0.45)',
-                boxShadow: '0 12px 30px rgba(0,0,0,0.6), 0 0 20px rgba(255, 85, 0, 0.2)',
-                padding: '10px 16px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px'
-              }}
-            >
-              <div
-                style={{
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '10px',
-                  background: 'linear-gradient(135deg, #FF5500 0%, #FF3300 100%)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: '#fff'
-                }}
-              >
-                <SoundCloudIcon size={22} color="#fff" />
-              </div>
-              <div>
-                <span style={{ fontSize: '0.74rem', color: '#ff7733', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block' }}>
-                  {t.hero.soundCloudTag}
-                </span>
-                <span style={{ fontSize: '0.86rem', fontWeight: 600, color: '#fff' }}>
-                  {t.hero.soundCloudSub}
-                </span>
-              </div>
-            </a>
-
-            {/* FLOATING BADGE 2: Kick Live */}
-            <a
-              href="https://kick.com/7missa"
-              target="_blank"
-              rel="noreferrer"
-              className="floating-badge float-anim-2"
-              style={{
-                top: '25px',
-                right: '-12px',
-                background: 'rgba(14, 18, 14, 0.94)',
-                border: '1px solid rgba(83, 252, 24, 0.4)',
-                boxShadow: '0 12px 30px rgba(0,0,0,0.6), 0 0 20px rgba(83, 252, 24, 0.25)',
-                padding: '10px 16px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px'
-              }}
-            >
-              <KickIcon size={20} />
-              <div>
-                <span style={{ fontSize: '0.74rem', color: '#53fc18', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block' }}>
-                  {t.hero.kickTag}
-                </span>
-                <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#fff' }}>
-                  kick.com/7missa
-                </span>
-              </div>
-            </a>
-
-            {/* FLOATING BADGE 3: WhatsApp Direct Booking */}
+            {/* FLOATING BADGE: WhatsApp Direct Booking */}
             <a
               href={whatsappUrl}
               target="_blank"
