@@ -1,5 +1,6 @@
 ﻿import React, { useState, useRef, useEffect } from 'react';
-import { Play, Pause, Disc, ExternalLink, Radio, Flame, Sparkles, Volume2 } from 'lucide-react';
+import { Play, Pause, Disc, ExternalLink } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 const TRACKS = [
   {
@@ -45,6 +46,7 @@ const TRACKS = [
 ];
 
 export default function MusicPlayer() {
+  const { t } = useLanguage();
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [currentTrack, setCurrentTrack] = useState(TRACKS[0]);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -92,11 +94,9 @@ export default function MusicPlayer() {
     <section id="music" style={{ padding: '90px 0', position: 'relative' }}>
       <div className="container">
         <div className="section-header">
-          <span className="section-tag">CATÁLOGO & SESIONES</span>
-          <h2>PRODUCCIÓN & MIXES</h2>
-          <p>
-            Escucha una muestra de los tracks y sesiones en vivo disponibles en el SoundCloud y canales oficiales de Missafx.
-          </p>
+          <span className="section-tag">{t.music.tag}</span>
+          <h2>{t.music.title}</h2>
+          <p>{t.music.desc}</p>
         </div>
 
         {/* Category Filters */}
@@ -121,7 +121,7 @@ export default function MusicPlayer() {
                 borderColor: selectedCategory === cat ? 'transparent' : 'var(--border-glass)'
               }}
             >
-              {cat}
+              {t.music.categories[cat] || cat}
             </button>
           ))}
         </div>
@@ -171,7 +171,7 @@ export default function MusicPlayer() {
                     textTransform: 'uppercase'
                   }}
                 >
-                  REPRODUCIENDO DEMO • {currentTrack.bpm}
+                  {t.music.playingDemo} • {currentTrack.bpm}
                 </span>
                 <h3
                   className="font-display"
@@ -220,7 +220,7 @@ export default function MusicPlayer() {
               className="btn btn-secondary btn-sm"
               style={{ gap: '8px' }}
             >
-              <span>Ver en SoundCloud</span>
+              <span>{t.music.viewSoundcloud}</span>
               <ExternalLink size={15} />
             </a>
           </div>
@@ -228,7 +228,7 @@ export default function MusicPlayer() {
 
         {/* Tracks List */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {filteredTracks.map((track, idx) => {
+          {filteredTracks.map((track) => {
             const isCurrent = currentTrack.id === track.id;
             return (
               <div
@@ -315,7 +315,7 @@ export default function MusicPlayer() {
             className="btn btn-secondary"
             style={{ gap: '10px' }}
           >
-            <Disc size={18} color="#FF003C" /> Ir al Perfil Completo en SoundCloud
+            <Disc size={18} color="#FF003C" /> {t.music.fullSoundcloudCta}
           </a>
         </div>
       </div>

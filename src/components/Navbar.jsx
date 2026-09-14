@@ -1,9 +1,11 @@
 ﻿import React, { useState, useEffect } from 'react';
-import { Menu, X, MessageCircle, Sparkles } from 'lucide-react';
+import { Menu, X, MessageCircle, Globe } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { lang, setLang, t } = useLanguage();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -25,7 +27,7 @@ export default function Navbar() {
         background: isScrolled ? 'rgba(6, 6, 8, 0.88)' : 'transparent',
         backdropFilter: isScrolled ? 'blur(16px)' : 'none',
         borderBottom: isScrolled ? '1px solid rgba(255, 255, 255, 0.08)' : 'none',
-        padding: isScrolled ? '14px 0' : '22px 0'
+        padding: isScrolled ? '14px 0' : '20px 0'
       }}
     >
       <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -56,15 +58,64 @@ export default function Navbar() {
           style={{
             display: 'none',
             alignItems: 'center',
-            gap: '32px'
+            gap: '26px'
           }}
           className="desktop-nav"
         >
-          <a href="#home" className="nav-link">Inicio</a>
-          <a href="#social-hub" className="nav-link">Redes Oficiales</a>
-          <a href="#music" className="nav-link">Música & Sets</a>
-          <a href="#about" className="nav-link">Bio & Rider</a>
-          <a href="#contact" className="nav-link">Contacto</a>
+          <a href="#home" className="nav-link">{t.nav.home}</a>
+          <a href="#social-hub" className="nav-link">{t.nav.socials}</a>
+          <a href="#music" className="nav-link">{t.nav.music}</a>
+          <a href="#about" className="nav-link">{t.nav.about}</a>
+          <a href="#contact" className="nav-link">{t.nav.contact}</a>
+
+          {/* Language Selector Pill */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              background: 'rgba(255, 255, 255, 0.05)',
+              borderRadius: '999px',
+              padding: '3px',
+              border: '1px solid var(--border-glass)',
+              gap: '2px'
+            }}
+          >
+            <button
+              onClick={() => setLang('es')}
+              aria-label="Cambiar a Español"
+              style={{
+                background: lang === 'es' ? '#FF003C' : 'transparent',
+                color: lang === 'es' ? '#fff' : 'var(--text-muted)',
+                border: 'none',
+                borderRadius: '999px',
+                padding: '4px 10px',
+                fontSize: '0.78rem',
+                fontWeight: 800,
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              ES
+            </button>
+            <button
+              onClick={() => setLang('en')}
+              aria-label="Switch to English"
+              style={{
+                background: lang === 'en' ? '#FF003C' : 'transparent',
+                color: lang === 'en' ? '#fff' : 'var(--text-muted)',
+                border: 'none',
+                borderRadius: '999px',
+                padding: '4px 10px',
+                fontSize: '0.78rem',
+                fontWeight: 800,
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              EN
+            </button>
+          </div>
+
           <a
             href="https://wa.me/5214443570777?text=Hola%20Missa,%20me%20gustar%C3%ADa%20cotizar%20una%20fecha%20o%20evento"
             target="_blank"
@@ -72,25 +123,72 @@ export default function Navbar() {
             className="btn btn-primary btn-sm"
             style={{ gap: '8px' }}
           >
-            <MessageCircle size={16} /> WhatsApp Directo
+            <MessageCircle size={16} /> {t.nav.whatsapp}
           </a>
         </nav>
 
-        {/* Mobile Hamburger Toggle */}
-        <button
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          aria-label="Menu"
-          style={{
-            background: 'none',
-            border: 'none',
-            color: '#fff',
-            cursor: 'pointer',
-            padding: '8px'
-          }}
-          className="mobile-toggle"
-        >
-          {mobileMenuOpen ? <X size={26} /> : <Menu size={26} />}
-        </button>
+        {/* Mobile Controls: Language + Hamburger */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }} className="mobile-toggle-group">
+          {/* Mobile Language Switcher */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              background: 'rgba(255, 255, 255, 0.05)',
+              borderRadius: '999px',
+              padding: '2px',
+              border: '1px solid var(--border-glass)'
+            }}
+            className="mobile-lang-pill"
+          >
+            <button
+              onClick={() => setLang('es')}
+              style={{
+                background: lang === 'es' ? '#FF003C' : 'transparent',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '999px',
+                padding: '4px 8px',
+                fontSize: '0.74rem',
+                fontWeight: 800,
+                cursor: 'pointer'
+              }}
+            >
+              ES
+            </button>
+            <button
+              onClick={() => setLang('en')}
+              style={{
+                background: lang === 'en' ? '#FF003C' : 'transparent',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '999px',
+                padding: '4px 8px',
+                fontSize: '0.74rem',
+                fontWeight: 800,
+                cursor: 'pointer'
+              }}
+            >
+              EN
+            </button>
+          </div>
+
+          {/* Hamburger Toggle */}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Menu"
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#fff',
+              cursor: 'pointer',
+              padding: '8px'
+            }}
+            className="mobile-toggle"
+          >
+            {mobileMenuOpen ? <X size={26} /> : <Menu size={26} />}
+          </button>
+        </div>
       </div>
 
       {/* Mobile Drawer */}
@@ -112,7 +210,7 @@ export default function Navbar() {
             className="nav-link"
             style={{ fontSize: '1.1rem' }}
           >
-            Inicio
+            {t.nav.home}
           </a>
           <a
             href="#social-hub"
@@ -120,7 +218,7 @@ export default function Navbar() {
             className="nav-link"
             style={{ fontSize: '1.1rem' }}
           >
-            Redes Oficiales
+            {t.nav.socials}
           </a>
           <a
             href="#music"
@@ -128,7 +226,7 @@ export default function Navbar() {
             className="nav-link"
             style={{ fontSize: '1.1rem' }}
           >
-            Música & Sets
+            {t.nav.music}
           </a>
           <a
             href="#about"
@@ -136,7 +234,7 @@ export default function Navbar() {
             className="nav-link"
             style={{ fontSize: '1.1rem' }}
           >
-            Bio & Rider
+            {t.nav.about}
           </a>
           <a
             href="#contact"
@@ -144,7 +242,7 @@ export default function Navbar() {
             className="nav-link"
             style={{ fontSize: '1.1rem' }}
           >
-            Contacto Directo
+            {t.nav.contact}
           </a>
           <a
             href="https://wa.me/5214443570777?text=Hola%20Missa,%20me%20gustar%C3%ADa%20cotizar%20una%20fecha%20o%20evento"
@@ -154,7 +252,7 @@ export default function Navbar() {
             className="btn btn-primary"
             style={{ width: '100%', marginTop: '10px' }}
           >
-            <MessageCircle size={18} /> Contactar por WhatsApp
+            <MessageCircle size={18} /> {t.nav.whatsapp}
           </a>
         </div>
       )}
@@ -170,11 +268,11 @@ export default function Navbar() {
         .nav-link:hover {
           color: #fff;
         }
-        @media (min-width: 768px) {
+        @media (min-width: 860px) {
           .desktop-nav {
             display: flex !important;
           }
-          .mobile-toggle {
+          .mobile-toggle-group {
             display: none !important;
           }
         }

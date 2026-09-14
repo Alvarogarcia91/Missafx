@@ -1,7 +1,9 @@
 ﻿import React from 'react';
 import { Play, MessageCircle, Flame, Music, Video } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function Hero() {
+  const { t } = useLanguage();
   const whatsappUrl = "https://wa.me/5214443570777?text=Hola%20Missa,%20me%20gustar%C3%ADa%20cotizar%20una%20fecha%20o%20evento";
 
   return (
@@ -52,7 +54,7 @@ export default function Hero() {
           <div style={{ maxWidth: '580px', zIndex: 5 }}>
             <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '20px' }}>
               <div className="badge">
-                <Flame size={14} color="#FF003C" /> DJ & MUSIC PRODUCER
+                <Flame size={14} color="#FF003C" /> {t.hero.badgeDj}
               </div>
               <a 
                 href="https://kick.com/7missa" 
@@ -61,7 +63,7 @@ export default function Hero() {
                 className="badge badge-live"
                 style={{ textDecoration: 'none' }}
               >
-                <span className="pulse-dot" /> KICK STREAM LIVE
+                <span className="pulse-dot" /> {t.hero.badgeLive}
               </a>
             </div>
 
@@ -75,9 +77,9 @@ export default function Hero() {
                 marginBottom: '20px'
               }}
             >
-              FEEL THE <br />
-              <span className="gradient-crimson-text">FREQUENCY.</span> <br />
-              LIVE THE BEAT.
+              {t.hero.title1} <br />
+              <span className="gradient-crimson-text">{t.hero.title2}</span> <br />
+              {t.hero.title3}
             </h1>
 
             <p
@@ -89,8 +91,7 @@ export default function Hero() {
                 lineHeight: 1.7
               }}
             >
-              Sets electrizantes de Tech House, basslines contundentes y atmósfera de club underground. 
-              Explora la música, directos y booking directo de <strong>Missafx</strong>.
+              {t.hero.desc}
             </p>
 
             {/* Main Action Buttons */}
@@ -102,7 +103,7 @@ export default function Hero() {
                 className="btn btn-primary"
                 style={{ gap: '10px' }}
               >
-                <MessageCircle size={18} /> Booking WhatsApp
+                <MessageCircle size={18} /> {t.hero.btnBooking}
               </a>
               <a
                 href="https://soundcloud.com/missael-arath"
@@ -111,7 +112,7 @@ export default function Hero() {
                 className="btn btn-secondary"
                 style={{ gap: '10px' }}
               >
-                <Music size={18} color="#FF003C" /> Escuchar Sets
+                <Music size={18} color="#FF003C" /> {t.hero.btnMusic}
               </a>
               <a
                 href="https://kick.com/7missa"
@@ -120,7 +121,7 @@ export default function Hero() {
                 className="btn btn-secondary"
                 style={{ gap: '10px' }}
               >
-                <Video size={18} color="#53fc18" /> Ver en Kick
+                <Video size={18} color="#53fc18" /> {t.hero.btnKick}
               </a>
             </div>
 
@@ -316,7 +317,7 @@ export default function Hero() {
                     <span className="eq-bar" />
                   </div>
                   <span style={{ fontSize: '0.82rem', fontWeight: 700, letterSpacing: '0.05em' }}>
-                    PIONEER DJ PRO SESSION
+                    {t.hero.sessionTag}
                   </span>
                 </div>
               </div>
@@ -356,10 +357,10 @@ export default function Hero() {
               </div>
               <div>
                 <span style={{ fontSize: '0.74rem', color: '#ff7733', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block' }}>
-                  SOUNDCLOUD
+                  {t.hero.soundCloudTag}
                 </span>
                 <span style={{ fontSize: '0.86rem', fontWeight: 600, color: '#fff' }}>
-                  Escuchar Sesiones
+                  {t.hero.soundCloudSub}
                 </span>
               </div>
             </a>
@@ -385,7 +386,7 @@ export default function Hero() {
               <span className="pulse-dot" style={{ backgroundColor: '#53fc18' }} />
               <div>
                 <span style={{ fontSize: '0.74rem', color: '#53fc18', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block' }}>
-                  KICK LIVE
+                  {t.hero.kickTag}
                 </span>
                 <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#fff' }}>
                   kick.com/7missa
@@ -415,7 +416,7 @@ export default function Hero() {
               <MessageCircle size={20} />
               <div>
                 <span style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', opacity: 0.9 }}>
-                  DIRECT BOOKING
+                  {t.hero.directBookingTag}
                 </span>
                 <span style={{ fontSize: '0.88rem', fontWeight: 800 }}>
                   +52 1 444 357 0777

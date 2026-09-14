@@ -1,11 +1,13 @@
 ﻿import React, { useState } from 'react';
 import { Send, Phone, MessageCircle, Instagram, CheckCircle, Sparkles } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function Booking() {
+  const { t } = useLanguage();
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
-    eventType: 'Club / Evento Privado',
+    eventType: 'club',
     date: '',
     location: '',
     message: ''
@@ -15,8 +17,9 @@ export default function Booking() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    const eventName = t.booking.eventOptions[formData.eventType] || formData.eventType;
     const msg = encodeURIComponent(
-      `Hola Missa! Mi nombre es ${formData.name || 'un organizador'}. Quisiera cotizar una fecha para: ${formData.eventType} en ${formData.location || 'mi ciudad'}${formData.date ? ' el día ' + formData.date : ''}. Mensaje: ${formData.message || 'Contacto directo'}`
+      `Hola Missa! Mi nombre es ${formData.name || 'un organizador'}. Quisiera cotizar una fecha para: ${eventName} en ${formData.location || 'mi ciudad'}${formData.date ? ' el día ' + formData.date : ''}. Mensaje: ${formData.message || 'Contacto directo'}`
     );
     window.open(`https://wa.me/5214443570777?text=${msg}`, '_blank');
     setSubmitted(true);
@@ -28,11 +31,9 @@ export default function Booking() {
     <section id="contact" style={{ padding: '90px 0', position: 'relative' }}>
       <div className="container">
         <div className="section-header">
-          <span className="section-tag">CONTRATACIONES & CONTACTO</span>
-          <h2>BOOKING DIRECTO</h2>
-          <p>
-            Disponible para fechas en clubs, festivales y eventos en vivo. Contacta directamente vía WhatsApp.
-          </p>
+          <span className="section-tag">{t.booking.tag}</span>
+          <h2>{t.booking.title}</h2>
+          <p>{t.booking.desc}</p>
         </div>
 
         <div
@@ -46,11 +47,10 @@ export default function Booking() {
           {/* Direct Contacts Column */}
           <div>
             <h3 className="font-display" style={{ fontSize: '1.5rem', color: '#fff', marginBottom: '14px' }}>
-              CANALES DE ATENCIÓN DIRECTA
+              {t.booking.channelsTitle}
             </h3>
             <p style={{ color: 'var(--text-muted)', marginBottom: '28px', lineHeight: 1.7 }}>
-              Para cotizaciones inmediatas de fechas o consultas sobre riders y requerimientos técnicos, 
-              comunícate de forma directa.
+              {t.booking.channelsDesc}
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '32px' }}>
@@ -85,7 +85,7 @@ export default function Booking() {
                 </div>
                 <div>
                   <span style={{ fontSize: '0.78rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block' }}>
-                    WhatsApp Oficial (Respuesta Rápida)
+                    {t.booking.whatsappOfficial}
                   </span>
                   <strong style={{ color: '#fff', fontSize: '1.1rem' }}>
                     +52 1 444 357 0777
@@ -124,7 +124,7 @@ export default function Booking() {
                 </div>
                 <div>
                   <span style={{ fontSize: '0.78rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block' }}>
-                    Mensaje Directo
+                    {t.booking.instagramDirect}
                   </span>
                   <strong style={{ color: '#fff', fontSize: '1.1rem' }}>
                     @missaa.fx
@@ -142,10 +142,10 @@ export default function Booking() {
               }}
             >
               <h4 style={{ color: '#fff', fontSize: '0.92rem', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Sparkles size={16} color="#FF003C" /> Disponibilidad de Fechas
+                <Sparkles size={16} color="#FF003C" /> {t.booking.policyTitle}
               </h4>
               <p style={{ fontSize: '0.85rem', color: 'var(--text-dim)', lineHeight: 1.6 }}>
-                Recomendamos coordinar fechas con anticipación para asegurar la disponibilidad de cabina y agenda.
+                {t.booking.policyDesc}
               </p>
             </div>
           </div>
@@ -177,32 +177,32 @@ export default function Booking() {
                   <CheckCircle size={32} />
                 </div>
                 <h3 className="font-display" style={{ fontSize: '1.4rem', color: '#fff', marginBottom: '8px' }}>
-                  ¡Abriendo Chat de WhatsApp!
+                  {t.booking.successTitle}
                 </h3>
                 <p style={{ color: 'var(--text-muted)', marginBottom: '20px', fontSize: '0.92rem' }}>
-                  Tu mensaje se ha generado con los datos de tu evento para cotizar directamente con Missafx.
+                  {t.booking.successDesc}
                 </p>
                 <button
                   onClick={() => setSubmitted(false)}
                   className="btn btn-secondary btn-sm"
                 >
-                  Enviar otra consulta
+                  {t.booking.sendAnother}
                 </button>
               </div>
             ) : (
               <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
                 <h3 className="font-display" style={{ fontSize: '1.25rem', color: '#fff' }}>
-                  COTIZACIÓN RÁPIDA VÍA WHATSAPP
+                  {t.booking.formTitle}
                 </h3>
 
                 <div>
                   <label style={{ display: 'block', fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '6px' }}>
-                    Tu Nombre o Promotora
+                    {t.booking.labelName}
                   </label>
                   <input
                     type="text"
                     required
-                    placeholder="Ej. Carlos Mendoza / Nocturna Club"
+                    placeholder={t.booking.placeholderName}
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     style={{
@@ -221,7 +221,7 @@ export default function Booking() {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
                   <div>
                     <label style={{ display: 'block', fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '6px' }}>
-                      Tipo de Evento
+                      {t.booking.labelEventType}
                     </label>
                     <select
                       value={formData.eventType}
@@ -237,20 +237,20 @@ export default function Booking() {
                         outline: 'none'
                       }}
                     >
-                      <option value="Club / Antro">Club / Antro</option>
-                      <option value="Festival / Escenario">Festival</option>
-                      <option value="Fiesta Privada / After">Fiesta Privada</option>
-                      <option value="Rave / Warehouse">Rave / Warehouse</option>
+                      <option value="club">{t.booking.eventOptions.club}</option>
+                      <option value="festival">{t.booking.eventOptions.festival}</option>
+                      <option value="private">{t.booking.eventOptions.private}</option>
+                      <option value="rave">{t.booking.eventOptions.rave}</option>
                     </select>
                   </div>
 
                   <div>
                     <label style={{ display: 'block', fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '6px' }}>
-                      Ciudad / Ubicación
+                      {t.booking.labelLocation}
                     </label>
                     <input
                       type="text"
-                      placeholder="Ej. San Luis Potosí / CDMX"
+                      placeholder={t.booking.placeholderLocation}
                       value={formData.location}
                       onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                       style={{
@@ -269,11 +269,11 @@ export default function Booking() {
 
                 <div>
                   <label style={{ display: 'block', fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '6px' }}>
-                    Mensaje o Requerimientos
+                    {t.booking.labelMessage}
                   </label>
                   <textarea
                     rows="3"
-                    placeholder="Detalles sobre horario, concepto del evento, etc."
+                    placeholder={t.booking.placeholderMessage}
                     value={formData.message}
                     onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                     style={{
@@ -295,7 +295,7 @@ export default function Booking() {
                   className="btn btn-primary"
                   style={{ width: '100%', gap: '10px', marginTop: '6px' }}
                 >
-                  <MessageCircle size={18} /> Enviar Cotización a WhatsApp
+                  <MessageCircle size={18} /> {t.booking.submitBtn}
                 </button>
               </form>
             )}

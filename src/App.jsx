@@ -1,4 +1,5 @@
 ﻿import React from 'react';
+import { LanguageProvider } from './context/LanguageContext.jsx';
 import Navbar from './components/Navbar.jsx';
 import Hero from './components/Hero.jsx';
 import SocialHub from './components/SocialHub.jsx';
@@ -9,16 +10,18 @@ import Footer from './components/Footer.jsx';
 
 export default function App() {
   return (
-    <div className="app-wrapper">
-      <Navbar />
-      <main>
-        <Hero />
-        <SocialHub />
-        <MusicPlayer />
-        <About />
-        <Booking />
-      </main>
-      <Footer />
-    </div>
+    <LanguageProvider>
+      <div className="app-wrapper">
+        <Navbar />
+        <main>
+          <Hero />
+          <SocialHub />
+          <MusicPlayer />
+          <About />
+          <Booking />
+        </main>
+        <Footer />
+      </div>
+    </LanguageProvider>
   );
 }

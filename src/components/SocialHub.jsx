@@ -1,59 +1,60 @@
 ﻿import React from 'react';
-import { ExternalLink, Play, Radio, Video, Instagram, MessageCircle, Music } from 'lucide-react';
-
-const SOCIAL_CHANNELS = [
-  {
-    name: 'SoundCloud',
-    tag: 'Sesiones & Tracks',
-    handle: 'soundcloud.com/missael-arath',
-    url: 'https://soundcloud.com/missael-arath',
-    description: 'Escucha los últimos sets completos, mezclas exclusivas y tracks de Tech House.',
-    color: '#FF5500',
-    icon: Music,
-    cta: 'Escuchar en SoundCloud'
-  },
-  {
-    name: 'Kick Live Stream',
-    tag: 'En Directo',
-    handle: 'kick.com/7missa',
-    url: 'https://kick.com/7missa',
-    description: 'Transmisiones en vivo, sesiones espontáneas de mezcla y directos interactivos.',
-    color: '#53FC18',
-    icon: Radio,
-    cta: 'Sintonizar Kick'
-  },
-  {
-    name: 'Instagram',
-    tag: 'Comunidad & Fechas',
-    handle: '@missaa.fx',
-    url: 'https://www.instagram.com/missaa.fx/',
-    description: 'Sigue el día a día en cabina, backstages de toquines y anuncios oficiales.',
-    color: '#E1306C',
-    icon: Instagram,
-    cta: 'Seguir en Instagram'
-  },
-  {
-    name: 'YouTube',
-    tag: 'Videos & Live Sets',
-    handle: '@missaelarath6364',
-    url: 'https://www.youtube.com/@missaelarath6364',
-    description: 'Grabaciones de sets en vivo, videos de presentaciones y contenido audiovisual.',
-    color: '#FF0000',
-    icon: Video,
-    cta: 'Ver Canal de YouTube'
-  }
-];
+import { ExternalLink, Radio, Video, Instagram, Music } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function SocialHub() {
+  const { t } = useLanguage();
+
+  const SOCIAL_CHANNELS = [
+    {
+      name: 'SoundCloud',
+      tag: t.socialHub.channels.soundcloud.tag,
+      handle: 'soundcloud.com/missael-arath',
+      url: 'https://soundcloud.com/missael-arath',
+      description: t.socialHub.channels.soundcloud.desc,
+      color: '#FF5500',
+      icon: Music,
+      cta: t.socialHub.channels.soundcloud.cta
+    },
+    {
+      name: 'Kick Live Stream',
+      tag: t.socialHub.channels.kick.tag,
+      handle: 'kick.com/7missa',
+      url: 'https://kick.com/7missa',
+      description: t.socialHub.channels.kick.desc,
+      color: '#53FC18',
+      icon: Radio,
+      cta: t.socialHub.channels.kick.cta
+    },
+    {
+      name: 'Instagram',
+      tag: t.socialHub.channels.instagram.tag,
+      handle: '@missaa.fx',
+      url: 'https://www.instagram.com/missaa.fx/',
+      description: t.socialHub.channels.instagram.desc,
+      color: '#E1306C',
+      icon: Instagram,
+      cta: t.socialHub.channels.instagram.cta
+    },
+    {
+      name: 'YouTube',
+      tag: t.socialHub.channels.youtube.tag,
+      handle: '@missaelarath6364',
+      url: 'https://www.youtube.com/@missaelarath6364',
+      description: t.socialHub.channels.youtube.desc,
+      color: '#FF0000',
+      icon: Video,
+      cta: t.socialHub.channels.youtube.cta
+    }
+  ];
+
   return (
     <section id="social-hub" style={{ padding: '90px 0', position: 'relative' }}>
       <div className="container">
         <div className="section-header">
-          <span className="section-tag">ECOSISTEMA DIGITAL</span>
-          <h2>REDES & CANALES OFICIALES</h2>
-          <p>
-            Sigue la actividad de Missafx en tiempo real a través de sus plataformas de streaming, música y contenido.
-          </p>
+          <span className="section-tag">{t.socialHub.tag}</span>
+          <h2>{t.socialHub.title}</h2>
+          <p>{t.socialHub.desc}</p>
         </div>
 
         <div

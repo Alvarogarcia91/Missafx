@@ -1,7 +1,10 @@
 ﻿import React from 'react';
-import { ArrowUp, Music, Instagram, Video, Radio, MessageCircle } from 'lucide-react';
+import { ArrowUp } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function Footer() {
+  const { t } = useLanguage();
+
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -34,7 +37,7 @@ export default function Footer() {
               style={{ height: '32px', width: 'auto', display: 'block' }}
             />
             <span style={{ fontSize: '0.85rem', color: 'var(--text-dim)', borderLeft: '1px solid var(--border-glass)', paddingLeft: '14px' }}>
-              DJ & Electronic Music Producer
+              {t.footer.tagline}
             </span>
           </div>
 
@@ -90,9 +93,9 @@ export default function Footer() {
             gap: '12px'
           }}
         >
-          <p>© {new Date().getFullYear()} Missafx. Sitio Oficial Representativo.</p>
+          <p>© {new Date().getFullYear()} {t.footer.rights}</p>
           <p>
-            Contacto directo de booking: <a href="tel:+5214443570777" style={{ color: '#FF003C', textDecoration: 'none' }}>+52 1 444 357 0777</a>
+            {t.footer.bookingContact} <a href="tel:+5214443570777" style={{ color: '#FF003C', textDecoration: 'none' }}>+52 1 444 357 0777</a>
           </p>
         </div>
       </div>

@@ -1,7 +1,9 @@
 ﻿import React from 'react';
-import { Sliders, Headphones, MessageCircle, Download, CheckCircle, Disc } from 'lucide-react';
+import { Sliders, Headphones, MessageCircle } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function About() {
+  const { t } = useLanguage();
   const whatsappUrl = "https://wa.me/5214443570777?text=Hola%20Missa,%20me%20gustar%C3%ADa%20solicitar%20el%20Press%20Kit%20completo%20y%20Rider";
 
   return (
@@ -18,18 +20,16 @@ export default function About() {
           {/* Left Column: Artist Bio */}
           <div>
             <div className="section-header" style={{ textAlign: 'left', marginBottom: '26px' }}>
-              <span className="section-tag">SOBRE EL ARTISTA</span>
-              <h2>MISSAFX / BIO & TRAYECTORIA</h2>
+              <span className="section-tag">{t.about.tag}</span>
+              <h2>{t.about.title}</h2>
             </div>
 
             <p style={{ color: 'var(--text-muted)', fontSize: '1.05rem', marginBottom: '18px', lineHeight: 1.8 }}>
-              Con una identidad sonora potente y enfocada en la pista de baile, <strong style={{ color: '#fff' }}>Missafx</strong> fusiona 
-              lo mejor del Tech House contemporáneo con líneas de bajo contundentes y percusiones dinámicas.
+              {t.about.bio1}
             </p>
 
             <p style={{ color: 'var(--text-muted)', fontSize: '1.05rem', marginBottom: '32px', lineHeight: 1.8 }}>
-              Sus sets están diseñados para generar alta energía en clubs y escenarios, respaldados por una comunidad activa en plataformas
-              de streaming como Kick, YouTube y SoundCloud.
+              {t.about.bio2}
             </p>
 
             {/* Highlights Grid */}
@@ -43,14 +43,14 @@ export default function About() {
             >
               <div className="glass-panel" style={{ padding: '18px 20px' }}>
                 <Headphones size={22} color="#FF003C" style={{ marginBottom: '8px' }} />
-                <h4 style={{ fontSize: '1rem', color: '#fff', marginBottom: '4px' }}>Tech House Sessions</h4>
-                <p style={{ fontSize: '0.82rem', color: 'var(--text-dim)' }}>Mezclas enérgicas y lectura dinámica de pista.</p>
+                <h4 style={{ fontSize: '1rem', color: '#fff', marginBottom: '4px' }}>{t.about.highlight1Title}</h4>
+                <p style={{ fontSize: '0.82rem', color: 'var(--text-dim)' }}>{t.about.highlight1Desc}</p>
               </div>
 
               <div className="glass-panel" style={{ padding: '18px 20px' }}>
                 <Sliders size={22} color="#FF003C" style={{ marginBottom: '8px' }} />
-                <h4 style={{ fontSize: '1rem', color: '#fff', marginBottom: '4px' }}>Edits & Bootlegs</h4>
-                <p style={{ fontSize: '0.82rem', color: 'var(--text-dim)' }}>Sonido vanguardista y producciones exclusivas.</p>
+                <h4 style={{ fontSize: '1rem', color: '#fff', marginBottom: '4px' }}>{t.about.highlight2Title}</h4>
+                <p style={{ fontSize: '0.82rem', color: 'var(--text-dim)' }}>{t.about.highlight2Desc}</p>
               </div>
             </div>
 
@@ -61,7 +61,7 @@ export default function About() {
               className="btn btn-secondary"
               style={{ gap: '10px' }}
             >
-              <MessageCircle size={18} color="#FF003C" /> Solicitar Press Kit Completo
+              <MessageCircle size={18} color="#FF003C" /> {t.about.pressKitBtn}
             </a>
           </div>
 
@@ -93,28 +93,28 @@ export default function About() {
                 </div>
                 <div>
                   <h3 className="font-display" style={{ fontSize: '1.25rem', color: '#fff' }}>
-                    RIDER TÉCNICO SUGERIDO
+                    {t.about.riderTitle}
                   </h3>
-                  <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>Equipamiento para clubs y festivales</span>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>{t.about.riderSubtitle}</span>
                 </div>
               </div>
 
               <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '26px' }}>
                 <li style={{ display: 'flex', alignItems: 'center', gap: '12px', color: 'var(--text-muted)', fontSize: '0.92rem' }}>
                   <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#FF003C' }} />
-                  <strong>Reproductores:</strong> 2x Pioneer CDJ-3000 o CDJ-2000NXS2
+                  {t.about.rider1}
                 </li>
                 <li style={{ display: 'flex', alignItems: 'center', gap: '12px', color: 'var(--text-muted)', fontSize: '0.92rem' }}>
                   <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#FF003C' }} />
-                  <strong>Mixer:</strong> Pioneer DJM-A9 o DJM-900NXS2
+                  {t.about.rider2}
                 </li>
                 <li style={{ display: 'flex', alignItems: 'center', gap: '12px', color: 'var(--text-muted)', fontSize: '0.92rem' }}>
                   <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#FF003C' }} />
-                  <strong>Monitores de Cabina:</strong> 2x Booth Monitors estéreo de alta potencia
+                  {t.about.rider3}
                 </li>
                 <li style={{ display: 'flex', alignItems: 'center', gap: '12px', color: 'var(--text-muted)', fontSize: '0.92rem' }}>
                   <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#FF003C' }} />
-                  <strong>Conectividad:</strong> Red Pro DJ Link Ethernet & Alimentación 110/220V
+                  {t.about.rider4}
                 </li>
               </ul>
 
@@ -128,7 +128,7 @@ export default function About() {
                 }}
               >
                 <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                  ¿Requieres especificaciones para un escenario o evento especial?
+                  {t.about.riderQuestion}
                 </span>
                 <a
                   href="https://wa.me/5214443570777?text=Hola%20Missa,%20quisiera%20consultar%20detalles%20t%C3%A9cnicos%20para%20un%20evento"
@@ -143,7 +143,7 @@ export default function About() {
                     textDecoration: 'none'
                   }}
                 >
-                  Consultar Requerimientos en WhatsApp →
+                  {t.about.riderAction}
                 </a>
               </div>
             </div>
