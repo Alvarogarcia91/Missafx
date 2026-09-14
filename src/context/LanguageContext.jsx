@@ -1,13 +1,13 @@
 ﻿import React, { createContext, useContext, useState, useEffect } from 'react';
 import { translations } from '../i18n/translations';
 
-const LanguageContext = createContext();
+export const LanguageContext = createContext();
 
 export function LanguageProvider({ children }) {
   const [lang, setLangState] = useState(() => {
     try {
       const saved = localStorage.getItem('missafx_lang');
-      return saved === 'en' ? 'en' : 'es'; // Default to 'es'
+      return saved === 'en' ? 'en' : 'es'; // Por defecto Español
     } catch {
       return 'es';
     }

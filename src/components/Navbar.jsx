@@ -1,5 +1,5 @@
 ﻿import React, { useState, useEffect } from 'react';
-import { Menu, X, MessageCircle, Globe } from 'lucide-react';
+import { Menu, X, MessageCircle } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
 export default function Navbar() {
@@ -58,13 +58,12 @@ export default function Navbar() {
           style={{
             display: 'none',
             alignItems: 'center',
-            gap: '26px'
+            gap: '28px'
           }}
           className="desktop-nav"
         >
           <a href="#home" className="nav-link">{t.nav.home}</a>
           <a href="#social-hub" className="nav-link">{t.nav.socials}</a>
-          <a href="#music" className="nav-link">{t.nav.music}</a>
           <a href="#about" className="nav-link">{t.nav.about}</a>
           <a href="#contact" className="nav-link">{t.nav.contact}</a>
 
@@ -73,7 +72,7 @@ export default function Navbar() {
             style={{
               display: 'flex',
               alignItems: 'center',
-              background: 'rgba(255, 255, 255, 0.05)',
+              background: 'rgba(255, 255, 255, 0.06)',
               borderRadius: '999px',
               padding: '3px',
               border: '1px solid var(--border-glass)',
@@ -134,12 +133,11 @@ export default function Navbar() {
             style={{
               display: 'flex',
               alignItems: 'center',
-              background: 'rgba(255, 255, 255, 0.05)',
+              background: 'rgba(255, 255, 255, 0.06)',
               borderRadius: '999px',
               padding: '2px',
               border: '1px solid var(--border-glass)'
             }}
-            className="mobile-lang-pill"
           >
             <button
               onClick={() => setLang('es')}
@@ -219,14 +217,6 @@ export default function Navbar() {
             style={{ fontSize: '1.1rem' }}
           >
             {t.nav.socials}
-          </a>
-          <a
-            href="#music"
-            onClick={() => setMobileMenuOpen(false)}
-            className="nav-link"
-            style={{ fontSize: '1.1rem' }}
-          >
-            {t.nav.music}
           </a>
           <a
             href="#about"
