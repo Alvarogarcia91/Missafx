@@ -34,6 +34,7 @@ import {
   RotateCcw
 } from 'lucide-react';
 import { GIFEncoder, quantize, applyPalette } from 'gifenc';
+import { Muxer, ArrayBufferTarget } from 'mp4-muxer';
 import { useLanguage } from '../context/LanguageContext';
 
 const FORMATS = {
@@ -1871,17 +1872,125 @@ export default function StoryCreator({ onBack }) {
     }, 150);
   };
 
-  // Export 2: Video Story (MP4 / WebM at customizable FPS: 30 / 60 / 120)
+  // Export 2: Video Story (True 100% ISO MP4 via WebCodecs + mp4-muxer with MediaRecorder fallback)
   const handleExportVideo = async () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     setIsExporting(true);
-    setExportStatusText(`${cT.exportVideoRecording || 'Grabando video MP4'} @ ${motionFps} FPS (${loopDuration}s)...`);
 
     const wasSafeZonesActive = showSafeZones;
     if (wasSafeZonesActive) setShowSafeZones(false);
 
+    const width = FORMATS[format].width;
+    const height = FORMATS[format].height;
+    const fps = motionFps;
+    const totalFrames = Math.round(loopDuration * fps);
+    const targetBitrate = fps === 120 ? 24000000 : (fps === 60 ? 14000000 : 8000000);
+
+    // 1. Try modern frame-by-frame WebCodecs VideoEncoder (True CFR MP4, ZERO dropped frames, 100% smooth)
+    if (typeof window !== 'undefined' && 'VideoEncoder' in window && 'VideoFrame' in window) {
+      try {
+        setExportStatusText(`Iniciando codificador MP4 H.264 @ ${fps} FPS...`);
+
+        const muxer = new Muxer({
+          target: new ArrayBufferTarget(),
+          video: {
+            codec: 'avc',
+            width,
+            height
+          },
+          fastStart: 'in-memory',
+          firstTimestampBehavior: 'offset'
+        });
+
+        let encoderError = null;
+        const videoEncoder = new VideoEncoder({
+          output: (chunk, meta) => muxer.addVideoChunk(chunk, meta),
+          error: (e) => {
+            console.error('VideoEncoder error:', e);
+            encoderError = e;
+          }
+        });
+
+        // Test supported configuration
+        let chosenCodec = 'avc1.4d002a'; // H.264 Main Profile
+        try {
+          const isSupported = await VideoEncoder.isConfigSupported({
+            codec: chosenCodec,
+            width,
+            height,
+            bitrate: targetBitrate,
+            framerate: fps
+          });
+          if (!isSupported.supported) {
+            chosenCodec = 'avc1.42001f'; // H.264 Baseline Profile
+          }
+        } catch (_) {
+          chosenCodec = 'avc1.42001f';
+        }
+
+        videoEncoder.configure({
+          codec: chosenCodec,
+          width,
+          height,
+          bitrate: targetBitrate,
+          framerate: fps
+        });
+
+        const frameIntervalUs = Math.round(1_000_000 / fps);
+
+        for (let i = 0; i < totalFrames; i++) {
+          if (encoderError) throw encoderError;
+
+          const frameTime = (i / totalFrames) * loopDuration;
+          renderCanvas(frameTime);
+
+          const pct = Math.round(((i + 1) / totalFrames) * 100);
+          setExportStatusText(`Renderizando cuadro ${i + 1}/${totalFrames} (${pct}%) @ ${fps} FPS...`);
+
+          // Allow the browser to process UI render every 6 frames
+          if (i % 6 === 0) {
+            await new Promise((resolve) => setTimeout(resolve, 0));
+          }
+
+          const frame = new VideoFrame(canvas, {
+            timestamp: i * frameIntervalUs,
+            duration: frameIntervalUs
+          });
+
+          videoEncoder.encode(frame, { keyFrame: i % (fps * 2) === 0 });
+          frame.close();
+        }
+
+        setExportStatusText('Empaquetando video MP4 con FastStart...');
+        await videoEncoder.flush();
+        videoEncoder.close();
+        muxer.finalize();
+
+        const blob = new Blob([muxer.target.buffer], { type: 'video/mp4' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `missafx-story-${format}-${width}x${height}-${fps}fps.mp4`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        setIsExporting(false);
+        setExportStatusText('');
+        setDownloadSuccess(true);
+        setTimeout(() => setDownloadSuccess(false), 4000);
+        if (wasSafeZonesActive) setShowSafeZones(true);
+        return;
+      } catch (err) {
+        console.warn('WebCodecs MP4 encoding failed, falling back to MediaRecorder:', err);
+      }
+    }
+
+    // 2. Fallback for legacy browsers without WebCodecs: MediaRecorder
     try {
+      setExportStatusText(`Grabando video @ ${fps} FPS (${loopDuration}s)...`);
       const candidateTypes = [
         'video/mp4;codecs=avc1.42E01E,mp4a.40.2',
         'video/mp4;codecs=avc1',
@@ -1896,8 +2005,7 @@ export default function StoryCreator({ onBack }) {
       setIsPlaying(true);
       setIsMotionActive(true);
 
-      const stream = canvas.captureStream(motionFps);
-      const targetBitrate = motionFps === 120 ? 24000000 : (motionFps === 60 ? 14000000 : 8000000);
+      const stream = canvas.captureStream(fps);
       const recorder = new MediaRecorder(stream, {
         mimeType: MediaRecorder.isTypeSupported(selectedMime) ? selectedMime : undefined,
         videoBitsPerSecond: targetBitrate
@@ -1914,7 +2022,8 @@ export default function StoryCreator({ onBack }) {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `missafx-story-${format}-${FORMATS[format].width}x${FORMATS[format].height}-${motionFps}fps.mp4`;
+        const ext = isNativeMp4 ? 'mp4' : 'webm';
+        a.download = `missafx-story-${format}-${width}x${height}-${fps}fps.${ext}`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -1923,12 +2032,12 @@ export default function StoryCreator({ onBack }) {
         setExportStatusText('');
         setDownloadSuccess(true);
         setTimeout(() => setDownloadSuccess(false), 4000);
+        if (wasSafeZonesActive) setShowSafeZones(true);
       };
 
       recorder.start();
       setTimeout(() => {
         recorder.stop();
-        if (wasSafeZonesActive) setShowSafeZones(true);
       }, loopDuration * 1000);
     } catch (err) {
       console.error('Video recording error:', err);
