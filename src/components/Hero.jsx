@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Flame } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { InstagramIcon, WhatsAppIcon, KickIcon, YouTubeIcon, SoundCloudIcon } from './SocialIcons';
+import { PhotoQueueManager } from '../utils/shuffleQueue';
 
 const HERO_PHOTOS = [
   '/gallery/missa-01.jpg',
@@ -24,37 +25,32 @@ export default function Hero() {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [progressKey, setProgressKey] = useState(0);
 
-  const heroShuffleDeck = useRef([...Array(HERO_PHOTOS.length).keys()].sort(() => Math.random() - 0.5));
-
-  const getNextHeroIndex = useCallback((current) => {
-    if (heroShuffleDeck.current.length === 0) {
-      heroShuffleDeck.current = [...Array(HERO_PHOTOS.length).keys()].sort(() => Math.random() - 0.5);
-    }
-    if (heroShuffleDeck.current[0] === current && heroShuffleDeck.current.length > 1) {
-      const temp = heroShuffleDeck.current.shift();
-      heroShuffleDeck.current.push(temp);
-    }
-    return heroShuffleDeck.current.shift();
-  }, []);
+  const queueManager = useRef(null);
+  if (!queueManager.current) {
+    queueManager.current = new PhotoQueueManager(HERO_PHOTOS.length, 0);
+  }
 
   const triggerHeroTransition = useCallback((nextIdx) => {
-    if (nextIdx === photoIndex || isTransitioning) return;
-    setPrevPhotoIndex(photoIndex);
-    setPhotoIndex(nextIdx);
-    setIsTransitioning(true);
-    setProgressKey(Date.now());
-    setTimeout(() => {
-      setIsTransitioning(false);
-      setPrevPhotoIndex(null);
-    }, 750);
-  }, [photoIndex, isTransitioning]);
+    setPhotoIndex((currentIdx) => {
+      if (nextIdx === currentIdx) return currentIdx;
+      setPrevPhotoIndex(currentIdx);
+      setIsTransitioning(true);
+      setProgressKey(Date.now());
+      setTimeout(() => {
+        setIsTransitioning(false);
+        setPrevPhotoIndex(null);
+      }, 750);
+      return nextIdx;
+    });
+  }, []);
 
   useEffect(() => {
     const timer = setInterval(() => {
-      triggerHeroTransition(getNextHeroIndex(photoIndex));
+      const nextIdx = queueManager.current.next();
+      triggerHeroTransition(nextIdx);
     }, 10000);
     return () => clearInterval(timer);
-  }, [photoIndex, getNextHeroIndex, triggerHeroTransition]);
+  }, [triggerHeroTransition]);
 
   return (
     <section

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Sliders, Headphones } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { WhatsAppIcon } from './SocialIcons';
+import { PhotoQueueManager } from '../utils/shuffleQueue';
 
 const ABOUT_PHOTOS = [
   '/gallery/missa-01.jpg',
@@ -24,37 +25,32 @@ export default function About() {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [progressKey, setProgressKey] = useState(0);
 
-  const aboutShuffleDeck = useRef([...Array(ABOUT_PHOTOS.length).keys()].sort(() => Math.random() - 0.5));
-
-  const getNextAboutIndex = useCallback((current) => {
-    if (aboutShuffleDeck.current.length === 0) {
-      aboutShuffleDeck.current = [...Array(ABOUT_PHOTOS.length).keys()].sort(() => Math.random() - 0.5);
-    }
-    if (aboutShuffleDeck.current[0] === current && aboutShuffleDeck.current.length > 1) {
-      const temp = aboutShuffleDeck.current.shift();
-      aboutShuffleDeck.current.push(temp);
-    }
-    return aboutShuffleDeck.current.shift();
-  }, []);
+  const queueManager = useRef(null);
+  if (!queueManager.current) {
+    queueManager.current = new PhotoQueueManager(ABOUT_PHOTOS.length, 3);
+  }
 
   const triggerAboutTransition = useCallback((nextIdx) => {
-    if (nextIdx === photoIndex || isTransitioning) return;
-    setPrevPhotoIndex(photoIndex);
-    setPhotoIndex(nextIdx);
-    setIsTransitioning(true);
-    setProgressKey(Date.now());
-    setTimeout(() => {
-      setIsTransitioning(false);
-      setPrevPhotoIndex(null);
-    }, 750);
-  }, [photoIndex, isTransitioning]);
+    setPhotoIndex((currentIdx) => {
+      if (nextIdx === currentIdx) return currentIdx;
+      setPrevPhotoIndex(currentIdx);
+      setIsTransitioning(true);
+      setProgressKey(Date.now());
+      setTimeout(() => {
+        setIsTransitioning(false);
+        setPrevPhotoIndex(null);
+      }, 750);
+      return nextIdx;
+    });
+  }, []);
 
   useEffect(() => {
     const timer = setInterval(() => {
-      triggerAboutTransition(getNextAboutIndex(photoIndex));
+      const nextIdx = queueManager.current.next();
+      triggerAboutTransition(nextIdx);
     }, 10000);
     return () => clearInterval(timer);
-  }, [photoIndex, getNextAboutIndex, triggerAboutTransition]);
+  }, [triggerAboutTransition]);
 
   return (
     <section id="about" style={{ padding: '90px 0', position: 'relative' }}>
