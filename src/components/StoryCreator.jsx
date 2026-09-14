@@ -517,7 +517,7 @@ export default function StoryCreator({ onBack }) {
   const [photoMotionIntensity, setPhotoMotionIntensity] = useState(1.0); // 0.2 to 2.0
 
   // 5. Atmósfera & Partículas
-  const [atmosphereEffect, setAtmosphereEffect] = useState('dust-laser'); // none | dust-laser | scanlines | rave-smoke | cold-sparks | laser-beams | bass-shockwave | vhs-cyber
+  const [atmosphereEffect, setAtmosphereEffect] = useState('dust-laser'); // none | dust-laser | scanlines | rave-smoke | cold-sparks | laser-beams | bass-shockwave | vhs-cyber | confetti-blast | matrix-rain | radar-sweep | stage-lightning | star-glints | aurora-laser
   const [atmosphereDensity, setAtmosphereDensity] = useState(1.0); // 0.3 to 2.0
 
   const handleResetMotion = () => {
@@ -877,6 +877,226 @@ export default function StoryCreator({ onBack }) {
           if (Math.sin(time * 24) > 0.88) {
             ctx.fillStyle = hexToRgba('#00F0FF', 0.05 * atmosphereDensity);
             ctx.fillRect(0, 0, width, height);
+          }
+          ctx.restore();
+        } else if (atmosphereEffect === 'confetti-blast') {
+          // 8. Lluvia de Confeti Festival (Gold & Cyber Confetti 3D Tumble)
+          ctx.save();
+          const flakeCount = 42;
+          for (let i = 0; i < flakeCount; i++) {
+            const seedX = (width * 0.08 + (i * 127.3) % (width * 0.84));
+            const fallSpeed = 100 + (i % 7) * 35;
+            const progress = ((time * (fallSpeed / height) + i * 0.17) % 1);
+            const curY = progress * (height + 60) - 30;
+            const curX = seedX + Math.sin(time * 2.5 + i * 1.5) * 45;
+            const angle = time * 3.5 + i * 2.1;
+            const flipScaleY = Math.sin(time * 4.2 + i * 3.3);
+            const flakeW = 11 + (i % 4) * 4;
+            const flakeH = 6 + (i % 3) * 3;
+            const palette = ['#FFD700', '#FFFFFF', frameColor, '#00F0FF', '#FF007F', '#EAB308'];
+            const col = palette[i % palette.length];
+
+            ctx.save();
+            ctx.translate(curX, curY);
+            ctx.rotate(angle);
+            ctx.scale(1, flipScaleY);
+            ctx.fillStyle = hexToRgba(col, (0.78 + 0.22 * Math.sin(time * 6 + i)) * Math.min(1.2, atmosphereDensity));
+            ctx.fillRect(-flakeW / 2, -flakeH / 2, flakeW, flakeH);
+            ctx.restore();
+          }
+          ctx.restore();
+        } else if (atmosphereEffect === 'matrix-rain') {
+          // 9. Lluvia de Código Matrix (Cascading Cyber Code Stream)
+          ctx.save();
+          ctx.font = '700 16px monospace';
+          ctx.textAlign = 'center';
+          const cols = 22;
+          const colSpacing = width / cols;
+          const glyphs = ['0', '1', 'M', 'I', 'S', 'S', 'A', 'F', 'X', '9', 'X', '+', '<', '>', '/', '#', '•', '§', 'Δ'];
+          for (let c = 0; c < cols; c++) {
+            const colSpeed = 170 + (c % 6) * 45;
+            const colProgress = (time * colSpeed + c * 240) % (height + 280);
+            const colX = c * colSpacing + colSpacing / 2;
+
+            for (let k = 0; k < 5; k++) {
+              const charY = colProgress - k * 26;
+              if (charY > 0 && charY < height) {
+                const glyphIdx = Math.floor(c * 7 + k + time * 7) % glyphs.length;
+                const char = glyphs[glyphIdx];
+                if (k === 0) {
+                  ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+                } else {
+                  const alpha = (0.75 - k * 0.15) * atmosphereDensity;
+                  ctx.fillStyle = hexToRgba(frameColor, Math.max(0, alpha));
+                }
+                ctx.fillText(char, colX, charY);
+              }
+            }
+          }
+          ctx.restore();
+        } else if (atmosphereEffect === 'radar-sweep') {
+          // 10. Radar Sónico de Cabina (Sonar Sweep & Distance Rings)
+          ctx.save();
+          ctx.globalCompositeOperation = 'lighter';
+          ctx.shadowBlur = 0;
+          const cx = width / 2;
+          const cy = height * 0.52;
+          const maxR = width * 0.54;
+
+          // Concentric faint sonar range rings
+          ctx.strokeStyle = hexToRgba(frameColor, 0.09 * atmosphereDensity);
+          ctx.lineWidth = 1.2;
+          ctx.beginPath();
+          ctx.arc(cx, cy, maxR * 0.33, 0, Math.PI * 2);
+          ctx.arc(cx, cy, maxR * 0.66, 0, Math.PI * 2);
+          ctx.arc(cx, cy, maxR, 0, Math.PI * 2);
+          ctx.stroke();
+
+          // Radar grid crosshairs
+          ctx.beginPath();
+          ctx.moveTo(cx - maxR, cy);
+          ctx.lineTo(cx + maxR, cy);
+          ctx.moveTo(cx, cy - maxR);
+          ctx.lineTo(cx, cy + maxR);
+          ctx.stroke();
+
+          // Sweeping radar wedge & glowing tail
+          const sweepAngle = (time * 1.8) % (Math.PI * 2);
+          const trailSegments = 8;
+          for (let s = 0; s < trailSegments; s++) {
+            const a1 = sweepAngle - (s + 1) * 0.055;
+            const a2 = sweepAngle - s * 0.055;
+            const trailAlpha = (1 - s / trailSegments) * 0.14 * atmosphereDensity;
+            ctx.fillStyle = hexToRgba(frameColor, trailAlpha);
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.arc(cx, cy, maxR, a1, a2);
+            ctx.closePath();
+            ctx.fill();
+          }
+
+          // Sharp white leading beam line
+          ctx.beginPath();
+          ctx.moveTo(cx, cy);
+          ctx.lineTo(cx + Math.cos(sweepAngle) * maxR, cy + Math.sin(sweepAngle) * maxR);
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+          ctx.restore();
+        } else if (atmosphereEffect === 'stage-lightning') {
+          // 11. Relámpagos Neón de Escenario (Procedural Electric Lightning Arcs)
+          ctx.save();
+          ctx.globalCompositeOperation = 'lighter';
+          ctx.shadowBlur = 0;
+          const lightningActive = (Math.sin(time * 15) > 0.68) || (beatPhase < 0.16);
+          if (lightningActive) {
+            const strikeCount = 2;
+            for (let s = 0; s < strikeCount; s++) {
+              const strikeX = width * (0.22 + s * 0.52 + Math.sin(time * 9 + s * 4) * 0.12);
+              const points = 8;
+              const pts = [{ x: strikeX, y: 0 }];
+              for (let p = 1; p < points; p++) {
+                const segY = (height * 0.82) * (p / points);
+                const jitter = Math.sin(time * 35 + p * 8 + s * 13) * 55;
+                pts.push({ x: strikeX + jitter, y: segY });
+              }
+
+              ctx.beginPath();
+              ctx.moveTo(pts[0].x, pts[0].y);
+              for (let p = 1; p < pts.length; p++) {
+                ctx.lineTo(pts[p].x, pts[p].y);
+              }
+
+              // Pass 1: Neon ambient electric aura
+              ctx.strokeStyle = hexToRgba(frameColor, 0.35 * atmosphereDensity);
+              ctx.lineWidth = 12 * atmosphereDensity;
+              ctx.stroke();
+
+              // Pass 2: High-energy electric arc
+              ctx.strokeStyle = hexToRgba(frameColor, 0.85 * atmosphereDensity);
+              ctx.lineWidth = 4 * atmosphereDensity;
+              ctx.stroke();
+
+              // Pass 3: White-hot core bolt
+              ctx.strokeStyle = '#FFFFFF';
+              ctx.lineWidth = 1.8;
+              ctx.stroke();
+            }
+          }
+          ctx.restore();
+        } else if (atmosphereEffect === 'star-glints') {
+          // 12. Destellos Prisma Estelares (Diamond Sparkles & 4-Point Star Flares)
+          ctx.save();
+          ctx.globalCompositeOperation = 'lighter';
+          ctx.shadowBlur = 0;
+          const glintCount = 15;
+          for (let i = 0; i < glintCount; i++) {
+            const gx = (width * 0.1 + (i * 157.3) % (width * 0.8));
+            const gy = (height * 0.12 + (i * 219.7) % (height * 0.76));
+            const glintPhase = Math.sin(time * 3.8 + i * 1.7);
+            if (glintPhase > 0) {
+              const glintScale = Math.pow(glintPhase, 3) * 24 * atmosphereDensity;
+              const glintRot = time * 0.6 + i;
+
+              ctx.save();
+              ctx.translate(gx, gy);
+              ctx.rotate(glintRot);
+
+              // 4-point diamond star flare
+              ctx.fillStyle = hexToRgba(frameColor, glintPhase * 0.45);
+              ctx.beginPath();
+              ctx.moveTo(0, -glintScale * 1.5);
+              ctx.lineTo(glintScale * 0.32, 0);
+              ctx.lineTo(0, glintScale * 1.5);
+              ctx.lineTo(-glintScale * 0.32, 0);
+              ctx.closePath();
+              ctx.fill();
+
+              ctx.beginPath();
+              ctx.moveTo(-glintScale * 1.5, 0);
+              ctx.lineTo(0, glintScale * 0.32);
+              ctx.lineTo(glintScale * 1.5, 0);
+              ctx.lineTo(0, -glintScale * 0.32);
+              ctx.closePath();
+              ctx.fill();
+
+              // Core brilliant pinpoint
+              ctx.fillStyle = '#FFFFFF';
+              ctx.beginPath();
+              ctx.arc(0, 0, Math.max(1, glintScale * 0.2), 0, Math.PI * 2);
+              ctx.fill();
+
+              ctx.restore();
+            }
+          }
+          ctx.restore();
+        } else if (atmosphereEffect === 'aurora-laser') {
+          // 13. Cortinas Láser Aurora (Flowing Northern Wave Laser Curtains)
+          ctx.save();
+          ctx.globalCompositeOperation = 'lighter';
+          ctx.shadowBlur = 0;
+          const ribbonCount = 3;
+          for (let r = 0; r < ribbonCount; r++) {
+            const ribbonAlpha = (0.13 + 0.06 * Math.sin(time * 1.4 + r * 1.2)) * atmosphereDensity;
+            const baseY = height * (0.28 + r * 0.18);
+            const waveFreq = 0.0035 + r * 0.0012;
+            const waveSpeed = time * (1.2 + r * 0.4);
+
+            ctx.beginPath();
+            ctx.moveTo(0, height);
+            for (let x = 0; x <= width; x += 30) {
+              const y = baseY + Math.sin(x * waveFreq + waveSpeed) * 65 + Math.cos(x * 0.0055 - waveSpeed * 0.8) * 35;
+              ctx.lineTo(x, y);
+            }
+            ctx.lineTo(width, height);
+            ctx.closePath();
+
+            const aurGrad = ctx.createLinearGradient(0, baseY - 65, 0, baseY + 130);
+            aurGrad.addColorStop(0, 'rgba(0, 0, 0, 0)');
+            aurGrad.addColorStop(0.35, hexToRgba(r % 2 === 0 ? frameColor : '#00F0FF', ribbonAlpha));
+            aurGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+            ctx.fillStyle = aurGrad;
+            ctx.fill();
           }
           ctx.restore();
         }
@@ -5214,6 +5434,12 @@ export default function StoryCreator({ onBack }) {
                         <option value="laser-beams" style={{ background: '#0c0c10', color: '#fff' }}>{cT.fxAtmosphereLaserBeams}</option>
                         <option value="bass-shockwave" style={{ background: '#0c0c10', color: '#fff' }}>{cT.fxAtmosphereBassShockwave}</option>
                         <option value="vhs-cyber" style={{ background: '#0c0c10', color: '#fff' }}>{cT.fxAtmosphereVhsCyber}</option>
+                        <option value="confetti-blast" style={{ background: '#0c0c10', color: '#fff' }}>{cT.fxAtmosphereConfetti}</option>
+                        <option value="matrix-rain" style={{ background: '#0c0c10', color: '#fff' }}>{cT.fxAtmosphereMatrix}</option>
+                        <option value="radar-sweep" style={{ background: '#0c0c10', color: '#fff' }}>{cT.fxAtmosphereRadar}</option>
+                        <option value="stage-lightning" style={{ background: '#0c0c10', color: '#fff' }}>{cT.fxAtmosphereLightning}</option>
+                        <option value="star-glints" style={{ background: '#0c0c10', color: '#fff' }}>{cT.fxAtmosphereStarGlints}</option>
+                        <option value="aurora-laser" style={{ background: '#0c0c10', color: '#fff' }}>{cT.fxAtmosphereAurora}</option>
                         <option value="none" style={{ background: '#0c0c10', color: '#fff' }}>{cT.fxAtmosphereNone}</option>
                       </select>
                     </div>

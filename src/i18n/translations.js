@@ -388,6 +388,12 @@ export const translations = {
       fxAtmosphereLaserBeams: 'Abanico de Rayos Láser (Laser Beams)',
       fxAtmosphereBassShockwave: 'Ondas de Choque Radiales (Shockwave)',
       fxAtmosphereVhsCyber: 'Cinta Analógica VHS Cyberpunk (VHS Tape)',
+      fxAtmosphereConfetti: 'Lluvia de Confeti Festival (Gold Confetti)',
+      fxAtmosphereMatrix: 'Lluvia de Código Matrix (Cyber Code)',
+      fxAtmosphereRadar: 'Radar Sónico de Cabina (Sonar Sweep)',
+      fxAtmosphereLightning: 'Relámpagos Neón de Escenario (Lightning Arcs)',
+      fxAtmosphereStarGlints: 'Destellos Prisma Estelares (Prism Glints)',
+      fxAtmosphereAurora: 'Cortinas Láser Aurora (Aurora Wave)',
 
       // Máscaras y Capas
       masksTitle: 'Interruptores de Máscaras & Capas (On/Off)',
@@ -820,6 +826,12 @@ export const translations = {
       fxAtmosphereLaserBeams: 'Club Laser Beams',
       fxAtmosphereBassShockwave: 'Radial Bass Shockwaves',
       fxAtmosphereVhsCyber: 'Retro Cyber VHS Tape',
+      fxAtmosphereConfetti: 'Festival Gold Confetti Blast',
+      fxAtmosphereMatrix: 'Cyber Matrix Code Rain',
+      fxAtmosphereRadar: 'Booth Sonar Radar Sweep',
+      fxAtmosphereLightning: 'Stage Neon Lightning Arcs',
+      fxAtmosphereStarGlints: 'Prismatic Star Glints',
+      fxAtmosphereAurora: 'Northern Aurora Laser Curtains',
 
       // Masks & Layers
       masksTitle: 'Masks & Graphic Layers (On/Off)',
