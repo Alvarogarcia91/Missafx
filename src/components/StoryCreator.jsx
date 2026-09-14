@@ -156,7 +156,7 @@ export default function StoryCreator({ onBack }) {
   const [mainTitleUpper, setMainTitleUpper] = useState(true);
 
   // 3. Subtitle / Genre ("TECH HOUSE")
-  const [subTitleSize, setSubTitleSize] = useState(18);
+  const [subTitleSize, setSubTitleSize] = useState(24);
   const [subTitleOffsetY, setSubTitleOffsetY] = useState(0);
   const [subTitleOffsetX, setSubTitleOffsetX] = useState(0);
   const [subTitleTracking, setSubTitleTracking] = useState(2);
@@ -164,7 +164,7 @@ export default function StoryCreator({ onBack }) {
   const [subTitleUpper, setSubTitleUpper] = useState(true);
 
   // 4. Date / Tagline ("SÁBADO // LIVE SET")
-  const [eventDateSize, setEventDateSize] = useState(24);
+  const [eventDateSize, setEventDateSize] = useState(32);
   const [eventDateOffsetY, setEventDateOffsetY] = useState(0);
   const [eventDateOffsetX, setEventDateOffsetX] = useState(0);
   const [eventDateTracking, setEventDateTracking] = useState(1);
@@ -172,7 +172,7 @@ export default function StoryCreator({ onBack }) {
   const [eventDateUpper, setEventDateUpper] = useState(true);
 
   // 5. Venue / City ("SAN LUIS POTOSÍ • MÉXICO")
-  const [eventVenueSize, setEventVenueSize] = useState(17);
+  const [eventVenueSize, setEventVenueSize] = useState(26);
   const [eventVenueOffsetY, setEventVenueOffsetY] = useState(0);
   const [eventVenueOffsetX, setEventVenueOffsetX] = useState(0);
   const [eventVenueTracking, setEventVenueTracking] = useState(1);
@@ -181,7 +181,7 @@ export default function StoryCreator({ onBack }) {
 
   // 6. Booking / Contact Info ("BOOKING DIRECTO • WA +52 1 444 357 0777")
   const [bookingText, setBookingText] = useState('BOOKING DIRECTO • WA +52 1 444 357 0777');
-  const [bookingTextSize, setBookingTextSize] = useState(13);
+  const [bookingTextSize, setBookingTextSize] = useState(20);
   const [bookingTextOffsetY, setBookingTextOffsetY] = useState(0);
   const [bookingTextOffsetX, setBookingTextOffsetX] = useState(0);
   const [bookingTextTracking, setBookingTextTracking] = useState(1);
@@ -190,7 +190,7 @@ export default function StoryCreator({ onBack }) {
 
   // 7. Top Badge / Tag ("PIONEER DJ PRO SESSION")
   const [badgeTagText, setBadgeTagText] = useState('PIONEER DJ PRO SESSION');
-  const [badgeTagSize, setBadgeTagSize] = useState(14);
+  const [badgeTagSize, setBadgeTagSize] = useState(22);
   const [badgeTagOffsetY, setBadgeTagOffsetY] = useState(0);
   const [badgeTagOffsetX, setBadgeTagOffsetX] = useState(0);
   const [badgeTagTracking, setBadgeTagTracking] = useState(0);
@@ -199,7 +199,7 @@ export default function StoryCreator({ onBack }) {
 
   // 8. Audio Spec / Sub-badge ("• 48kHz / 24-BIT MASTER AUDIO •")
   const [audioSpecText, setAudioSpecText] = useState('• 48kHz / 24-BIT MASTER AUDIO •');
-  const [audioSpecSize, setAudioSpecSize] = useState(12);
+  const [audioSpecSize, setAudioSpecSize] = useState(18);
   const [audioSpecOffsetY, setAudioSpecOffsetY] = useState(0);
   const [audioSpecOffsetX, setAudioSpecOffsetX] = useState(0);
   const [audioSpecTracking, setAudioSpecTracking] = useState(1);
@@ -208,7 +208,7 @@ export default function StoryCreator({ onBack }) {
 
   // 9. HUD Technical Coordinates ("[ 22° 09' N // 100° 58' W ]")
   const [hudCoordsText, setHudCoordsText] = useState('[ 22° 09\' N // 100° 58\' W ]');
-  const [hudCoordsSize, setHudCoordsSize] = useState(13);
+  const [hudCoordsSize, setHudCoordsSize] = useState(18);
   const [hudCoordsOffsetY, setHudCoordsOffsetY] = useState(0);
   const [hudCoordsOffsetX, setHudCoordsOffsetX] = useState(0);
   const [hudCoordsTracking, setHudCoordsTracking] = useState(1);
@@ -217,7 +217,7 @@ export default function StoryCreator({ onBack }) {
   // 10. Graphic Equalizer (EQ) Position & Scale
   const [eqOffsetX, setEqOffsetX] = useState(0);
   const [eqOffsetY, setEqOffsetY] = useState(0);
-  const [eqScale, setEqScale] = useState(1.0);
+  const [eqScale, setEqScale] = useState(1.35);
 
   // Expandable accordion section state (null or element id)
   const [expandedTextSection, setExpandedTextSection] = useState(null);
@@ -245,7 +245,7 @@ export default function StoryCreator({ onBack }) {
         setMainTitleUpper(true);
         break;
       case 'subTitle':
-        setSubTitleSize(18);
+        setSubTitleSize(24);
         setSubTitleOffsetY(0);
         setSubTitleOffsetX(0);
         setSubTitleTracking(2);
@@ -253,7 +253,7 @@ export default function StoryCreator({ onBack }) {
         setSubTitleUpper(true);
         break;
       case 'eventDate':
-        setEventDateSize(24);
+        setEventDateSize(32);
         setEventDateOffsetY(0);
         setEventDateOffsetX(0);
         setEventDateTracking(1);
@@ -261,7 +261,7 @@ export default function StoryCreator({ onBack }) {
         setEventDateUpper(true);
         break;
       case 'eventVenue':
-        setEventVenueSize(17);
+        setEventVenueSize(26);
         setEventVenueOffsetY(0);
         setEventVenueOffsetX(0);
         setEventVenueTracking(1);
@@ -269,7 +269,7 @@ export default function StoryCreator({ onBack }) {
         setEventVenueUpper(true);
         break;
       case 'booking':
-        setBookingTextSize(13);
+        setBookingTextSize(20);
         setBookingTextOffsetY(0);
         setBookingTextOffsetX(0);
         setBookingTextTracking(1);
@@ -277,7 +277,7 @@ export default function StoryCreator({ onBack }) {
         setBookingTextUpper(true);
         break;
       case 'badgeTag':
-        setBadgeTagSize(14);
+        setBadgeTagSize(22);
         setBadgeTagOffsetY(0);
         setBadgeTagOffsetX(0);
         setBadgeTagTracking(0);
@@ -285,7 +285,7 @@ export default function StoryCreator({ onBack }) {
         setBadgeTagUpper(true);
         break;
       case 'audioSpec':
-        setAudioSpecSize(12);
+        setAudioSpecSize(18);
         setAudioSpecOffsetY(0);
         setAudioSpecOffsetX(0);
         setAudioSpecTracking(1);
@@ -293,7 +293,7 @@ export default function StoryCreator({ onBack }) {
         setAudioSpecUpper(true);
         break;
       case 'hudCoords':
-        setHudCoordsSize(13);
+        setHudCoordsSize(18);
         setHudCoordsOffsetY(0);
         setHudCoordsOffsetX(0);
         setHudCoordsTracking(1);
@@ -302,7 +302,7 @@ export default function StoryCreator({ onBack }) {
       case 'eq':
         setEqOffsetX(0);
         setEqOffsetY(0);
-        setEqScale(1.0);
+        setEqScale(1.35);
         break;
       default:
         break;
@@ -324,49 +324,49 @@ export default function StoryCreator({ onBack }) {
     setMainTitleAlign('center');
     setMainTitleUpper(true);
 
-    setSubTitleSize(18);
+    setSubTitleSize(24);
     setSubTitleOffsetY(0);
     setSubTitleOffsetX(0);
     setSubTitleTracking(2);
     setSubTitleAlign('center');
     setSubTitleUpper(true);
 
-    setEventDateSize(24);
+    setEventDateSize(32);
     setEventDateOffsetY(0);
     setEventDateOffsetX(0);
     setEventDateTracking(1);
     setEventDateAlign('center');
     setEventDateUpper(true);
 
-    setEventVenueSize(17);
+    setEventVenueSize(26);
     setEventVenueOffsetY(0);
     setEventVenueOffsetX(0);
     setEventVenueTracking(1);
     setEventVenueAlign('center');
     setEventVenueUpper(true);
 
-    setBookingTextSize(13);
+    setBookingTextSize(20);
     setBookingTextOffsetY(0);
     setBookingTextOffsetX(0);
     setBookingTextTracking(1);
     setBookingTextAlign('center');
     setBookingTextUpper(true);
 
-    setBadgeTagSize(14);
+    setBadgeTagSize(22);
     setBadgeTagOffsetY(0);
     setBadgeTagOffsetX(0);
     setBadgeTagTracking(0);
     setBadgeTagAlign('center');
     setBadgeTagUpper(true);
 
-    setAudioSpecSize(12);
+    setAudioSpecSize(18);
     setAudioSpecOffsetY(0);
     setAudioSpecOffsetX(0);
     setAudioSpecTracking(1);
     setAudioSpecAlign('center');
     setAudioSpecUpper(true);
 
-    setHudCoordsSize(13);
+    setHudCoordsSize(18);
     setHudCoordsOffsetY(0);
     setHudCoordsOffsetX(0);
     setHudCoordsTracking(1);
@@ -374,7 +374,7 @@ export default function StoryCreator({ onBack }) {
 
     setEqOffsetX(0);
     setEqOffsetY(0);
-    setEqScale(1.0);
+    setEqScale(1.35);
   };
 
   // Granular Color Customization State
@@ -958,6 +958,7 @@ export default function StoryCreator({ onBack }) {
             ctx.letterSpacing = `${hudCoordsTracking}px`;
           }
           ctx.fillStyle = '#F8FAFC';
+          ctx.textBaseline = 'middle';
           const hudBaseY = format === 'story' ? 245 : 80;
           ctx.fillText(coordsToRender, 110 + hudCoordsOffsetX, hudBaseY + hudCoordsOffsetY);
         }
@@ -1028,7 +1029,7 @@ export default function StoryCreator({ onBack }) {
         let tagX = (width - tagW) / 2 + badgeTagOffsetX;
         if (badgeTagAlign === 'left') tagX = width * 0.12 + badgeTagOffsetX;
         if (badgeTagAlign === 'right') tagX = width * 0.88 - tagW + badgeTagOffsetX;
-        const tagBaseY = format === 'story' ? 295 : height * 0.08;
+        const tagBaseY = format === 'story' ? 300 : height * 0.08;
         const tagY = tagBaseY + badgeTagOffsetY;
 
         ctx.fillStyle = 'rgba(12, 12, 16, 0.85)';
@@ -1070,8 +1071,8 @@ export default function StoryCreator({ onBack }) {
         if (audioSpecAlign === 'right') specX = width * 0.88 + audioSpecOffsetX;
         ctx.textAlign = audioSpecAlign;
 
-        const specBaseY = format === 'story' ? 295 : height * 0.08;
-        const specY = specBaseY + (badgeTagSize * 2.4) + 16 + audioSpecOffsetY;
+        const specBaseY = format === 'story' ? 300 : height * 0.08;
+        const specY = specBaseY + (badgeTagSize * 2.4) + 20 + audioSpecOffsetY;
         ctx.fillText(specText, specX, specY);
 
         ctx.restore();
@@ -1079,7 +1080,7 @@ export default function StoryCreator({ onBack }) {
 
       // 9. Main Typography & Event Information (Element #2 FX: Titular)
       ctx.save();
-      const bottomBase = height - (format === 'story' ? 335 : (format === 'portrait' ? 160 : 130));
+      const bottomBase = height - (format === 'story' ? 355 : (format === 'portrait' ? 170 : 130));
 
       let titleGlowBlur = 0;
       let titleShadowColor = titleColor;
@@ -1133,7 +1134,7 @@ export default function StoryCreator({ onBack }) {
       }
 
       // Calculate dynamic title position for glow & rendering
-      const titleY = bottomBase - 90 + mainTitleOffsetY + titleShakeY;
+      const titleY = bottomBase - 100 + mainTitleOffsetY + titleShakeY;
       let titleX = width / 2 + mainTitleOffsetX + titleGlitchOffset;
       const titleAlign = mainTitleAlign;
 
@@ -1178,7 +1179,7 @@ export default function StoryCreator({ onBack }) {
         }
 
         const subX = subCenterX - subW / 2;
-        const subY = bottomBase - 180 + subTitleOffsetY;
+        const subY = bottomBase - 205 + subTitleOffsetY;
 
         let effectiveBadgeTextColor = badgeTextColor;
         if (isLightColor(badgeColor) && isLightColor(badgeTextColor)) {
@@ -1270,8 +1271,8 @@ export default function StoryCreator({ onBack }) {
         ctx.strokeStyle = hexToRgba(textColor, 0.2);
         ctx.lineWidth = 1;
         ctx.beginPath();
-        ctx.moveTo(width * 0.15 + eventDateOffsetX, bottomBase - 30 + eventDateOffsetY);
-        ctx.lineTo(width * 0.85 + eventDateOffsetX, bottomBase - 30 + eventDateOffsetY);
+        ctx.moveTo(width * 0.15 + eventDateOffsetX, bottomBase - 35 + eventDateOffsetY);
+        ctx.lineTo(width * 0.85 + eventDateOffsetX, bottomBase - 35 + eventDateOffsetY);
         ctx.stroke();
       }
 
@@ -1290,7 +1291,7 @@ export default function StoryCreator({ onBack }) {
 
         ctx.textAlign = eventDateAlign;
         ctx.fillStyle = textColor;
-        ctx.fillText(textToRender, dateX, bottomBase + 10 + eventDateOffsetY);
+        ctx.fillText(textToRender, dateX, bottomBase + 12 + eventDateOffsetY);
       }
 
       if (eventVenue.trim()) {
@@ -1305,7 +1306,7 @@ export default function StoryCreator({ onBack }) {
 
         ctx.textAlign = eventVenueAlign;
         ctx.fillStyle = hexToRgba(textColor, 0.75);
-        ctx.fillText(textToRender, venueX, bottomBase + 45 + eventVenueOffsetY);
+        ctx.fillText(textToRender, venueX, bottomBase + 55 + eventVenueOffsetY);
       }
 
       // 6. Booking / Contact Info
@@ -1321,7 +1322,7 @@ export default function StoryCreator({ onBack }) {
 
         ctx.textAlign = bookingTextAlign;
         ctx.fillStyle = techColor;
-        ctx.fillText(textToRender, bookX, bottomBase + 78 + bookingTextOffsetY);
+        ctx.fillText(textToRender, bookX, bottomBase + 92 + bookingTextOffsetY);
       }
 
       ctx.restore();
@@ -3767,7 +3768,7 @@ export default function StoryCreator({ onBack }) {
                           <input
                             type="range"
                             min="9"
-                            max="36"
+                            max="48"
                             step="1"
                             value={badgeTagSize}
                             onChange={(e) => setBadgeTagSize(parseInt(e.target.value, 10))}
@@ -3993,7 +3994,7 @@ export default function StoryCreator({ onBack }) {
                           <input
                             type="range"
                             min="8"
-                            max="30"
+                            max="40"
                             step="1"
                             value={audioSpecSize}
                             onChange={(e) => setAudioSpecSize(parseInt(e.target.value, 10))}
@@ -4219,7 +4220,7 @@ export default function StoryCreator({ onBack }) {
                           <input
                             type="range"
                             min="8"
-                            max="30"
+                            max="40"
                             step="1"
                             value={hudCoordsSize}
                             onChange={(e) => setHudCoordsSize(parseInt(e.target.value, 10))}
@@ -4391,7 +4392,7 @@ export default function StoryCreator({ onBack }) {
                             type="range"
                             min="0.5"
                             max="2.5"
-                            step="0.1"
+                            step="0.05"
                             value={eqScale}
                             onChange={(e) => setEqScale(parseFloat(e.target.value))}
                             style={{ width: '100%', accentColor: frameColor, cursor: 'pointer' }}
