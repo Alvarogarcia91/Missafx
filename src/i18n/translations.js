@@ -313,6 +313,8 @@ export const translations = {
       fxCascadeScrollUp: 'Cascada Ascendente (Scroll Up)',
       fxCascadeBreathe: 'Pulso de Contorno (Breathe)',
       fxCascadeGlitch: 'Glitch Cyberpunk',
+      fxCascadeWaveSine: 'Onda Sinusoidal Serpenteante (Sine Wave)',
+      fxCascadeNeonScan: 'Escáner Neón / Radar (Neon Scan)',
 
       // 2. Titular Principal
       elementTitleFxTitle: '2. Titular Principal ("MISSAFX")',
@@ -325,6 +327,9 @@ export const translations = {
       fxTitleGlitch: 'Glitch RGB Split Cyberpunk',
       fxTitleStrobe: 'Estroboscópico Rítmico (Strobe)',
       fxTitleColorCycle: 'Ciclo de Color Dinámico',
+      fxTitleLaserSweep: 'Barrido Láser Horizontal (Laser Sweep)',
+      fxTitleBassShake: 'Sacudida Sísmica de Bajos (Sub-Bass Shake)',
+      fxTitleRgbSplit: 'Aberración Cromática 3D (RGB Split)',
 
       // 3. Ecualizador
       elementEqTitle: '3. Ecualizador Gráfico (EQ)',
@@ -335,6 +340,8 @@ export const translations = {
       fxEqVuBounce: 'Rebote VU Rítmico (VU Bounce)',
       fxEqWaveFlow: 'Ola de Frecuencia Suave (Wave Flow)',
       fxEqBassPulse: 'Golpe de Bombo / Bass Pulse',
+      fxEqPeakMeter: 'Medidor con Retención de Pico (Peak Hold)',
+      fxEqCenterSplit: 'EQ Espejo Bilateral (Center Split)',
 
       // 4. Foto de Artista
       elementPhotoTitle: '4. Foto de Cabina / Artista',
@@ -345,6 +352,8 @@ export const translations = {
       fxPhotoKenBurnsOut: 'Zoom Out Dinámico',
       fxPhotoPanSway: 'Paneo Oscilante (Camera Sway)',
       fxPhotoClubStrobe: 'Flash Club Neón',
+      fxPhotoKickPunch: 'Golpe de Bombo / Sidechain (Kick Punch)',
+      fxPhotoPrismRoll: 'Cabeceo Cinemático (Prism Roll)',
 
       // 5. Atmósfera
       elementAtmosphereTitle: '5. Atmósfera & Partículas',
@@ -354,6 +363,10 @@ export const translations = {
       fxAtmosphereDustLaser: 'Partículas Láser Flotantes',
       fxAtmosphereScanlines: 'Líneas de Escáner CRT Cyberpunk',
       fxAtmosphereRaveSmoke: 'Niebla & Humo de Club',
+      fxAtmosphereColdSparks: 'Chispas Pirotécnicas (Cold Sparks)',
+      fxAtmosphereLaserBeams: 'Abanico de Rayos Láser (Laser Beams)',
+      fxAtmosphereBassShockwave: 'Ondas de Choque Radiales (Shockwave)',
+      fxAtmosphereVhsCyber: 'Cinta Analógica VHS Cyberpunk (VHS Tape)',
 
       // Máscaras y Capas
       masksTitle: 'Interruptores de Máscaras & Capas (On/Off)',
@@ -701,6 +714,8 @@ export const translations = {
       fxCascadeScrollUp: 'Scroll Up',
       fxCascadeBreathe: 'Outline Breathe Pulse',
       fxCascadeGlitch: 'Cyberpunk Glitch',
+      fxCascadeWaveSine: 'Serpentine Sine Wave',
+      fxCascadeNeonScan: 'Neon Scanner / Radar',
 
       // 2. Titular Principal
       elementTitleFxTitle: '2. Main Title ("MISSAFX")',
@@ -713,6 +728,9 @@ export const translations = {
       fxTitleGlitch: 'RGB Split Glitch',
       fxTitleStrobe: 'Rhythmic Strobe',
       fxTitleColorCycle: 'Dynamic Color Cycle',
+      fxTitleLaserSweep: 'Horizontal Laser Sweep',
+      fxTitleBassShake: 'Sub-Bass Seismic Shake',
+      fxTitleRgbSplit: '3D Chromatic Aberration (RGB Split)',
 
       // 3. Ecualizador
       elementEqTitle: '3. Graphic Equalizer (EQ)',
@@ -723,6 +741,8 @@ export const translations = {
       fxEqVuBounce: 'Rhythmic VU Bounce',
       fxEqWaveFlow: 'Smooth Frequency Wave',
       fxEqBassPulse: 'Kick Drum / Bass Pulse',
+      fxEqPeakMeter: 'Peak Hold Meter (Pioneer DJ Style)',
+      fxEqCenterSplit: 'Bilateral Center-Split EQ',
 
       // 4. Foto de Artista
       elementPhotoTitle: '4. DJ Booth / Artist Photo',
@@ -733,6 +753,8 @@ export const translations = {
       fxPhotoKenBurnsOut: 'Dynamic Zoom Out',
       fxPhotoPanSway: 'Oscillating Camera Sway',
       fxPhotoClubStrobe: 'Neon Club Strobe Flash',
+      fxPhotoKickPunch: 'Kick Drum Punch (Sidechain Zoom)',
+      fxPhotoPrismRoll: 'Cinematic Prism Roll',
 
       // 5. Atmósfera
       elementAtmosphereTitle: '5. Atmosphere & Particles',
@@ -742,6 +764,10 @@ export const translations = {
       fxAtmosphereDustLaser: 'Floating Laser Dust',
       fxAtmosphereScanlines: 'CRT Cyberpunk Scanlines',
       fxAtmosphereRaveSmoke: 'Club Rave Smoke Haze',
+      fxAtmosphereColdSparks: 'Festival Cold Sparks',
+      fxAtmosphereLaserBeams: 'Club Laser Beams',
+      fxAtmosphereBassShockwave: 'Radial Bass Shockwaves',
+      fxAtmosphereVhsCyber: 'Retro Cyber VHS Tape',
 
       // Masks & Layers
       masksTitle: 'Masks & Graphic Layers (On/Off)',

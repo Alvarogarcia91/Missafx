@@ -321,25 +321,25 @@ export default function StoryCreator({ onBack }) {
   const [motionFps, setMotionFps] = useState(60); // 30 | 60 | 120 FPS
 
   // 1. Cascada Lateral ("MISSA MISSA")
-  const [cascadeEffect, setCascadeEffect] = useState('scroll-down'); // none | scroll-down | scroll-up | breathe | glitch
+  const [cascadeEffect, setCascadeEffect] = useState('scroll-down'); // none | scroll-down | scroll-up | breathe | glitch | wave-sine | neon-scan
   const [cascadeSpeed, setCascadeSpeed] = useState(1.0); // 0.2 to 3.0
 
   // 2. Titular Principal ("MISSAFX")
-  const [titleEffect, setTitleEffect] = useState('neon-breathe'); // none | neon-breathe | neon-flicker | glitch | strobe | color-cycle
+  const [titleEffect, setTitleEffect] = useState('neon-breathe'); // none | neon-breathe | neon-flicker | glitch | strobe | color-cycle | laser-sweep | bass-shake | rgb-split
   const [titleGlow, setTitleGlow] = useState(1.2); // 0.2 to 2.5
   const [titleBpm, setTitleBpm] = useState(128); // 60 to 180
 
   // 3. Ecualizador Gráfico (EQ)
-  const [eqEffect, setEqEffect] = useState('vu-bounce'); // none | vu-bounce | wave-flow | bass-pulse
+  const [eqEffect, setEqEffect] = useState('vu-bounce'); // none | vu-bounce | wave-flow | bass-pulse | peak-meter | center-split
   const [eqSpeed, setEqSpeed] = useState(1.0); // 0.5 to 2.5
   const [eqIntensity, setEqIntensity] = useState(1.0); // 0.5 to 2.0
 
   // 4. Foto de Cabina / Artista
-  const [photoEffect, setPhotoEffect] = useState('ken-burns-in'); // none | ken-burns-in | ken-burns-out | pan-sway | club-strobe
+  const [photoEffect, setPhotoEffect] = useState('ken-burns-in'); // none | ken-burns-in | ken-burns-out | pan-sway | club-strobe | kick-punch | prism-roll
   const [photoMotionIntensity, setPhotoMotionIntensity] = useState(1.0); // 0.2 to 2.0
 
   // 5. Atmósfera & Partículas
-  const [atmosphereEffect, setAtmosphereEffect] = useState('dust-laser'); // none | dust-laser | scanlines | rave-smoke
+  const [atmosphereEffect, setAtmosphereEffect] = useState('dust-laser'); // none | dust-laser | scanlines | rave-smoke | cold-sparks | laser-beams | bass-shockwave | vhs-cyber
   const [atmosphereDensity, setAtmosphereDensity] = useState(1.0); // 0.3 to 2.0
 
   const handleResetMotion = () => {
@@ -447,6 +447,16 @@ export default function StoryCreator({ onBack }) {
             const strobePulse = Math.pow(Math.sin(Math.PI * beatPhase), 6);
             animBrightness = 1.0 + 0.5 * strobePulse * photoMotionIntensity;
             animScale = photoScale * (1 + 0.02 * strobePulse * photoMotionIntensity);
+          } else if (photoEffect === 'kick-punch') {
+            const kick = Math.pow(Math.max(0, 1 - beatPhase * 3.5), 3);
+            animScale = photoScale * (1 + 0.09 * kick * photoMotionIntensity);
+            animBrightness = 1.0 + 0.3 * kick * photoMotionIntensity;
+          } else if (photoEffect === 'prism-roll') {
+            const rollAngle = Math.sin(omega * 0.5) * 0.025 * photoMotionIntensity;
+            ctx.translate(width / 2, height / 2);
+            ctx.rotate(rollAngle);
+            ctx.translate(-width / 2, -height / 2);
+            animScale = photoScale * (1 + 0.04 * photoMotionIntensity);
           }
         }
 
@@ -561,6 +571,108 @@ export default function StoryCreator({ onBack }) {
             ctx.fillStyle = fogGrad;
             ctx.fillRect(0, 0, width, height);
           }
+        } else if (atmosphereEffect === 'cold-sparks') {
+          const sparkCount = 45;
+          for (let i = 0; i < sparkCount; i++) {
+            const seedX = (width * 0.12 + (i * 97.3) % (width * 0.76));
+            const speed = 320 + (i % 8) * 50;
+            const sparkLife = (time * (speed / height) + (i * 0.13)) % 1;
+            const curY = height * (1 - Math.pow(sparkLife, 0.85));
+            const curX = seedX + Math.sin(sparkLife * 12 + i) * 22 + ((i % 2 === 0 ? 1 : -1) * sparkLife * 40);
+            const sparkAlpha = Math.max(0, (1 - sparkLife) * Math.min(1.2, atmosphereDensity));
+            const sparkSize = (1.5 + (i % 3)) * (1 - sparkLife * 0.5);
+
+            ctx.save();
+            ctx.shadowColor = '#FFE600';
+            ctx.shadowBlur = 8;
+            ctx.fillStyle = i % 3 === 0 ? '#FFFFFF' : hexToRgba('#FFA500', sparkAlpha);
+            ctx.beginPath();
+            ctx.arc(curX, curY, sparkSize, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.strokeStyle = hexToRgba('#FF5500', sparkAlpha * 0.6);
+            ctx.lineWidth = 1.2;
+            ctx.beginPath();
+            ctx.moveTo(curX, curY);
+            ctx.lineTo(curX - ((i % 2 === 0 ? 1 : -1) * 4), curY + 12);
+            ctx.stroke();
+            ctx.restore();
+          }
+        } else if (atmosphereEffect === 'laser-beams') {
+          const beamCount = 6;
+          ctx.save();
+          ctx.globalCompositeOperation = 'lighter';
+          for (let i = 0; i < beamCount; i++) {
+            const originX = (i % 2 === 0) ? width * 0.08 : width * 0.92;
+            const originY = height * 0.05 + (i * 30);
+            const sweepPhase = Math.sin(time * 1.8 + i * 0.9);
+            const targetX = width * (0.5 + sweepPhase * 0.55);
+            const targetY = height * 0.85 + Math.cos(time * 1.2 + i) * (height * 0.1);
+
+            const laserGrad = ctx.createLinearGradient(originX, originY, targetX, targetY);
+            laserGrad.addColorStop(0, '#FFFFFF');
+            laserGrad.addColorStop(0.2, hexToRgba(frameColor, 0.9 * atmosphereDensity));
+            laserGrad.addColorStop(0.8, hexToRgba(frameColor, 0.25 * atmosphereDensity));
+            laserGrad.addColorStop(1, 'rgba(0,0,0,0)');
+
+            ctx.strokeStyle = laserGrad;
+            ctx.lineWidth = 3;
+            ctx.shadowColor = frameColor;
+            ctx.shadowBlur = 18;
+            ctx.beginPath();
+            ctx.moveTo(originX, originY);
+            ctx.lineTo(targetX, targetY);
+            ctx.stroke();
+
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(originX, originY);
+            ctx.lineTo(targetX, targetY);
+            ctx.stroke();
+          }
+          ctx.restore();
+        } else if (atmosphereEffect === 'bass-shockwave') {
+          const rings = 3;
+          ctx.save();
+          for (let r = 0; r < rings; r++) {
+            const ringPhase = (beatPhase + r * (1 / rings)) % 1;
+            const maxRadius = Math.max(width, height) * 0.75;
+            const radius = ringPhase * maxRadius;
+            const ringAlpha = Math.pow(1 - ringPhase, 2) * 0.55 * atmosphereDensity;
+
+            ctx.strokeStyle = hexToRgba(frameColor, ringAlpha);
+            ctx.lineWidth = 3 + (1 - ringPhase) * 6;
+            ctx.shadowColor = frameColor;
+            ctx.shadowBlur = 14;
+            ctx.beginPath();
+            ctx.arc(width / 2, height * 0.52, radius, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+          ctx.restore();
+        } else if (atmosphereEffect === 'vhs-cyber') {
+          ctx.save();
+          const bandCount = 4;
+          for (let b = 0; b < bandCount; b++) {
+            const bandY = ((time * (90 + b * 40)) + b * 260) % height;
+            const bandH = 12 + (b % 3) * 8;
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.04)';
+            ctx.fillRect(0, bandY, width, bandH);
+
+            ctx.fillStyle = hexToRgba(frameColor, 0.06 * atmosphereDensity);
+            ctx.fillRect(0, bandY + bandH * 0.3, width, 2);
+          }
+
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.12)';
+          for (let y = 0; y < height; y += 4) {
+            ctx.fillRect(0, y, width, 1.5);
+          }
+
+          if (Math.sin(time * 24) > 0.88) {
+            ctx.fillStyle = hexToRgba('#00F0FF', 0.05 * atmosphereDensity);
+            ctx.fillRect(0, 0, width, height);
+          }
+          ctx.restore();
         }
         ctx.restore();
       }
@@ -599,6 +711,10 @@ export default function StoryCreator({ onBack }) {
               isGlitchActive = true;
               jitterX = Math.sin(time * 50) * 8 * cascadeSpeed;
             }
+          } else if (cascadeEffect === 'wave-sine') {
+            shiftY = (time * 45 * cascadeSpeed) % stepY;
+          } else if (cascadeEffect === 'neon-scan') {
+            shiftY = (time * 65 * cascadeSpeed) % stepY;
           }
         }
 
@@ -607,12 +723,23 @@ export default function StoryCreator({ onBack }) {
         ctx.clip();
 
         let count = 0;
+        const scanPos = ((time * 190 * cascadeSpeed) % (endY - startY + stepY * 2)) + startY - stepY;
         for (let y = startY - stepY; y <= endY + stepY; y += stepY) {
           const curY = y + shiftY;
-          const curX = posX + jitterX;
+          let curX = posX + jitterX;
+          if (cascadeEffect === 'wave-sine') {
+            curX += Math.sin(time * 3.2 * cascadeSpeed + count * 0.75) * 22;
+          }
 
-          ctx.lineWidth = Math.max(1, dynamicLineWidth);
-          ctx.strokeStyle = repeatTextColor;
+          let isScanActive = false;
+          if (cascadeEffect === 'neon-scan') {
+            if (Math.abs(curY - scanPos) < stepY * 0.75) {
+              isScanActive = true;
+            }
+          }
+
+          ctx.lineWidth = isScanActive ? 3.5 : Math.max(1, dynamicLineWidth);
+          ctx.strokeStyle = isScanActive ? '#FFFFFF' : repeatTextColor;
 
           if (isGlitchActive) {
             ctx.save();
@@ -622,14 +749,24 @@ export default function StoryCreator({ onBack }) {
             ctx.restore();
           }
 
-          ctx.strokeText(textToRepeat, curX, curY);
-
-          if (count % 7 === 1) {
+          if (isScanActive) {
+            ctx.save();
+            ctx.shadowColor = repeatTextColor;
+            ctx.shadowBlur = 22;
+            ctx.strokeText(textToRepeat, curX, curY);
             ctx.fillStyle = repeatTextColor;
             ctx.fillText(textToRepeat, curX, curY);
+            ctx.restore();
           } else {
-            ctx.fillStyle = hexToRgba(repeatTextColor, 0.04);
-            ctx.fillText(textToRepeat, curX, curY);
+            ctx.strokeText(textToRepeat, curX, curY);
+
+            if (count % 7 === 1) {
+              ctx.fillStyle = repeatTextColor;
+              ctx.fillText(textToRepeat, curX, curY);
+            } else {
+              ctx.fillStyle = hexToRgba(repeatTextColor, 0.04);
+              ctx.fillText(textToRepeat, curX, curY);
+            }
           }
           count++;
         }
@@ -713,10 +850,30 @@ export default function StoryCreator({ onBack }) {
             } else if (eqEffect === 'bass-pulse') {
               const bassHit = Math.pow(Math.sin(Math.PI * beatPhase), 4);
               barH = Math.min(28, Math.max(4, bassHit * 22 * eqIntensity + Math.sin(time * 12 + i) * 5));
+            } else if (eqEffect === 'peak-meter') {
+              const bounce = Math.abs(Math.sin(time * 7.5 * eqSpeed + i * 0.7));
+              barH = Math.min(26, Math.max(4, bounce * 23 * eqIntensity));
+            } else if (eqEffect === 'center-split') {
+              const wave = Math.abs(Math.sin(time * 6 * eqSpeed + i * 0.5));
+              barH = Math.min(26, Math.max(4, wave * 24 * eqIntensity));
             }
           }
-          ctx.fillStyle = i % 3 === 0 ? techColor : 'rgba(255, 255, 255, 0.7)';
-          ctx.fillRect(eqX + i * 8, eqY + (28 - barH), 5, barH);
+
+          if (eqEffect === 'center-split') {
+            const halfH = barH / 2;
+            ctx.fillStyle = i % 3 === 0 ? techColor : 'rgba(255, 255, 255, 0.7)';
+            ctx.fillRect(eqX + i * 8, eqY + 14 - halfH, 5, halfH * 2);
+          } else {
+            ctx.fillStyle = i % 3 === 0 ? techColor : 'rgba(255, 255, 255, 0.7)';
+            ctx.fillRect(eqX + i * 8, eqY + (28 - barH), 5, barH);
+
+            if (eqEffect === 'peak-meter') {
+              const peakOffset = ((Math.sin(time * 3.5 * eqSpeed + i * 0.9) * 0.5 + 0.5) * 4);
+              const peakY = Math.max(eqY, eqY + (28 - barH) - 3 - peakOffset);
+              ctx.fillStyle = '#FFFFFF';
+              ctx.fillRect(eqX + i * 8, peakY, 5, 2);
+            }
+          }
         }
 
         ctx.restore();
@@ -770,6 +927,9 @@ export default function StoryCreator({ onBack }) {
       let titleShadowColor = titleColor;
       let titleAlpha = 1.0;
       let titleGlitchOffset = 0;
+      let titleShakeY = 0;
+      let isRgbSplit = false;
+      let isLaserSweep = false;
       let effectiveTitleColor = titleColor;
 
       if (isMotionActive) {
@@ -797,6 +957,20 @@ export default function StoryCreator({ onBack }) {
           effectiveTitleColor = `hsl(${hue}, 100%, 65%)`;
           titleShadowColor = effectiveTitleColor;
           titleGlowBlur = 20 * titleGlow;
+        } else if (titleEffect === 'laser-sweep') {
+          isLaserSweep = true;
+          titleGlowBlur = 16 * titleGlow;
+          titleShadowColor = titleColor;
+        } else if (titleEffect === 'bass-shake') {
+          const punch = Math.pow(Math.max(0, 1 - beatPhase * 3.0), 2);
+          titleGlitchOffset = Math.sin(time * 65) * 8 * punch * titleGlow;
+          titleShakeY = Math.cos(time * 75) * 5 * punch * titleGlow;
+          titleGlowBlur = 12 + punch * 36 * titleGlow;
+          titleShadowColor = titleColor;
+        } else if (titleEffect === 'rgb-split') {
+          isRgbSplit = true;
+          titleGlowBlur = 14 * titleGlow;
+          titleShadowColor = '#00F0FF';
         }
       }
 
@@ -865,7 +1039,7 @@ export default function StoryCreator({ onBack }) {
         ctx.shadowBlur = titleGlowBlur;
         ctx.globalAlpha = titleAlpha;
 
-        const titleY = bottomBase - 90 + mainTitleOffsetY;
+        const titleY = bottomBase - 90 + mainTitleOffsetY + titleShakeY;
         let titleX = width / 2 + mainTitleOffsetX + titleGlitchOffset;
         let titleAlign = mainTitleAlign;
 
@@ -875,31 +1049,54 @@ export default function StoryCreator({ onBack }) {
           titleX = width * 0.88 + mainTitleOffsetX + titleGlitchOffset;
         }
 
-        if (titleText.startsWith('MISSA') && titleText.endsWith('FX') && titleText.length >= 7) {
-          const missaPart = titleText.slice(0, -2);
-          const fxPart = titleText.slice(-2);
+        const drawTitlePass = (curX, curY, colMissa, colFx) => {
+          if (titleText.startsWith('MISSA') && titleText.endsWith('FX') && titleText.length >= 7) {
+            const missaPart = titleText.slice(0, -2);
+            const fxPart = titleText.slice(-2);
+            const missaMetrics = ctx.measureText(missaPart);
+            const fxMetrics = ctx.measureText(fxPart);
+            const fullW = missaMetrics.width + fxMetrics.width;
 
-          const missaMetrics = ctx.measureText(missaPart);
-          const fxMetrics = ctx.measureText(fxPart);
-          const fullW = missaMetrics.width + fxMetrics.width;
+            let startX = curX - fullW / 2;
+            if (titleAlign === 'left') startX = curX;
+            else if (titleAlign === 'right') startX = curX - fullW;
 
-          let startX = titleX - fullW / 2;
-          if (titleAlign === 'left') {
-            startX = titleX;
-          } else if (titleAlign === 'right') {
-            startX = titleX - fullW;
+            ctx.textAlign = 'left';
+            ctx.fillStyle = colMissa;
+            ctx.fillText(missaPart, startX, curY);
+
+            ctx.fillStyle = colFx;
+            ctx.fillText(fxPart, startX + missaMetrics.width, curY);
+          } else {
+            ctx.textAlign = titleAlign;
+            ctx.fillStyle = colMissa;
+            ctx.fillText(titleText, curX, curY);
           }
+        };
 
-          ctx.textAlign = 'left';
-          ctx.fillStyle = effectiveTitleColor;
-          ctx.fillText(missaPart, startX, titleY);
+        if (isRgbSplit) {
+          ctx.save();
+          ctx.shadowBlur = 0;
+          ctx.globalAlpha = 0.75;
+          drawTitlePass(titleX - 5, titleY, '#00F0FF', '#00F0FF');
+          drawTitlePass(titleX + 5, titleY, '#FF0055', '#FF0055');
+          ctx.restore();
+        }
 
-          ctx.fillStyle = titleFxColor;
-          ctx.fillText(fxPart, startX + missaMetrics.width, titleY);
-        } else {
-          ctx.textAlign = titleAlign;
-          ctx.fillStyle = effectiveTitleColor;
-          ctx.fillText(titleText, titleX, titleY);
+        drawTitlePass(titleX, titleY, effectiveTitleColor, titleFxColor);
+
+        if (isLaserSweep) {
+          ctx.save();
+          ctx.globalCompositeOperation = 'lighter';
+          const sweepX = (((time * 0.9) % 1) * (width * 1.5)) - width * 0.25;
+          const sweepGrad = ctx.createLinearGradient(sweepX - 50, 0, sweepX + 50, 0);
+          sweepGrad.addColorStop(0, 'rgba(255, 255, 255, 0)');
+          sweepGrad.addColorStop(0.5, 'rgba(255, 255, 255, 0.95)');
+          sweepGrad.addColorStop(0.7, hexToRgba(titleColor, 0.8));
+          sweepGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+          ctx.fillStyle = sweepGrad;
+          ctx.fillRect(sweepX - 50, titleY - mainTitleSize * 0.7, 100, mainTitleSize * 1.4);
+          ctx.restore();
         }
       }
 
@@ -3463,6 +3660,8 @@ export default function StoryCreator({ onBack }) {
                         <option value="scroll-up" style={{ background: '#0c0c10', color: '#fff' }}>{cT.fxCascadeScrollUp}</option>
                         <option value="breathe" style={{ background: '#0c0c10', color: '#fff' }}>{cT.fxCascadeBreathe}</option>
                         <option value="glitch" style={{ background: '#0c0c10', color: '#fff' }}>{cT.fxCascadeGlitch}</option>
+                        <option value="wave-sine" style={{ background: '#0c0c10', color: '#fff' }}>{cT.fxCascadeWaveSine}</option>
+                        <option value="neon-scan" style={{ background: '#0c0c10', color: '#fff' }}>{cT.fxCascadeNeonScan}</option>
                         <option value="none" style={{ background: '#0c0c10', color: '#fff' }}>{cT.fxCascadeNone}</option>
                       </select>
                     </div>
@@ -3530,6 +3729,9 @@ export default function StoryCreator({ onBack }) {
                         <option value="glitch" style={{ background: '#0c0c10', color: '#fff' }}>{cT.fxTitleGlitch}</option>
                         <option value="strobe" style={{ background: '#0c0c10', color: '#fff' }}>{cT.fxTitleStrobe}</option>
                         <option value="color-cycle" style={{ background: '#0c0c10', color: '#fff' }}>{cT.fxTitleColorCycle}</option>
+                        <option value="laser-sweep" style={{ background: '#0c0c10', color: '#fff' }}>{cT.fxTitleLaserSweep}</option>
+                        <option value="bass-shake" style={{ background: '#0c0c10', color: '#fff' }}>{cT.fxTitleBassShake}</option>
+                        <option value="rgb-split" style={{ background: '#0c0c10', color: '#fff' }}>{cT.fxTitleRgbSplit}</option>
                         <option value="none" style={{ background: '#0c0c10', color: '#fff' }}>{cT.fxTitleNone}</option>
                       </select>
                     </div>
@@ -3615,6 +3817,8 @@ export default function StoryCreator({ onBack }) {
                         <option value="vu-bounce" style={{ background: '#0c0c10', color: '#fff' }}>{cT.fxEqVuBounce}</option>
                         <option value="wave-flow" style={{ background: '#0c0c10', color: '#fff' }}>{cT.fxEqWaveFlow}</option>
                         <option value="bass-pulse" style={{ background: '#0c0c10', color: '#fff' }}>{cT.fxEqBassPulse}</option>
+                        <option value="peak-meter" style={{ background: '#0c0c10', color: '#fff' }}>{cT.fxEqPeakMeter}</option>
+                        <option value="center-split" style={{ background: '#0c0c10', color: '#fff' }}>{cT.fxEqCenterSplit}</option>
                         <option value="none" style={{ background: '#0c0c10', color: '#fff' }}>{cT.fxEqNone}</option>
                       </select>
                     </div>
@@ -3701,6 +3905,8 @@ export default function StoryCreator({ onBack }) {
                         <option value="ken-burns-out" style={{ background: '#0c0c10', color: '#fff' }}>{cT.fxPhotoKenBurnsOut}</option>
                         <option value="pan-sway" style={{ background: '#0c0c10', color: '#fff' }}>{cT.fxPhotoPanSway}</option>
                         <option value="club-strobe" style={{ background: '#0c0c10', color: '#fff' }}>{cT.fxPhotoClubStrobe}</option>
+                        <option value="kick-punch" style={{ background: '#0c0c10', color: '#fff' }}>{cT.fxPhotoKickPunch}</option>
+                        <option value="prism-roll" style={{ background: '#0c0c10', color: '#fff' }}>{cT.fxPhotoPrismRoll}</option>
                         <option value="none" style={{ background: '#0c0c10', color: '#fff' }}>{cT.fxPhotoNone}</option>
                       </select>
                     </div>
@@ -3766,6 +3972,10 @@ export default function StoryCreator({ onBack }) {
                         <option value="dust-laser" style={{ background: '#0c0c10', color: '#fff' }}>{cT.fxAtmosphereDustLaser}</option>
                         <option value="scanlines" style={{ background: '#0c0c10', color: '#fff' }}>{cT.fxAtmosphereScanlines}</option>
                         <option value="rave-smoke" style={{ background: '#0c0c10', color: '#fff' }}>{cT.fxAtmosphereRaveSmoke}</option>
+                        <option value="cold-sparks" style={{ background: '#0c0c10', color: '#fff' }}>{cT.fxAtmosphereColdSparks}</option>
+                        <option value="laser-beams" style={{ background: '#0c0c10', color: '#fff' }}>{cT.fxAtmosphereLaserBeams}</option>
+                        <option value="bass-shockwave" style={{ background: '#0c0c10', color: '#fff' }}>{cT.fxAtmosphereBassShockwave}</option>
+                        <option value="vhs-cyber" style={{ background: '#0c0c10', color: '#fff' }}>{cT.fxAtmosphereVhsCyber}</option>
                         <option value="none" style={{ background: '#0c0c10', color: '#fff' }}>{cT.fxAtmosphereNone}</option>
                       </select>
                     </div>
