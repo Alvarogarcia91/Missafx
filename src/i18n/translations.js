@@ -3,7 +3,6 @@
     nav: {
       home: 'Inicio',
       socials: 'Redes Oficiales',
-      music: 'Música & Sets',
       about: 'Bio & Rider',
       contact: 'Contacto',
       whatsapp: 'WhatsApp Directo'
@@ -50,20 +49,6 @@
           cta: 'Ver Canal de YouTube'
         }
       }
-    },
-    music: {
-      tag: 'CATÁLOGO & SESIONES',
-      title: 'PRODUCCIÓN & MIXES',
-      desc: 'Escucha una muestra de los tracks y sesiones en vivo disponibles en el SoundCloud y canales oficiales de Missafx.',
-      categories: {
-        All: 'Todos',
-        'Original Mixes': 'Original Mixes',
-        'Live Sets': 'Live Sets',
-        Remixes: 'Remixes'
-      },
-      playingDemo: 'REPRODUCIENDO DEMO',
-      viewSoundcloud: 'Ver en SoundCloud',
-      fullSoundcloudCta: 'Ir al Perfil Completo en SoundCloud'
     },
     about: {
       tag: 'SOBRE EL ARTISTA',
@@ -113,6 +98,20 @@
       successDesc: 'Tu mensaje se ha generado con los datos de tu evento para cotizar directamente con Missafx.',
       sendAnother: 'Enviar otra consulta'
     },
+    tools: {
+      trigger: 'Herramientas DJ',
+      title: 'MISSA STUDIO // TOOLS',
+      subtitle: 'Herramientas y utilidades de producción',
+      tool1Title: 'Portal Privado DJ',
+      tool1Desc: 'Panel de control y agenda',
+      tool2Title: 'Calculadora BPM & Claves',
+      tool2Desc: 'Armonía y rueda Camelot',
+      tool3Title: 'Rider & Press Kit Builder',
+      tool3Desc: 'Especificaciones técnicas',
+      tool4Title: 'Stream & Live Hub',
+      tool4Desc: 'Recursos para directos',
+      statusPlaceholder: 'En desarrollo'
+    },
     footer: {
       tagline: 'DJ & Electronic Music Producer',
       rights: 'Missafx. Sitio Oficial Representativo.',
@@ -123,7 +122,6 @@
     nav: {
       home: 'Home',
       socials: 'Official Links',
-      music: 'Music & Sets',
       about: 'Bio & Rider',
       contact: 'Booking',
       whatsapp: 'Direct WhatsApp'
@@ -170,20 +168,6 @@
           cta: 'Visit YouTube Channel'
         }
       }
-    },
-    music: {
-      tag: 'DISCOGRAPHY & SESSIONS',
-      title: 'PRODUCTIONS & MIXES',
-      desc: 'Listen to a curated selection of tracks and live sessions available on Missafx’s official SoundCloud and streaming channels.',
-      categories: {
-        All: 'All',
-        'Original Mixes': 'Original Mixes',
-        'Live Sets': 'Live Sets',
-        Remixes: 'Remixes'
-      },
-      playingDemo: 'PLAYING DEMO',
-      viewSoundcloud: 'View on SoundCloud',
-      fullSoundcloudCta: 'Visit Full SoundCloud Profile'
     },
     about: {
       tag: 'ABOUT THE ARTIST',
@@ -232,6 +216,20 @@
       successTitle: 'Opening WhatsApp Chat!',
       successDesc: 'Your booking inquiry message was prepared to chat directly with Missafx.',
       sendAnother: 'Send another inquiry'
+    },
+    tools: {
+      trigger: 'DJ Tools',
+      title: 'MISSA STUDIO // TOOLS',
+      subtitle: 'Private DJ utilities & production',
+      tool1Title: 'DJ Private Portal',
+      tool1Desc: 'Control dashboard & schedule',
+      tool2Title: 'BPM & Camelot Wheel',
+      tool2Desc: 'Harmonic mixing calculator',
+      tool3Title: 'Rider & Press Kit Builder',
+      tool3Desc: 'Technical requirements export',
+      tool4Title: 'Stream & Live Hub',
+      tool4Desc: 'Live broadcast utilities',
+      statusPlaceholder: 'In development'
     },
     footer: {
       tagline: 'DJ & Electronic Music Producer',

@@ -6,6 +6,7 @@ import SocialHub from './components/SocialHub.jsx';
 import About from './components/About.jsx';
 import Booking from './components/Booking.jsx';
 import Footer from './components/Footer.jsx';
+import DjTools from './components/DjTools.jsx';
 
 export default function App() {
   return (
@@ -19,6 +20,7 @@ export default function App() {
           <Booking />
         </main>
         <Footer />
+        <DjTools />
       </div>
     </LanguageProvider>
   );

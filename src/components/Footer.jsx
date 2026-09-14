@@ -14,7 +14,7 @@ export default function Footer() {
       style={{
         borderTop: '1px solid var(--border-glass)',
         background: 'rgba(5, 5, 8, 0.98)',
-        padding: '60px 0 30px 0',
+        padding: '60px 0 26px 0',
         position: 'relative'
       }}
     >
@@ -80,10 +80,11 @@ export default function Footer() {
           </button>
         </div>
 
+        {/* Legal & Booking bar */}
         <div
           style={{
             borderTop: '1px solid rgba(255, 255, 255, 0.05)',
-            paddingTop: '24px',
+            paddingTop: '20px',
             display: 'flex',
             flexWrap: 'wrap',
             justifyContent: 'space-between',
@@ -97,6 +98,55 @@ export default function Footer() {
           <p>
             {t.footer.bookingContact} <a href="tel:+5214443570777" style={{ color: '#FF003C', textDecoration: 'none' }}>+52 1 444 357 0777</a>
           </p>
+        </div>
+
+        {/* Discreet Credit Bar: "bn sordo By Nexora IT LLC wwwitnexora.com" */}
+        <div
+          style={{
+            borderTop: '1px solid rgba(255, 255, 255, 0.03)',
+            paddingTop: '16px',
+            marginTop: '16px',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            fontSize: '0.74rem',
+            color: 'rgba(255, 255, 255, 0.30)',
+            letterSpacing: '0.04em'
+          }}
+        >
+          <span>
+            By{' '}
+            <a
+              href="https://wwwitnexora.com"
+              target="_blank"
+              rel="noreferrer"
+              style={{
+                color: 'rgba(255, 255, 255, 0.45)',
+                textDecoration: 'none',
+                fontWeight: 600,
+                transition: 'color 0.2s ease'
+              }}
+              onMouseEnter={(e) => e.target.style.color = '#FF003C'}
+              onMouseLeave={(e) => e.target.style.color = 'rgba(255, 255, 255, 0.45)'}
+            >
+              Nexora IT LLC
+            </a>
+            {' '}—{' '}
+            <a
+              href="https://wwwitnexora.com"
+              target="_blank"
+              rel="noreferrer"
+              style={{
+                color: 'rgba(255, 255, 255, 0.32)',
+                textDecoration: 'none',
+                transition: 'color 0.2s ease'
+              }}
+              onMouseEnter={(e) => e.target.style.color = '#fff'}
+              onMouseLeave={(e) => e.target.style.color = 'rgba(255, 255, 255, 0.32)'}
+            >
+              wwwitnexora.com
+            </a>
+          </span>
         </div>
       </div>
     </footer>
