@@ -54,6 +54,21 @@ const hexToRgba = (hex, alpha = 1) => {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 };
 
+// Calculate brightness to validate contrast and prevent white-on-white / unreadable text
+const isLightColor = (hex) => {
+  if (!hex) return false;
+  let c = hex.replace('#', '');
+  if (c.length === 3) c = c.split('').map((x) => x + x).join('');
+  const r = parseInt(c.substring(0, 2), 16) || 0;
+  const g = parseInt(c.substring(2, 4), 16) || 0;
+  const b = parseInt(c.substring(4, 6), 16) || 0;
+  return (r * 299 + g * 587 + b * 114) / 1000 > 160;
+};
+
+const getAutoContrastColor = (bgHex) => {
+  return isLightColor(bgHex) ? '#060608' : '#FFFFFF';
+};
+
 export default function CardCreator({ onBack }) {
   const { t } = useLanguage();
   const cT = t.cardCreator;
@@ -76,7 +91,10 @@ export default function CardCreator({ onBack }) {
   // Granular Color Customization State
   const [frameColor, setFrameColor] = useState('#FF003C');
   const [titleColor, setTitleColor] = useState('#FF003C');
+  const [titleFxColor, setTitleFxColor] = useState('#FFFFFF');
   const [badgeColor, setBadgeColor] = useState('#FF003C');
+  const [badgeTextColor, setBadgeTextColor] = useState('#FFFFFF');
+  const [textColor, setTextColor] = useState('#E2E8F0');
   const [backAccentColor, setBackAccentColor] = useState('#FF003C');
   const [glowColor, setGlowColor] = useState('#FF003C');
 
@@ -131,13 +149,25 @@ export default function CardCreator({ onBack }) {
       });
   }, [qrUrl]);
 
-  // Apply a unified color theme to all elements at once
+  // Apply a unified color theme to all elements at once with smart contrast
   const applyUnifiedColor = (hex) => {
     setFrameColor(hex);
     setTitleColor(hex);
     setBadgeColor(hex);
     setBackAccentColor(hex);
     setGlowColor(hex);
+
+    // Smart auto-contrast for text elements
+    const autoBadgeText = getAutoContrastColor(hex);
+    setBadgeTextColor(autoBadgeText);
+
+    if (isLightColor(hex)) {
+      setTitleFxColor('#FF003C');
+      setTextColor('#CBD5E1');
+    } else {
+      setTitleFxColor('#FFFFFF');
+      setTextColor('#E2E8F0');
+    }
   };
 
   // Render FRONT Canvas
@@ -309,14 +339,14 @@ export default function CardCreator({ onBack }) {
       ctx.textAlign = 'left';
       ctx.fillStyle = titleColor;
       ctx.fillText(p1, sX, centerY);
-      ctx.fillStyle = '#FFFFFF';
+      ctx.fillStyle = titleFxColor;
       ctx.fillText(p2, sX + m1, centerY);
     } else {
       ctx.fillStyle = titleColor;
       ctx.fillText(titleUpper, w / 2, centerY);
     }
 
-    // Role / Genre Pill with badgeColor
+    // Role / Genre Pill with badgeColor & intelligent contrast
     if (roleGenre.trim()) {
       ctx.font = '800 16px "Syne", sans-serif';
       const rText = roleGenre.trim().toUpperCase();
@@ -330,7 +360,15 @@ export default function CardCreator({ onBack }) {
       ctx.roundRect(rX, rY, rW, rH, 5);
       ctx.fill();
 
-      ctx.fillStyle = '#FFFFFF';
+      // Intelligent contrast check for badge text
+      let effectiveBadgeTextColor = badgeTextColor;
+      if (isLightColor(badgeColor) && isLightColor(badgeTextColor)) {
+        effectiveBadgeTextColor = '#060608';
+      } else if (!isLightColor(badgeColor) && !isLightColor(badgeTextColor)) {
+        effectiveBadgeTextColor = '#FFFFFF';
+      }
+
+      ctx.fillStyle = effectiveBadgeTextColor;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(rText, w / 2, rY + rH / 2);
@@ -340,11 +378,11 @@ export default function CardCreator({ onBack }) {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.font = '600 15px "Outfit", sans-serif';
-    ctx.fillStyle = '#E2E8F0';
+    ctx.fillStyle = textColor;
     ctx.fillText(realName.trim(), w / 2, centerY + 115);
 
     ctx.font = '500 13px "Outfit", sans-serif';
-    ctx.fillStyle = '#94A3B8';
+    ctx.fillStyle = isLightColor(textColor) ? 'rgba(255, 255, 255, 0.65)' : '#94A3B8';
     ctx.fillText(`${cityLocation.trim()} • DIRECT BOOKING & TOURS`, w / 2, centerY + 138);
 
     ctx.restore();
@@ -355,7 +393,10 @@ export default function CardCreator({ onBack }) {
     cityLocation,
     frameColor,
     titleColor,
+    titleFxColor,
     badgeColor,
+    badgeTextColor,
+    textColor,
     glowColor,
     showCyberFrame,
     showTechAccents,
@@ -474,7 +515,7 @@ export default function CardCreator({ onBack }) {
     ctx.fillStyle = titleColor;
     ctx.fillText('MISSA', leftColX, 85);
     const m1 = ctx.measureText('MISSA').width;
-    ctx.fillStyle = '#FFFFFF';
+    ctx.fillStyle = titleFxColor;
     ctx.fillText('FX', leftColX + m1, 85);
 
     ctx.font = '700 13px "Outfit", sans-serif';
@@ -491,11 +532,11 @@ export default function CardCreator({ onBack }) {
 
     // Info rows
     ctx.font = '600 16px "Outfit", sans-serif';
-    ctx.fillStyle = '#FFFFFF';
+    ctx.fillStyle = textColor;
     ctx.fillText(`WA: ${phoneWhatsapp.trim()}`, leftColX, 180);
 
     ctx.font = '500 14px "Outfit", sans-serif';
-    ctx.fillStyle = '#94A3B8';
+    ctx.fillStyle = isLightColor(textColor) ? 'rgba(255, 255, 255, 0.7)' : '#94A3B8';
     ctx.fillText(`LOC: ${cityLocation.trim()}`, leftColX, 214);
     ctx.fillText(`TAG: ${tagline.trim()}`, leftColX, 244);
 
@@ -506,7 +547,7 @@ export default function CardCreator({ onBack }) {
       ctx.fillText('CHANNELS: IG • KICK • SOUNDCLOUD • WA', leftColX, 280);
 
       ctx.font = '600 13px "Outfit", sans-serif';
-      ctx.fillStyle = '#E2E8F0';
+      ctx.fillStyle = textColor;
       ctx.fillText('@missafx_ // oficial', leftColX, 305);
     }
 
@@ -559,6 +600,8 @@ export default function CardCreator({ onBack }) {
     tagline,
     frameColor,
     titleColor,
+    titleFxColor,
+    textColor,
     backAccentColor,
     qrDataUrl,
     qrLabelText,
@@ -1154,19 +1197,44 @@ export default function CardCreator({ onBack }) {
                     {cT.colorElementsTitle}
                   </label>
 
+                  {/* Smart Contrast Notice */}
+                  <div
+                    style={{
+                      padding: '10px 14px',
+                      borderRadius: '10px',
+                      background: 'rgba(0, 240, 255, 0.06)',
+                      border: '1px solid rgba(0, 240, 255, 0.2)',
+                      fontSize: '0.78rem',
+                      color: 'var(--text-muted)',
+                      marginBottom: '16px',
+                      lineHeight: 1.4
+                    }}
+                  >
+                    {cT.contrastNotice}
+                  </div>
+
                   {/* 1. Cyberpunk Frame */}
                   {renderColorItem(cT.colorFrame, frameColor, setFrameColor)}
 
                   {/* 2. Artist Title */}
                   {renderColorItem(cT.colorTitle, titleColor, setTitleColor)}
 
-                  {/* 3. Genre Badge */}
+                  {/* 3. Title FX Suffix */}
+                  {renderColorItem(cT.colorTitleFx, titleFxColor, setTitleFxColor)}
+
+                  {/* 4. Genre Badge Background */}
                   {renderColorItem(cT.colorBadge, badgeColor, setBadgeColor)}
 
-                  {/* 4. Background Glow */}
+                  {/* 5. Genre Badge Text */}
+                  {renderColorItem(cT.colorBadgeText, badgeTextColor, setBadgeTextColor)}
+
+                  {/* 6. Text & Details */}
+                  {renderColorItem(cT.colorText, textColor, setTextColor)}
+
+                  {/* 7. Background Glow */}
                   {renderColorItem(cT.colorGlow, glowColor, setGlowColor)}
 
-                  {/* 5. Back Accent (QR & Handles) */}
+                  {/* 8. Back Accent (QR & Handles) */}
                   {renderColorItem(cT.colorBack, backAccentColor, setBackAccentColor)}
                 </div>
 

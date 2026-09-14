@@ -83,6 +83,21 @@ const hexToRgba = (hex, alpha = 1) => {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 };
 
+// Calculate brightness to validate contrast and prevent white-on-white / unreadable text
+const isLightColor = (hex) => {
+  if (!hex) return false;
+  let c = hex.replace('#', '');
+  if (c.length === 3) c = c.split('').map((x) => x + x).join('');
+  const r = parseInt(c.substring(0, 2), 16) || 0;
+  const g = parseInt(c.substring(2, 4), 16) || 0;
+  const b = parseInt(c.substring(4, 6), 16) || 0;
+  return (r * 299 + g * 587 + b * 114) / 1000 > 160;
+};
+
+const getAutoContrastColor = (bgHex) => {
+  return isLightColor(bgHex) ? '#060608' : '#FFFFFF';
+};
+
 export default function StoryCreator({ onBack }) {
   const { t } = useLanguage();
   const cT = t.storyCreator;
@@ -111,17 +126,30 @@ export default function StoryCreator({ onBack }) {
   // Granular Color Customization State
   const [frameColor, setFrameColor] = useState('#FF003C');
   const [titleColor, setTitleColor] = useState('#FF003C');
+  const [titleFxColor, setTitleFxColor] = useState('#FFFFFF');
   const [repeatTextColor, setRepeatTextColor] = useState('#FF003C');
   const [badgeColor, setBadgeColor] = useState('#FF003C');
+  const [badgeTextColor, setBadgeTextColor] = useState('#FFFFFF');
+  const [textColor, setTextColor] = useState('#FFFFFF');
   const [techColor, setTechColor] = useState('#FF003C');
 
-  // Apply unified color theme to all elements at once
+  // Apply unified color theme to all elements at once with smart contrast
   const applyUnifiedColor = (hex) => {
     setFrameColor(hex);
     setTitleColor(hex);
     setRepeatTextColor(hex);
     setBadgeColor(hex);
     setTechColor(hex);
+    // Anti-empalme: automatically set badge text to dark if background is white/light
+    const contrastText = getAutoContrastColor(hex);
+    setBadgeTextColor(contrastText);
+    if (hex === '#FFFFFF') {
+      setTitleFxColor('#FF003C');
+      setTextColor('#FFFFFF');
+    } else {
+      setTitleFxColor('#FFFFFF');
+      setTextColor('#FFFFFF');
+    }
   };
 
   // Masks and layers toggles (on/off)
@@ -456,12 +484,20 @@ export default function StoryCreator({ onBack }) {
       const subX = width / 2 - subW / 2;
       const subY = bottomBase - 180;
 
+      // Smart contrast guarantee: text is NEVER same luminance as background pill
+      let effectiveBadgeTextColor = badgeTextColor;
+      if (isLightColor(badgeColor) && isLightColor(badgeTextColor)) {
+        effectiveBadgeTextColor = '#060608';
+      } else if (!isLightColor(badgeColor) && !isLightColor(badgeTextColor)) {
+        effectiveBadgeTextColor = '#FFFFFF';
+      }
+
       ctx.fillStyle = badgeColor;
       ctx.beginPath();
       ctx.roundRect(subX, subY, subW, subH, 6);
       ctx.fill();
 
-      ctx.fillStyle = '#FFFFFF';
+      ctx.fillStyle = effectiveBadgeTextColor;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(subTitle.toUpperCase(), width / 2, subY + subH / 2);
@@ -489,16 +525,16 @@ export default function StoryCreator({ onBack }) {
         ctx.fillStyle = titleColor;
         ctx.fillText(missaPart, startX, bottomBase - 90);
 
-        ctx.fillStyle = '#FFFFFF';
+        ctx.fillStyle = titleFxColor;
         ctx.fillText(fxPart, startX + missaMetrics.width, bottomBase - 90);
       } else {
-        ctx.fillStyle = '#FFFFFF';
+        ctx.fillStyle = titleColor;
         ctx.fillText(titleUpper, width / 2, bottomBase - 90);
       }
     }
 
     // Divider Line
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+    ctx.strokeStyle = hexToRgba(textColor, 0.2);
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(width * 0.15, bottomBase - 30);
@@ -512,14 +548,14 @@ export default function StoryCreator({ onBack }) {
     // Date
     if (eventDate.trim()) {
       ctx.font = '800 24px "Outfit", sans-serif';
-      ctx.fillStyle = '#FFFFFF';
+      ctx.fillStyle = textColor;
       ctx.fillText(eventDate.toUpperCase(), width / 2, bottomBase + 10);
     }
 
     // Venue / Location
     if (eventVenue.trim()) {
       ctx.font = '500 17px "Outfit", sans-serif';
-      ctx.fillStyle = '#94A3B8';
+      ctx.fillStyle = hexToRgba(textColor, 0.75);
       ctx.fillText(eventVenue.toUpperCase(), width / 2, bottomBase + 45);
     }
 
@@ -566,8 +602,11 @@ export default function StoryCreator({ onBack }) {
     eventVenue,
     frameColor,
     titleColor,
+    titleFxColor,
     repeatTextColor,
     badgeColor,
+    badgeTextColor,
+    textColor,
     techColor,
     showRepeatText,
     showCyberFrame,
@@ -1512,6 +1551,26 @@ export default function StoryCreator({ onBack }) {
                   </div>
                 </div>
 
+                {/* Contrast protection notice */}
+                <div
+                  style={{
+                    padding: '12px 14px',
+                    borderRadius: '10px',
+                    background: 'rgba(250, 204, 21, 0.08)',
+                    border: '1px solid rgba(250, 204, 21, 0.25)',
+                    color: '#FACC15',
+                    fontSize: '0.78rem',
+                    marginBottom: '20px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    lineHeight: 1.4
+                  }}
+                >
+                  <CheckCircle2 size={16} style={{ flexShrink: 0 }} />
+                  <span>{cT.contrastNotice}</span>
+                </div>
+
                 {/* Granular Elements Colors */}
                 <div style={{ marginBottom: '24px' }}>
                   <label style={{ fontSize: '0.82rem', fontWeight: 600, color: '#fff', display: 'block', marginBottom: '12px' }}>
@@ -1524,13 +1583,25 @@ export default function StoryCreator({ onBack }) {
                   {/* 2. Main Title (MISSA) */}
                   {renderColorItem(cT.colorTitle, titleColor, setTitleColor)}
 
-                  {/* 3. Lateral Repeated Text */}
+                  {/* 3. Title Suffix (FX) */}
+                  {renderColorItem(cT.colorTitleFx, titleFxColor, setTitleFxColor)}
+
+                  {/* 4. Subtitle / Genre Badge Background */}
+                  {renderColorItem(cT.colorBadge, badgeColor, (c) => {
+                    setBadgeColor(c);
+                    setBadgeTextColor(getAutoContrastColor(c));
+                  })}
+
+                  {/* 5. Subtitle / Genre Badge Text */}
+                  {renderColorItem(cT.colorBadgeText, badgeTextColor, setBadgeTextColor)}
+
+                  {/* 6. Event Info & Date Text */}
+                  {renderColorItem(cT.colorText, textColor, setTextColor)}
+
+                  {/* 7. Lateral Repeated Text */}
                   {renderColorItem(cT.colorRepeatText, repeatTextColor, setRepeatTextColor)}
 
-                  {/* 4. Subtitle / Genre Badge */}
-                  {renderColorItem(cT.colorBadge, badgeColor, setBadgeColor)}
-
-                  {/* 5. Tech Accents, EQ & Booking */}
+                  {/* 8. Tech Accents, EQ & Booking */}
                   {renderColorItem(cT.colorTech, techColor, setTechColor)}
                 </div>
 
