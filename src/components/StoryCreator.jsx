@@ -25,7 +25,13 @@ import {
   Zap,
   Activity,
   Radio,
-  Clock
+  Clock,
+  ChevronDown,
+  ChevronUp,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  RotateCcw
 } from 'lucide-react';
 import { GIFEncoder, quantize, applyPalette } from 'gifenc';
 import { useLanguage } from '../context/LanguageContext';
@@ -131,6 +137,138 @@ export default function StoryCreator({ onBack }) {
   const [subTitle, setSubTitle] = useState('TECH HOUSE');
   const [eventDate, setEventDate] = useState('SÁBADO // LIVE SET');
   const [eventVenue, setEventVenue] = useState('SAN LUIS POTOSÍ • MÉXICO');
+
+  // Advanced Typography Controls (Size, Position X/Y, Tracking, Alignment, Uppercase)
+  // 1. Repeated Lateral Text ("MISSA")
+  const [repeatedTextSize, setRepeatedTextSize] = useState(88);
+  const [repeatedTextPosX, setRepeatedTextPosX] = useState(60);
+  const [repeatedTextPosY, setRepeatedTextPosY] = useState(0);
+  const [repeatedTextSpacing, setRepeatedTextSpacing] = useState(104);
+  const [repeatedTextTracking, setRepeatedTextTracking] = useState(0);
+  const [repeatedTextUpper, setRepeatedTextUpper] = useState(true);
+
+  // 2. Main Title ("MISSAFX")
+  const [mainTitleSize, setMainTitleSize] = useState(110);
+  const [mainTitleOffsetY, setMainTitleOffsetY] = useState(0);
+  const [mainTitleOffsetX, setMainTitleOffsetX] = useState(0);
+  const [mainTitleTracking, setMainTitleTracking] = useState(0);
+  const [mainTitleAlign, setMainTitleAlign] = useState('center'); // left | center | right
+  const [mainTitleUpper, setMainTitleUpper] = useState(true);
+
+  // 3. Subtitle / Genre ("TECH HOUSE")
+  const [subTitleSize, setSubTitleSize] = useState(18);
+  const [subTitleOffsetY, setSubTitleOffsetY] = useState(0);
+  const [subTitleOffsetX, setSubTitleOffsetX] = useState(0);
+  const [subTitleTracking, setSubTitleTracking] = useState(2);
+  const [subTitleAlign, setSubTitleAlign] = useState('center');
+  const [subTitleUpper, setSubTitleUpper] = useState(true);
+
+  // 4. Date / Tagline ("SÁBADO // LIVE SET")
+  const [eventDateSize, setEventDateSize] = useState(24);
+  const [eventDateOffsetY, setEventDateOffsetY] = useState(0);
+  const [eventDateOffsetX, setEventDateOffsetX] = useState(0);
+  const [eventDateTracking, setEventDateTracking] = useState(1);
+  const [eventDateAlign, setEventDateAlign] = useState('center');
+  const [eventDateUpper, setEventDateUpper] = useState(true);
+
+  // 5. Venue / City ("SAN LUIS POTOSÍ • MÉXICO")
+  const [eventVenueSize, setEventVenueSize] = useState(17);
+  const [eventVenueOffsetY, setEventVenueOffsetY] = useState(0);
+  const [eventVenueOffsetX, setEventVenueOffsetX] = useState(0);
+  const [eventVenueTracking, setEventVenueTracking] = useState(1);
+  const [eventVenueAlign, setEventVenueAlign] = useState('center');
+  const [eventVenueUpper, setEventVenueUpper] = useState(true);
+
+  // Expandable accordion section state (null or element id)
+  const [expandedTextSection, setExpandedTextSection] = useState(null);
+
+  const toggleTextSection = (sectionId) => {
+    setExpandedTextSection((prev) => (prev === sectionId ? null : sectionId));
+  };
+
+  const handleResetText = (elementId) => {
+    switch (elementId) {
+      case 'repeat':
+        setRepeatedTextSize(88);
+        setRepeatedTextPosX(60);
+        setRepeatedTextPosY(0);
+        setRepeatedTextSpacing(104);
+        setRepeatedTextTracking(0);
+        setRepeatedTextUpper(true);
+        break;
+      case 'title':
+        setMainTitleSize(110);
+        setMainTitleOffsetY(0);
+        setMainTitleOffsetX(0);
+        setMainTitleTracking(0);
+        setMainTitleAlign('center');
+        setMainTitleUpper(true);
+        break;
+      case 'subTitle':
+        setSubTitleSize(18);
+        setSubTitleOffsetY(0);
+        setSubTitleOffsetX(0);
+        setSubTitleTracking(2);
+        setSubTitleAlign('center');
+        setSubTitleUpper(true);
+        break;
+      case 'eventDate':
+        setEventDateSize(24);
+        setEventDateOffsetY(0);
+        setEventDateOffsetX(0);
+        setEventDateTracking(1);
+        setEventDateAlign('center');
+        setEventDateUpper(true);
+        break;
+      case 'eventVenue':
+        setEventVenueSize(17);
+        setEventVenueOffsetY(0);
+        setEventVenueOffsetX(0);
+        setEventVenueTracking(1);
+        setEventVenueAlign('center');
+        setEventVenueUpper(true);
+        break;
+      default:
+        break;
+    }
+  };
+
+  const handleResetAllTypography = () => {
+    setRepeatedTextSize(88);
+    setRepeatedTextPosX(60);
+    setRepeatedTextPosY(0);
+    setRepeatedTextSpacing(104);
+    setRepeatedTextTracking(0);
+    setRepeatedTextUpper(true);
+
+    setMainTitleSize(110);
+    setMainTitleOffsetY(0);
+    setMainTitleOffsetX(0);
+    setMainTitleTracking(0);
+    setMainTitleAlign('center');
+    setMainTitleUpper(true);
+
+    setSubTitleSize(18);
+    setSubTitleOffsetY(0);
+    setSubTitleOffsetX(0);
+    setSubTitleTracking(2);
+    setSubTitleAlign('center');
+    setSubTitleUpper(true);
+
+    setEventDateSize(24);
+    setEventDateOffsetY(0);
+    setEventDateOffsetX(0);
+    setEventDateTracking(1);
+    setEventDateAlign('center');
+    setEventDateUpper(true);
+
+    setEventVenueSize(17);
+    setEventVenueOffsetY(0);
+    setEventVenueOffsetX(0);
+    setEventVenueTracking(1);
+    setEventVenueAlign('center');
+    setEventVenueUpper(true);
+  };
 
   // Granular Color Customization State
   const [frameColor, setFrameColor] = useState('#FF003C');
@@ -428,15 +566,18 @@ export default function StoryCreator({ onBack }) {
       // 5. Repeated Lateral Outline Typography ("MISSA MISSA") (Element #1 FX)
       if (showRepeatText && repeatedText.trim()) {
         ctx.save();
-        const textToRepeat = repeatedText.trim().toUpperCase();
-        ctx.font = '900 88px "Syne", "Outfit", sans-serif';
+        const textToRepeat = repeatedTextUpper ? repeatedText.trim().toUpperCase() : repeatedText.trim();
+        ctx.font = `900 ${repeatedTextSize}px "Syne", "Outfit", sans-serif`;
         ctx.textBaseline = 'middle';
         ctx.textAlign = 'left';
+        if (ctx.letterSpacing !== undefined) {
+          ctx.letterSpacing = `${repeatedTextTracking}px`;
+        }
 
-        const startY = height * 0.14;
-        const endY = height * 0.82;
-        const stepY = 104;
-        const posX = 60;
+        const startY = height * 0.14 + repeatedTextPosY;
+        const endY = height * 0.82 + repeatedTextPosY;
+        const stepY = Math.max(30, repeatedTextSpacing);
+        const posX = repeatedTextPosX;
 
         let shiftY = 0;
         let dynamicLineWidth = 2.5;
@@ -460,7 +601,7 @@ export default function StoryCreator({ onBack }) {
         }
 
         ctx.beginPath();
-        ctx.rect(0, startY - 20, width * 0.45, endY - startY + 40);
+        ctx.rect(0, startY - 20, width * 0.85, endY - startY + 40);
         ctx.clip();
 
         let count = 0;
@@ -672,12 +813,25 @@ export default function StoryCreator({ onBack }) {
 
       // Subtitle Pill
       if (subTitle.trim()) {
-        ctx.font = '800 18px "Syne", sans-serif';
-        const subMetrics = ctx.measureText(subTitle.toUpperCase());
-        const subW = subMetrics.width + 32;
-        const subH = 36;
-        const subX = width / 2 - subW / 2;
-        const subY = bottomBase - 180;
+        const textToRender = subTitleUpper ? subTitle.trim().toUpperCase() : subTitle.trim();
+        ctx.font = `800 ${subTitleSize}px "Syne", sans-serif`;
+        if (ctx.letterSpacing !== undefined) {
+          ctx.letterSpacing = `${subTitleTracking}px`;
+        }
+        const subMetrics = ctx.measureText(textToRender);
+        const subPaddingX = Math.round(subTitleSize * 0.9);
+        const subW = subMetrics.width + subPaddingX * 2;
+        const subH = Math.round(subTitleSize * 2.0);
+
+        let subCenterX = width / 2 + subTitleOffsetX;
+        if (subTitleAlign === 'left') {
+          subCenterX = width * 0.12 + subW / 2 + subTitleOffsetX;
+        } else if (subTitleAlign === 'right') {
+          subCenterX = width * 0.88 - subW / 2 + subTitleOffsetX;
+        }
+
+        const subX = subCenterX - subW / 2;
+        const subY = bottomBase - 180 + subTitleOffsetY;
 
         let effectiveBadgeTextColor = badgeTextColor;
         if (isLightColor(badgeColor) && isLightColor(badgeTextColor)) {
@@ -694,38 +848,56 @@ export default function StoryCreator({ onBack }) {
         ctx.fillStyle = effectiveBadgeTextColor;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(subTitle.toUpperCase(), width / 2, subY + subH / 2);
+        ctx.fillText(textToRender, subCenterX, subY + subH / 2);
       }
 
       // Main Title
       if (mainTitle.trim()) {
-        ctx.font = '900 110px "Syne", sans-serif';
-        ctx.textAlign = 'center';
+        const titleText = mainTitleUpper ? mainTitle.trim().toUpperCase() : mainTitle.trim();
+        ctx.font = `900 ${mainTitleSize}px "Syne", sans-serif`;
+        if (ctx.letterSpacing !== undefined) {
+          ctx.letterSpacing = `${mainTitleTracking}px`;
+        }
         ctx.textBaseline = 'middle';
         ctx.shadowColor = titleShadowColor;
         ctx.shadowBlur = titleGlowBlur;
         ctx.globalAlpha = titleAlpha;
 
-        const titleUpper = mainTitle.trim().toUpperCase();
-        if (titleUpper.startsWith('MISSA') && titleUpper.endsWith('FX')) {
-          const missaPart = 'MISSA';
-          const fxPart = 'FX';
+        const titleY = bottomBase - 90 + mainTitleOffsetY;
+        let titleX = width / 2 + mainTitleOffsetX + titleGlitchOffset;
+        let titleAlign = mainTitleAlign;
 
-          ctx.font = '900 110px "Syne", sans-serif';
+        if (titleAlign === 'left') {
+          titleX = width * 0.12 + mainTitleOffsetX + titleGlitchOffset;
+        } else if (titleAlign === 'right') {
+          titleX = width * 0.88 + mainTitleOffsetX + titleGlitchOffset;
+        }
+
+        if (titleText.startsWith('MISSA') && titleText.endsWith('FX') && titleText.length >= 7) {
+          const missaPart = titleText.slice(0, -2);
+          const fxPart = titleText.slice(-2);
+
           const missaMetrics = ctx.measureText(missaPart);
           const fxMetrics = ctx.measureText(fxPart);
           const fullW = missaMetrics.width + fxMetrics.width;
-          const startX = (width - fullW) / 2 + titleGlitchOffset;
+
+          let startX = titleX - fullW / 2;
+          if (titleAlign === 'left') {
+            startX = titleX;
+          } else if (titleAlign === 'right') {
+            startX = titleX - fullW;
+          }
 
           ctx.textAlign = 'left';
           ctx.fillStyle = effectiveTitleColor;
-          ctx.fillText(missaPart, startX, bottomBase - 90);
+          ctx.fillText(missaPart, startX, titleY);
 
           ctx.fillStyle = titleFxColor;
-          ctx.fillText(fxPart, startX + missaMetrics.width, bottomBase - 90);
+          ctx.fillText(fxPart, startX + missaMetrics.width, titleY);
         } else {
+          ctx.textAlign = titleAlign;
           ctx.fillStyle = effectiveTitleColor;
-          ctx.fillText(titleUpper, width / 2 + titleGlitchOffset, bottomBase - 90);
+          ctx.fillText(titleText, titleX, titleY);
         }
       }
 
@@ -735,30 +907,51 @@ export default function StoryCreator({ onBack }) {
       ctx.strokeStyle = hexToRgba(textColor, 0.2);
       ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.moveTo(width * 0.15, bottomBase - 30);
-      ctx.lineTo(width * 0.85, bottomBase - 30);
+      ctx.moveTo(width * 0.15, bottomBase - 30 + eventDateOffsetY);
+      ctx.lineTo(width * 0.85, bottomBase - 30 + eventDateOffsetY);
       ctx.stroke();
 
       // Event Date & Venue Info
-      ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
 
       if (eventDate.trim()) {
-        ctx.font = '800 24px "Outfit", sans-serif';
+        const textToRender = eventDateUpper ? eventDate.trim().toUpperCase() : eventDate.trim();
+        ctx.font = `800 ${eventDateSize}px "Outfit", sans-serif`;
+        if (ctx.letterSpacing !== undefined) {
+          ctx.letterSpacing = `${eventDateTracking}px`;
+        }
+        let dateX = width / 2 + eventDateOffsetX;
+        if (eventDateAlign === 'left') dateX = width * 0.12 + eventDateOffsetX;
+        if (eventDateAlign === 'right') dateX = width * 0.88 + eventDateOffsetX;
+
+        ctx.textAlign = eventDateAlign;
         ctx.fillStyle = textColor;
-        ctx.fillText(eventDate.toUpperCase(), width / 2, bottomBase + 10);
+        ctx.fillText(textToRender, dateX, bottomBase + 10 + eventDateOffsetY);
       }
 
       if (eventVenue.trim()) {
-        ctx.font = '500 17px "Outfit", sans-serif';
+        const textToRender = eventVenueUpper ? eventVenue.trim().toUpperCase() : eventVenue.trim();
+        ctx.font = `500 ${eventVenueSize}px "Outfit", sans-serif`;
+        if (ctx.letterSpacing !== undefined) {
+          ctx.letterSpacing = `${eventVenueTracking}px`;
+        }
+        let venueX = width / 2 + eventVenueOffsetX;
+        if (eventVenueAlign === 'left') venueX = width * 0.12 + eventVenueOffsetX;
+        if (eventVenueAlign === 'right') venueX = width * 0.88 + eventVenueOffsetX;
+
+        ctx.textAlign = eventVenueAlign;
         ctx.fillStyle = hexToRgba(textColor, 0.75);
-        ctx.fillText(eventVenue.toUpperCase(), width / 2, bottomBase + 45);
+        ctx.fillText(textToRender, venueX, bottomBase + 45 + eventVenueOffsetY);
       }
 
       // Booking Pill
       ctx.font = '700 13px "Outfit", sans-serif';
+      if (ctx.letterSpacing !== undefined) {
+        ctx.letterSpacing = '0.5px';
+      }
+      ctx.textAlign = 'center';
       ctx.fillStyle = techColor;
-      ctx.fillText('BOOKING DIRECTO • WA +52 1 444 357 0777', width / 2, bottomBase + 78);
+      ctx.fillText('BOOKING DIRECTO • WA +52 1 444 357 0777', width / 2, bottomBase + 78 + eventVenueOffsetY);
 
       ctx.restore();
 
@@ -792,10 +985,40 @@ export default function StoryCreator({ onBack }) {
       photoFilter,
       imageLoaded,
       repeatedText,
+      repeatedTextSize,
+      repeatedTextPosX,
+      repeatedTextPosY,
+      repeatedTextSpacing,
+      repeatedTextTracking,
+      repeatedTextUpper,
       mainTitle,
+      mainTitleSize,
+      mainTitleOffsetY,
+      mainTitleOffsetX,
+      mainTitleTracking,
+      mainTitleAlign,
+      mainTitleUpper,
       subTitle,
+      subTitleSize,
+      subTitleOffsetY,
+      subTitleOffsetX,
+      subTitleTracking,
+      subTitleAlign,
+      subTitleUpper,
       eventDate,
+      eventDateSize,
+      eventDateOffsetY,
+      eventDateOffsetX,
+      eventDateTracking,
+      eventDateAlign,
+      eventDateUpper,
       eventVenue,
+      eventVenueSize,
+      eventVenueOffsetY,
+      eventVenueOffsetX,
+      eventVenueTracking,
+      eventVenueAlign,
+      eventVenueUpper,
       frameColor,
       titleColor,
       titleFxColor,
@@ -1668,183 +1891,1150 @@ export default function StoryCreator({ onBack }) {
             {/* STEP 3: Typography & Text details */}
             {activeStep === 3 && (
               <div>
-                <h3
-                  className="font-display"
-                  style={{ fontSize: '1.25rem', marginBottom: '8px', color: '#fff' }}
-                >
-                  {cT.textTitle}
-                </h3>
-                <p
-                  style={{
-                    color: 'var(--text-muted)',
-                    fontSize: '0.88rem',
-                    marginBottom: '20px'
-                  }}
-                >
-                  Modifica los textos que aparecerán en el flyer y en la columna de contorno lateral.
-                </p>
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
+                  <div>
+                    <h3
+                      className="font-display"
+                      style={{ fontSize: '1.25rem', marginBottom: '4px', color: '#fff' }}
+                    >
+                      {cT.textTitle}
+                    </h3>
+                    <p
+                      style={{
+                        color: 'var(--text-muted)',
+                        fontSize: '0.84rem',
+                        margin: 0
+                      }}
+                    >
+                      {cT.textSubtitle || 'Modifica textos, tamaños, posiciones y espaciados para lograr una composición perfecta.'}
+                    </p>
+                  </div>
 
-                {/* Repeated Text */}
-                <div style={{ marginBottom: '16px' }}>
-                  <label
+                  <button
+                    onClick={handleResetAllTypography}
                     style={{
-                      fontSize: '0.82rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '6px 12px',
+                      background: 'rgba(255, 255, 255, 0.04)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      borderRadius: '8px',
+                      color: 'var(--text-muted)',
+                      fontSize: '0.74rem',
                       fontWeight: 600,
-                      color: '#fff',
-                      display: 'block',
-                      marginBottom: '6px'
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease'
                     }}
+                    title="Restablecer todos los tamaños y posiciones"
                   >
-                    {cT.textRepeatLabel}
-                  </label>
-                  <input
-                    type="text"
-                    value={repeatedText}
-                    maxLength={15}
-                    onChange={(e) => setRepeatedText(e.target.value)}
-                    placeholder={cT.textRepeatPlaceholder}
-                    style={{
-                      width: '100%',
-                      padding: '12px 14px',
-                      background: 'rgba(0, 0, 0, 0.4)',
-                      border: '1px solid rgba(255, 255, 255, 0.12)',
-                      borderRadius: '10px',
-                      color: '#fff',
-                      fontSize: '0.9rem',
-                      outline: 'none'
-                    }}
-                  />
-                  <span style={{ fontSize: '0.74rem', color: 'var(--text-dim)', marginTop: '4px', display: 'block' }}>
-                    {cT.textRepeatHelp}
-                  </span>
+                    <RotateCcw size={13} />
+                    <span>{cT.textResetDefaults}</span>
+                  </button>
                 </div>
 
-                {/* Main Title */}
-                <div style={{ marginBottom: '16px' }}>
-                  <label
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                  {/* 1. Repeated Lateral Outline Text */}
+                  <div
                     style={{
-                      fontSize: '0.82rem',
-                      fontWeight: 600,
-                      color: '#fff',
-                      display: 'block',
-                      marginBottom: '6px'
+                      background: 'rgba(255, 255, 255, 0.02)',
+                      border: expandedTextSection === 'repeat' ? `1px solid ${hexToRgba(frameColor, 0.35)}` : '1px solid rgba(255, 255, 255, 0.08)',
+                      borderRadius: '14px',
+                      padding: '14px 16px',
+                      transition: 'all 0.2s ease'
                     }}
                   >
-                    {cT.mainTitleLabel}
-                  </label>
-                  <input
-                    type="text"
-                    value={mainTitle}
-                    maxLength={20}
-                    onChange={(e) => setMainTitle(e.target.value)}
-                    placeholder={cT.mainTitlePlaceholder}
-                    style={{
-                      width: '100%',
-                      padding: '12px 14px',
-                      background: 'rgba(0, 0, 0, 0.4)',
-                      border: '1px solid rgba(255, 255, 255, 0.12)',
-                      borderRadius: '10px',
-                      color: '#fff',
-                      fontSize: '0.9rem',
-                      outline: 'none'
-                    }}
-                  />
-                </div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontSize: '0.84rem', fontWeight: 700, color: '#fff' }}>
+                          {cT.textRepeatLabel}
+                        </span>
+                        <span
+                          style={{
+                            fontSize: '0.72rem',
+                            color: repeatTextColor,
+                            background: hexToRgba(repeatTextColor, 0.12),
+                            padding: '2px 8px',
+                            borderRadius: '6px',
+                            fontWeight: 700,
+                            fontFamily: 'monospace'
+                          }}
+                        >
+                          {repeatedTextSize}px • {repeatedTextSpacing}px
+                        </span>
+                      </div>
 
-                {/* Subtitle / Genre */}
-                <div style={{ marginBottom: '16px' }}>
-                  <label
-                    style={{
-                      fontSize: '0.82rem',
-                      fontWeight: 600,
-                      color: '#fff',
-                      display: 'block',
-                      marginBottom: '6px'
-                    }}
-                  >
-                    {cT.genreLabel}
-                  </label>
-                  <input
-                    type="text"
-                    value={subTitle}
-                    maxLength={25}
-                    onChange={(e) => setSubTitle(e.target.value)}
-                    placeholder={cT.genrePlaceholder}
-                    style={{
-                      width: '100%',
-                      padding: '12px 14px',
-                      background: 'rgba(0, 0, 0, 0.4)',
-                      border: '1px solid rgba(255, 255, 255, 0.12)',
-                      borderRadius: '10px',
-                      color: '#fff',
-                      fontSize: '0.9rem',
-                      outline: 'none'
-                    }}
-                  />
-                </div>
+                      <button
+                        onClick={() => toggleTextSection('repeat')}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          padding: '5px 10px',
+                          borderRadius: '8px',
+                          border: expandedTextSection === 'repeat' ? `1px solid ${frameColor}` : '1px solid rgba(255, 255, 255, 0.1)',
+                          background: expandedTextSection === 'repeat' ? hexToRgba(frameColor, 0.2) : 'rgba(255, 255, 255, 0.04)',
+                          color: expandedTextSection === 'repeat' ? '#fff' : 'var(--text-muted)',
+                          fontSize: '0.74rem',
+                          fontWeight: 600,
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <Sliders size={13} />
+                        <span>{expandedTextSection === 'repeat' ? 'Ocultar' : cT.textAdvancedToggle}</span>
+                        <ChevronDown size={13} style={{ transform: expandedTextSection === 'repeat' ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+                      </button>
+                    </div>
 
-                {/* Date / Line 1 */}
-                <div style={{ marginBottom: '16px' }}>
-                  <label
-                    style={{
-                      fontSize: '0.82rem',
-                      fontWeight: 600,
-                      color: '#fff',
-                      display: 'block',
-                      marginBottom: '6px'
-                    }}
-                  >
-                    {cT.dateLabel}
-                  </label>
-                  <input
-                    type="text"
-                    value={eventDate}
-                    maxLength={30}
-                    onChange={(e) => setEventDate(e.target.value)}
-                    placeholder={cT.datePlaceholder}
-                    style={{
-                      width: '100%',
-                      padding: '12px 14px',
-                      background: 'rgba(0, 0, 0, 0.4)',
-                      border: '1px solid rgba(255, 255, 255, 0.12)',
-                      borderRadius: '10px',
-                      color: '#fff',
-                      fontSize: '0.9rem',
-                      outline: 'none'
-                    }}
-                  />
-                </div>
+                    <input
+                      type="text"
+                      value={repeatedText}
+                      maxLength={15}
+                      onChange={(e) => setRepeatedText(e.target.value)}
+                      placeholder={cT.textRepeatPlaceholder}
+                      style={{
+                        width: '100%',
+                        padding: '10px 14px',
+                        background: 'rgba(0, 0, 0, 0.4)',
+                        border: '1px solid rgba(255, 255, 255, 0.12)',
+                        borderRadius: '10px',
+                        color: '#fff',
+                        fontSize: '0.9rem',
+                        outline: 'none'
+                      }}
+                    />
+                    <span style={{ fontSize: '0.72rem', color: 'var(--text-dim)', marginTop: '4px', display: 'block' }}>
+                      {cT.textRepeatHelp}
+                    </span>
 
-                {/* Venue / City */}
-                <div style={{ marginBottom: '20px' }}>
-                  <label
+                    {/* Expandable Controls for Repeated Text */}
+                    {expandedTextSection === 'repeat' && (
+                      <div
+                        style={{
+                          marginTop: '14px',
+                          padding: '14px',
+                          background: 'rgba(0, 0, 0, 0.35)',
+                          borderRadius: '10px',
+                          border: '1px solid rgba(255, 255, 255, 0.05)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '12px'
+                        }}
+                      >
+                        {/* Size */}
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                            <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>{cT.fontSizeLabel}:</span>
+                            <span style={{ fontSize: '0.76rem', color: '#fff', fontFamily: 'monospace', fontWeight: 700 }}>{repeatedTextSize} px</span>
+                          </div>
+                          <input
+                            type="range"
+                            min="40"
+                            max="140"
+                            step="1"
+                            value={repeatedTextSize}
+                            onChange={(e) => setRepeatedTextSize(parseInt(e.target.value, 10))}
+                            style={{ width: '100%', accentColor: frameColor, cursor: 'pointer' }}
+                          />
+                        </div>
+
+                        {/* Spacing between repeats */}
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                            <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>{cT.cascadeSpacingLabel}:</span>
+                            <span style={{ fontSize: '0.76rem', color: '#fff', fontFamily: 'monospace', fontWeight: 700 }}>{repeatedTextSpacing} px</span>
+                          </div>
+                          <input
+                            type="range"
+                            min="50"
+                            max="180"
+                            step="2"
+                            value={repeatedTextSpacing}
+                            onChange={(e) => setRepeatedTextSpacing(parseInt(e.target.value, 10))}
+                            style={{ width: '100%', accentColor: frameColor, cursor: 'pointer' }}
+                          />
+                        </div>
+
+                        {/* Position X */}
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                            <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>{cT.cascadePosXLabel}:</span>
+                            <span style={{ fontSize: '0.76rem', color: '#fff', fontFamily: 'monospace', fontWeight: 700 }}>{repeatedTextPosX} px</span>
+                          </div>
+                          <input
+                            type="range"
+                            min="0"
+                            max="350"
+                            step="5"
+                            value={repeatedTextPosX}
+                            onChange={(e) => setRepeatedTextPosX(parseInt(e.target.value, 10))}
+                            style={{ width: '100%', accentColor: frameColor, cursor: 'pointer' }}
+                          />
+                        </div>
+
+                        {/* Position Y */}
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                            <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>{cT.cascadePosYLabel}:</span>
+                            <span style={{ fontSize: '0.76rem', color: '#fff', fontFamily: 'monospace', fontWeight: 700 }}>{repeatedTextPosY > 0 ? `+${repeatedTextPosY}` : repeatedTextPosY} px</span>
+                          </div>
+                          <input
+                            type="range"
+                            min="-200"
+                            max="200"
+                            step="5"
+                            value={repeatedTextPosY}
+                            onChange={(e) => setRepeatedTextPosY(parseInt(e.target.value, 10))}
+                            style={{ width: '100%', accentColor: frameColor, cursor: 'pointer' }}
+                          />
+                        </div>
+
+                        {/* Tracking / Letter Spacing */}
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                            <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>{cT.letterSpacingLabel}:</span>
+                            <span style={{ fontSize: '0.76rem', color: '#fff', fontFamily: 'monospace', fontWeight: 700 }}>{repeatedTextTracking} px</span>
+                          </div>
+                          <input
+                            type="range"
+                            min="0"
+                            max="20"
+                            step="1"
+                            value={repeatedTextTracking}
+                            onChange={(e) => setRepeatedTextTracking(parseInt(e.target.value, 10))}
+                            style={{ width: '100%', accentColor: frameColor, cursor: 'pointer' }}
+                          />
+                        </div>
+
+                        {/* Toggle Uppercase & Reset */}
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '6px', borderTop: '1px solid rgba(255, 255, 255, 0.06)' }}>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.76rem', color: 'var(--text-muted)' }}>
+                            <input
+                              type="checkbox"
+                              checked={repeatedTextUpper}
+                              onChange={(e) => setRepeatedTextUpper(e.target.checked)}
+                              style={{ accentColor: frameColor, cursor: 'pointer' }}
+                            />
+                            <span>{cT.uppercaseLabel}</span>
+                          </label>
+
+                          <button
+                            onClick={() => handleResetText('repeat')}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '5px',
+                              background: 'none',
+                              border: 'none',
+                              color: 'var(--text-dim)',
+                              fontSize: '0.72rem',
+                              cursor: 'pointer',
+                              padding: '2px 6px'
+                            }}
+                          >
+                            <RotateCcw size={11} />
+                            <span>{cT.textResetThis}</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 2. Main Title */}
+                  <div
                     style={{
-                      fontSize: '0.82rem',
-                      fontWeight: 600,
-                      color: '#fff',
-                      display: 'block',
-                      marginBottom: '6px'
+                      background: 'rgba(255, 255, 255, 0.02)',
+                      border: expandedTextSection === 'title' ? `1px solid ${hexToRgba(frameColor, 0.35)}` : '1px solid rgba(255, 255, 255, 0.08)',
+                      borderRadius: '14px',
+                      padding: '14px 16px',
+                      transition: 'all 0.2s ease'
                     }}
                   >
-                    {cT.venueLabel}
-                  </label>
-                  <input
-                    type="text"
-                    value={eventVenue}
-                    maxLength={35}
-                    onChange={(e) => setEventVenue(e.target.value)}
-                    placeholder={cT.venuePlaceholder}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontSize: '0.84rem', fontWeight: 700, color: '#fff' }}>
+                          {cT.mainTitleLabel}
+                        </span>
+                        <span
+                          style={{
+                            fontSize: '0.72rem',
+                            color: titleColor,
+                            background: hexToRgba(titleColor, 0.12),
+                            padding: '2px 8px',
+                            borderRadius: '6px',
+                            fontWeight: 700,
+                            fontFamily: 'monospace'
+                          }}
+                        >
+                          {mainTitleSize}px • {mainTitleAlign.toUpperCase()}
+                        </span>
+                      </div>
+
+                      <button
+                        onClick={() => toggleTextSection('title')}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          padding: '5px 10px',
+                          borderRadius: '8px',
+                          border: expandedTextSection === 'title' ? `1px solid ${frameColor}` : '1px solid rgba(255, 255, 255, 0.1)',
+                          background: expandedTextSection === 'title' ? hexToRgba(frameColor, 0.2) : 'rgba(255, 255, 255, 0.04)',
+                          color: expandedTextSection === 'title' ? '#fff' : 'var(--text-muted)',
+                          fontSize: '0.74rem',
+                          fontWeight: 600,
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <Sliders size={13} />
+                        <span>{expandedTextSection === 'title' ? 'Ocultar' : cT.textAdvancedToggle}</span>
+                        <ChevronDown size={13} style={{ transform: expandedTextSection === 'title' ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+                      </button>
+                    </div>
+
+                    <input
+                      type="text"
+                      value={mainTitle}
+                      maxLength={20}
+                      onChange={(e) => setMainTitle(e.target.value)}
+                      placeholder={cT.mainTitlePlaceholder}
+                      style={{
+                        width: '100%',
+                        padding: '10px 14px',
+                        background: 'rgba(0, 0, 0, 0.4)',
+                        border: '1px solid rgba(255, 255, 255, 0.12)',
+                        borderRadius: '10px',
+                        color: '#fff',
+                        fontSize: '0.9rem',
+                        outline: 'none'
+                      }}
+                    />
+
+                    {/* Expandable Controls for Main Title */}
+                    {expandedTextSection === 'title' && (
+                      <div
+                        style={{
+                          marginTop: '14px',
+                          padding: '14px',
+                          background: 'rgba(0, 0, 0, 0.35)',
+                          borderRadius: '10px',
+                          border: '1px solid rgba(255, 255, 255, 0.05)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '12px'
+                        }}
+                      >
+                        {/* Size */}
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                            <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>{cT.fontSizeLabel}:</span>
+                            <span style={{ fontSize: '0.76rem', color: '#fff', fontFamily: 'monospace', fontWeight: 700 }}>{mainTitleSize} px</span>
+                          </div>
+                          <input
+                            type="range"
+                            min="50"
+                            max="170"
+                            step="1"
+                            value={mainTitleSize}
+                            onChange={(e) => setMainTitleSize(parseInt(e.target.value, 10))}
+                            style={{ width: '100%', accentColor: frameColor, cursor: 'pointer' }}
+                          />
+                        </div>
+
+                        {/* Position Y */}
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                            <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>{cT.positionYLabel} (Subir / Bajar):</span>
+                            <span style={{ fontSize: '0.76rem', color: '#fff', fontFamily: 'monospace', fontWeight: 700 }}>{mainTitleOffsetY > 0 ? `+${mainTitleOffsetY}` : mainTitleOffsetY} px</span>
+                          </div>
+                          <input
+                            type="range"
+                            min="-250"
+                            max="250"
+                            step="5"
+                            value={mainTitleOffsetY}
+                            onChange={(e) => setMainTitleOffsetY(parseInt(e.target.value, 10))}
+                            style={{ width: '100%', accentColor: frameColor, cursor: 'pointer' }}
+                          />
+                        </div>
+
+                        {/* Position X */}
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                            <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>{cT.positionXLabel} (Izquierda / Derecha):</span>
+                            <span style={{ fontSize: '0.76rem', color: '#fff', fontFamily: 'monospace', fontWeight: 700 }}>{mainTitleOffsetX > 0 ? `+${mainTitleOffsetX}` : mainTitleOffsetX} px</span>
+                          </div>
+                          <input
+                            type="range"
+                            min="-300"
+                            max="300"
+                            step="5"
+                            value={mainTitleOffsetX}
+                            onChange={(e) => setMainTitleOffsetX(parseInt(e.target.value, 10))}
+                            style={{ width: '100%', accentColor: frameColor, cursor: 'pointer' }}
+                          />
+                        </div>
+
+                        {/* Tracking */}
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                            <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>{cT.letterSpacingLabel}:</span>
+                            <span style={{ fontSize: '0.76rem', color: '#fff', fontFamily: 'monospace', fontWeight: 700 }}>{mainTitleTracking} px</span>
+                          </div>
+                          <input
+                            type="range"
+                            min="0"
+                            max="25"
+                            step="1"
+                            value={mainTitleTracking}
+                            onChange={(e) => setMainTitleTracking(parseInt(e.target.value, 10))}
+                            style={{ width: '100%', accentColor: frameColor, cursor: 'pointer' }}
+                          />
+                        </div>
+
+                        {/* Alignment */}
+                        <div>
+                          <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>{cT.alignLabel}:</span>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px' }}>
+                            {[
+                              { id: 'left', label: cT.alignLeft, icon: AlignLeft },
+                              { id: 'center', label: cT.alignCenter, icon: AlignCenter },
+                              { id: 'right', label: cT.alignRight, icon: AlignRight }
+                            ].map((al) => {
+                              const Icon = al.icon;
+                              const isActive = mainTitleAlign === al.id;
+                              return (
+                                <button
+                                  key={al.id}
+                                  onClick={() => setMainTitleAlign(al.id)}
+                                  style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '5px',
+                                    padding: '6px 10px',
+                                    borderRadius: '8px',
+                                    border: isActive ? `1px solid ${frameColor}` : '1px solid rgba(255, 255, 255, 0.08)',
+                                    background: isActive ? hexToRgba(frameColor, 0.2) : 'rgba(255, 255, 255, 0.04)',
+                                    color: isActive ? '#fff' : 'var(--text-muted)',
+                                    fontSize: '0.74rem',
+                                    fontWeight: 600,
+                                    cursor: 'pointer'
+                                  }}
+                                >
+                                  <Icon size={12} />
+                                  <span>{al.label}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Toggle Uppercase & Reset */}
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '6px', borderTop: '1px solid rgba(255, 255, 255, 0.06)' }}>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.76rem', color: 'var(--text-muted)' }}>
+                            <input
+                              type="checkbox"
+                              checked={mainTitleUpper}
+                              onChange={(e) => setMainTitleUpper(e.target.checked)}
+                              style={{ accentColor: frameColor, cursor: 'pointer' }}
+                            />
+                            <span>{cT.uppercaseLabel}</span>
+                          </label>
+
+                          <button
+                            onClick={() => handleResetText('title')}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '5px',
+                              background: 'none',
+                              border: 'none',
+                              color: 'var(--text-dim)',
+                              fontSize: '0.72rem',
+                              cursor: 'pointer',
+                              padding: '2px 6px'
+                            }}
+                          >
+                            <RotateCcw size={11} />
+                            <span>{cT.textResetThis}</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 3. Subtitle / Genre */}
+                  <div
                     style={{
-                      width: '100%',
-                      padding: '12px 14px',
-                      background: 'rgba(0, 0, 0, 0.4)',
-                      border: '1px solid rgba(255, 255, 255, 0.12)',
-                      borderRadius: '10px',
-                      color: '#fff',
-                      fontSize: '0.9rem',
-                      outline: 'none'
+                      background: 'rgba(255, 255, 255, 0.02)',
+                      border: expandedTextSection === 'subTitle' ? `1px solid ${hexToRgba(frameColor, 0.35)}` : '1px solid rgba(255, 255, 255, 0.08)',
+                      borderRadius: '14px',
+                      padding: '14px 16px',
+                      transition: 'all 0.2s ease'
                     }}
-                  />
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontSize: '0.84rem', fontWeight: 700, color: '#fff' }}>
+                          {cT.genreLabel}
+                        </span>
+                        <span
+                          style={{
+                            fontSize: '0.72rem',
+                            color: badgeColor,
+                            background: hexToRgba(badgeColor, 0.12),
+                            padding: '2px 8px',
+                            borderRadius: '6px',
+                            fontWeight: 700,
+                            fontFamily: 'monospace'
+                          }}
+                        >
+                          {subTitleSize}px • {subTitleAlign.toUpperCase()}
+                        </span>
+                      </div>
+
+                      <button
+                        onClick={() => toggleTextSection('subTitle')}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          padding: '5px 10px',
+                          borderRadius: '8px',
+                          border: expandedTextSection === 'subTitle' ? `1px solid ${frameColor}` : '1px solid rgba(255, 255, 255, 0.1)',
+                          background: expandedTextSection === 'subTitle' ? hexToRgba(frameColor, 0.2) : 'rgba(255, 255, 255, 0.04)',
+                          color: expandedTextSection === 'subTitle' ? '#fff' : 'var(--text-muted)',
+                          fontSize: '0.74rem',
+                          fontWeight: 600,
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <Sliders size={13} />
+                        <span>{expandedTextSection === 'subTitle' ? 'Ocultar' : cT.textAdvancedToggle}</span>
+                        <ChevronDown size={13} style={{ transform: expandedTextSection === 'subTitle' ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+                      </button>
+                    </div>
+
+                    <input
+                      type="text"
+                      value={subTitle}
+                      maxLength={25}
+                      onChange={(e) => setSubTitle(e.target.value)}
+                      placeholder={cT.genrePlaceholder}
+                      style={{
+                        width: '100%',
+                        padding: '10px 14px',
+                        background: 'rgba(0, 0, 0, 0.4)',
+                        border: '1px solid rgba(255, 255, 255, 0.12)',
+                        borderRadius: '10px',
+                        color: '#fff',
+                        fontSize: '0.9rem',
+                        outline: 'none'
+                      }}
+                    />
+
+                    {/* Expandable Controls for Subtitle */}
+                    {expandedTextSection === 'subTitle' && (
+                      <div
+                        style={{
+                          marginTop: '14px',
+                          padding: '14px',
+                          background: 'rgba(0, 0, 0, 0.35)',
+                          borderRadius: '10px',
+                          border: '1px solid rgba(255, 255, 255, 0.05)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '12px'
+                        }}
+                      >
+                        {/* Size */}
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                            <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>{cT.fontSizeLabel}:</span>
+                            <span style={{ fontSize: '0.76rem', color: '#fff', fontFamily: 'monospace', fontWeight: 700 }}>{subTitleSize} px</span>
+                          </div>
+                          <input
+                            type="range"
+                            min="12"
+                            max="36"
+                            step="1"
+                            value={subTitleSize}
+                            onChange={(e) => setSubTitleSize(parseInt(e.target.value, 10))}
+                            style={{ width: '100%', accentColor: frameColor, cursor: 'pointer' }}
+                          />
+                        </div>
+
+                        {/* Position Y */}
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                            <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>{cT.positionYLabel} (Subir / Bajar):</span>
+                            <span style={{ fontSize: '0.76rem', color: '#fff', fontFamily: 'monospace', fontWeight: 700 }}>{subTitleOffsetY > 0 ? `+${subTitleOffsetY}` : subTitleOffsetY} px</span>
+                          </div>
+                          <input
+                            type="range"
+                            min="-200"
+                            max="200"
+                            step="5"
+                            value={subTitleOffsetY}
+                            onChange={(e) => setSubTitleOffsetY(parseInt(e.target.value, 10))}
+                            style={{ width: '100%', accentColor: frameColor, cursor: 'pointer' }}
+                          />
+                        </div>
+
+                        {/* Position X */}
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                            <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>{cT.positionXLabel} (Izquierda / Derecha):</span>
+                            <span style={{ fontSize: '0.76rem', color: '#fff', fontFamily: 'monospace', fontWeight: 700 }}>{subTitleOffsetX > 0 ? `+${subTitleOffsetX}` : subTitleOffsetX} px</span>
+                          </div>
+                          <input
+                            type="range"
+                            min="-300"
+                            max="300"
+                            step="5"
+                            value={subTitleOffsetX}
+                            onChange={(e) => setSubTitleOffsetX(parseInt(e.target.value, 10))}
+                            style={{ width: '100%', accentColor: frameColor, cursor: 'pointer' }}
+                          />
+                        </div>
+
+                        {/* Tracking */}
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                            <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>{cT.letterSpacingLabel}:</span>
+                            <span style={{ fontSize: '0.76rem', color: '#fff', fontFamily: 'monospace', fontWeight: 700 }}>{subTitleTracking} px</span>
+                          </div>
+                          <input
+                            type="range"
+                            min="0"
+                            max="15"
+                            step="1"
+                            value={subTitleTracking}
+                            onChange={(e) => setSubTitleTracking(parseInt(e.target.value, 10))}
+                            style={{ width: '100%', accentColor: frameColor, cursor: 'pointer' }}
+                          />
+                        </div>
+
+                        {/* Alignment */}
+                        <div>
+                          <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>{cT.alignLabel}:</span>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px' }}>
+                            {[
+                              { id: 'left', label: cT.alignLeft, icon: AlignLeft },
+                              { id: 'center', label: cT.alignCenter, icon: AlignCenter },
+                              { id: 'right', label: cT.alignRight, icon: AlignRight }
+                            ].map((al) => {
+                              const Icon = al.icon;
+                              const isActive = subTitleAlign === al.id;
+                              return (
+                                <button
+                                  key={al.id}
+                                  onClick={() => setSubTitleAlign(al.id)}
+                                  style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '5px',
+                                    padding: '6px 10px',
+                                    borderRadius: '8px',
+                                    border: isActive ? `1px solid ${frameColor}` : '1px solid rgba(255, 255, 255, 0.08)',
+                                    background: isActive ? hexToRgba(frameColor, 0.2) : 'rgba(255, 255, 255, 0.04)',
+                                    color: isActive ? '#fff' : 'var(--text-muted)',
+                                    fontSize: '0.74rem',
+                                    fontWeight: 600,
+                                    cursor: 'pointer'
+                                  }}
+                                >
+                                  <Icon size={12} />
+                                  <span>{al.label}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Toggle Uppercase & Reset */}
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '6px', borderTop: '1px solid rgba(255, 255, 255, 0.06)' }}>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.76rem', color: 'var(--text-muted)' }}>
+                            <input
+                              type="checkbox"
+                              checked={subTitleUpper}
+                              onChange={(e) => setSubTitleUpper(e.target.checked)}
+                              style={{ accentColor: frameColor, cursor: 'pointer' }}
+                            />
+                            <span>{cT.uppercaseLabel}</span>
+                          </label>
+
+                          <button
+                            onClick={() => handleResetText('subTitle')}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '5px',
+                              background: 'none',
+                              border: 'none',
+                              color: 'var(--text-dim)',
+                              fontSize: '0.72rem',
+                              cursor: 'pointer',
+                              padding: '2px 6px'
+                            }}
+                          >
+                            <RotateCcw size={11} />
+                            <span>{cT.textResetThis}</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 4. Date / Tagline */}
+                  <div
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.02)',
+                      border: expandedTextSection === 'eventDate' ? `1px solid ${hexToRgba(frameColor, 0.35)}` : '1px solid rgba(255, 255, 255, 0.08)',
+                      borderRadius: '14px',
+                      padding: '14px 16px',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontSize: '0.84rem', fontWeight: 700, color: '#fff' }}>
+                          {cT.dateLabel}
+                        </span>
+                        <span
+                          style={{
+                            fontSize: '0.72rem',
+                            color: textColor,
+                            background: 'rgba(255, 255, 255, 0.08)',
+                            padding: '2px 8px',
+                            borderRadius: '6px',
+                            fontWeight: 700,
+                            fontFamily: 'monospace'
+                          }}
+                        >
+                          {eventDateSize}px • {eventDateAlign.toUpperCase()}
+                        </span>
+                      </div>
+
+                      <button
+                        onClick={() => toggleTextSection('eventDate')}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          padding: '5px 10px',
+                          borderRadius: '8px',
+                          border: expandedTextSection === 'eventDate' ? `1px solid ${frameColor}` : '1px solid rgba(255, 255, 255, 0.1)',
+                          background: expandedTextSection === 'eventDate' ? hexToRgba(frameColor, 0.2) : 'rgba(255, 255, 255, 0.04)',
+                          color: expandedTextSection === 'eventDate' ? '#fff' : 'var(--text-muted)',
+                          fontSize: '0.74rem',
+                          fontWeight: 600,
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <Sliders size={13} />
+                        <span>{expandedTextSection === 'eventDate' ? 'Ocultar' : cT.textAdvancedToggle}</span>
+                        <ChevronDown size={13} style={{ transform: expandedTextSection === 'eventDate' ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+                      </button>
+                    </div>
+
+                    <input
+                      type="text"
+                      value={eventDate}
+                      maxLength={30}
+                      onChange={(e) => setEventDate(e.target.value)}
+                      placeholder={cT.datePlaceholder}
+                      style={{
+                        width: '100%',
+                        padding: '10px 14px',
+                        background: 'rgba(0, 0, 0, 0.4)',
+                        border: '1px solid rgba(255, 255, 255, 0.12)',
+                        borderRadius: '10px',
+                        color: '#fff',
+                        fontSize: '0.9rem',
+                        outline: 'none'
+                      }}
+                    />
+
+                    {/* Expandable Controls for Event Date */}
+                    {expandedTextSection === 'eventDate' && (
+                      <div
+                        style={{
+                          marginTop: '14px',
+                          padding: '14px',
+                          background: 'rgba(0, 0, 0, 0.35)',
+                          borderRadius: '10px',
+                          border: '1px solid rgba(255, 255, 255, 0.05)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '12px'
+                        }}
+                      >
+                        {/* Size */}
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                            <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>{cT.fontSizeLabel}:</span>
+                            <span style={{ fontSize: '0.76rem', color: '#fff', fontFamily: 'monospace', fontWeight: 700 }}>{eventDateSize} px</span>
+                          </div>
+                          <input
+                            type="range"
+                            min="14"
+                            max="44"
+                            step="1"
+                            value={eventDateSize}
+                            onChange={(e) => setEventDateSize(parseInt(e.target.value, 10))}
+                            style={{ width: '100%', accentColor: frameColor, cursor: 'pointer' }}
+                          />
+                        </div>
+
+                        {/* Position Y */}
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                            <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>{cT.positionYLabel} (Subir / Bajar):</span>
+                            <span style={{ fontSize: '0.76rem', color: '#fff', fontFamily: 'monospace', fontWeight: 700 }}>{eventDateOffsetY > 0 ? `+${eventDateOffsetY}` : eventDateOffsetY} px</span>
+                          </div>
+                          <input
+                            type="range"
+                            min="-150"
+                            max="150"
+                            step="5"
+                            value={eventDateOffsetY}
+                            onChange={(e) => setEventDateOffsetY(parseInt(e.target.value, 10))}
+                            style={{ width: '100%', accentColor: frameColor, cursor: 'pointer' }}
+                          />
+                        </div>
+
+                        {/* Position X */}
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                            <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>{cT.positionXLabel} (Izquierda / Derecha):</span>
+                            <span style={{ fontSize: '0.76rem', color: '#fff', fontFamily: 'monospace', fontWeight: 700 }}>{eventDateOffsetX > 0 ? `+${eventDateOffsetX}` : eventDateOffsetX} px</span>
+                          </div>
+                          <input
+                            type="range"
+                            min="-250"
+                            max="250"
+                            step="5"
+                            value={eventDateOffsetX}
+                            onChange={(e) => setEventDateOffsetX(parseInt(e.target.value, 10))}
+                            style={{ width: '100%', accentColor: frameColor, cursor: 'pointer' }}
+                          />
+                        </div>
+
+                        {/* Tracking */}
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                            <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>{cT.letterSpacingLabel}:</span>
+                            <span style={{ fontSize: '0.76rem', color: '#fff', fontFamily: 'monospace', fontWeight: 700 }}>{eventDateTracking} px</span>
+                          </div>
+                          <input
+                            type="range"
+                            min="0"
+                            max="15"
+                            step="1"
+                            value={eventDateTracking}
+                            onChange={(e) => setEventDateTracking(parseInt(e.target.value, 10))}
+                            style={{ width: '100%', accentColor: frameColor, cursor: 'pointer' }}
+                          />
+                        </div>
+
+                        {/* Alignment */}
+                        <div>
+                          <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>{cT.alignLabel}:</span>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px' }}>
+                            {[
+                              { id: 'left', label: cT.alignLeft, icon: AlignLeft },
+                              { id: 'center', label: cT.alignCenter, icon: AlignCenter },
+                              { id: 'right', label: cT.alignRight, icon: AlignRight }
+                            ].map((al) => {
+                              const Icon = al.icon;
+                              const isActive = eventDateAlign === al.id;
+                              return (
+                                <button
+                                  key={al.id}
+                                  onClick={() => setEventDateAlign(al.id)}
+                                  style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '5px',
+                                    padding: '6px 10px',
+                                    borderRadius: '8px',
+                                    border: isActive ? `1px solid ${frameColor}` : '1px solid rgba(255, 255, 255, 0.08)',
+                                    background: isActive ? hexToRgba(frameColor, 0.2) : 'rgba(255, 255, 255, 0.04)',
+                                    color: isActive ? '#fff' : 'var(--text-muted)',
+                                    fontSize: '0.74rem',
+                                    fontWeight: 600,
+                                    cursor: 'pointer'
+                                  }}
+                                >
+                                  <Icon size={12} />
+                                  <span>{al.label}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Toggle Uppercase & Reset */}
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '6px', borderTop: '1px solid rgba(255, 255, 255, 0.06)' }}>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.76rem', color: 'var(--text-muted)' }}>
+                            <input
+                              type="checkbox"
+                              checked={eventDateUpper}
+                              onChange={(e) => setEventDateUpper(e.target.checked)}
+                              style={{ accentColor: frameColor, cursor: 'pointer' }}
+                            />
+                            <span>{cT.uppercaseLabel}</span>
+                          </label>
+
+                          <button
+                            onClick={() => handleResetText('eventDate')}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '5px',
+                              background: 'none',
+                              border: 'none',
+                              color: 'var(--text-dim)',
+                              fontSize: '0.72rem',
+                              cursor: 'pointer',
+                              padding: '2px 6px'
+                            }}
+                          >
+                            <RotateCcw size={11} />
+                            <span>{cT.textResetThis}</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 5. Venue / City */}
+                  <div
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.02)',
+                      border: expandedTextSection === 'eventVenue' ? `1px solid ${hexToRgba(frameColor, 0.35)}` : '1px solid rgba(255, 255, 255, 0.08)',
+                      borderRadius: '14px',
+                      padding: '14px 16px',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontSize: '0.84rem', fontWeight: 700, color: '#fff' }}>
+                          {cT.venueLabel}
+                        </span>
+                        <span
+                          style={{
+                            fontSize: '0.72rem',
+                            color: 'rgba(255, 255, 255, 0.7)',
+                            background: 'rgba(255, 255, 255, 0.08)',
+                            padding: '2px 8px',
+                            borderRadius: '6px',
+                            fontWeight: 700,
+                            fontFamily: 'monospace'
+                          }}
+                        >
+                          {eventVenueSize}px • {eventVenueAlign.toUpperCase()}
+                        </span>
+                      </div>
+
+                      <button
+                        onClick={() => toggleTextSection('eventVenue')}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          padding: '5px 10px',
+                          borderRadius: '8px',
+                          border: expandedTextSection === 'eventVenue' ? `1px solid ${frameColor}` : '1px solid rgba(255, 255, 255, 0.1)',
+                          background: expandedTextSection === 'eventVenue' ? hexToRgba(frameColor, 0.2) : 'rgba(255, 255, 255, 0.04)',
+                          color: expandedTextSection === 'eventVenue' ? '#fff' : 'var(--text-muted)',
+                          fontSize: '0.74rem',
+                          fontWeight: 600,
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <Sliders size={13} />
+                        <span>{expandedTextSection === 'eventVenue' ? 'Ocultar' : cT.textAdvancedToggle}</span>
+                        <ChevronDown size={13} style={{ transform: expandedTextSection === 'eventVenue' ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+                      </button>
+                    </div>
+
+                    <input
+                      type="text"
+                      value={eventVenue}
+                      maxLength={35}
+                      onChange={(e) => setEventVenue(e.target.value)}
+                      placeholder={cT.venuePlaceholder}
+                      style={{
+                        width: '100%',
+                        padding: '10px 14px',
+                        background: 'rgba(0, 0, 0, 0.4)',
+                        border: '1px solid rgba(255, 255, 255, 0.12)',
+                        borderRadius: '10px',
+                        color: '#fff',
+                        fontSize: '0.9rem',
+                        outline: 'none'
+                      }}
+                    />
+
+                    {/* Expandable Controls for Event Venue */}
+                    {expandedTextSection === 'eventVenue' && (
+                      <div
+                        style={{
+                          marginTop: '14px',
+                          padding: '14px',
+                          background: 'rgba(0, 0, 0, 0.35)',
+                          borderRadius: '10px',
+                          border: '1px solid rgba(255, 255, 255, 0.05)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '12px'
+                        }}
+                      >
+                        {/* Size */}
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                            <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>{cT.fontSizeLabel}:</span>
+                            <span style={{ fontSize: '0.76rem', color: '#fff', fontFamily: 'monospace', fontWeight: 700 }}>{eventVenueSize} px</span>
+                          </div>
+                          <input
+                            type="range"
+                            min="12"
+                            max="32"
+                            step="1"
+                            value={eventVenueSize}
+                            onChange={(e) => setEventVenueSize(parseInt(e.target.value, 10))}
+                            style={{ width: '100%', accentColor: frameColor, cursor: 'pointer' }}
+                          />
+                        </div>
+
+                        {/* Position Y */}
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                            <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>{cT.positionYLabel} (Subir / Bajar):</span>
+                            <span style={{ fontSize: '0.76rem', color: '#fff', fontFamily: 'monospace', fontWeight: 700 }}>{eventVenueOffsetY > 0 ? `+${eventVenueOffsetY}` : eventVenueOffsetY} px</span>
+                          </div>
+                          <input
+                            type="range"
+                            min="-150"
+                            max="150"
+                            step="5"
+                            value={eventVenueOffsetY}
+                            onChange={(e) => setEventVenueOffsetY(parseInt(e.target.value, 10))}
+                            style={{ width: '100%', accentColor: frameColor, cursor: 'pointer' }}
+                          />
+                        </div>
+
+                        {/* Position X */}
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                            <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>{cT.positionXLabel} (Izquierda / Derecha):</span>
+                            <span style={{ fontSize: '0.76rem', color: '#fff', fontFamily: 'monospace', fontWeight: 700 }}>{eventVenueOffsetX > 0 ? `+${eventVenueOffsetX}` : eventVenueOffsetX} px</span>
+                          </div>
+                          <input
+                            type="range"
+                            min="-250"
+                            max="250"
+                            step="5"
+                            value={eventVenueOffsetX}
+                            onChange={(e) => setEventVenueOffsetX(parseInt(e.target.value, 10))}
+                            style={{ width: '100%', accentColor: frameColor, cursor: 'pointer' }}
+                          />
+                        </div>
+
+                        {/* Tracking */}
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                            <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>{cT.letterSpacingLabel}:</span>
+                            <span style={{ fontSize: '0.76rem', color: '#fff', fontFamily: 'monospace', fontWeight: 700 }}>{eventVenueTracking} px</span>
+                          </div>
+                          <input
+                            type="range"
+                            min="0"
+                            max="15"
+                            step="1"
+                            value={eventVenueTracking}
+                            onChange={(e) => setEventVenueTracking(parseInt(e.target.value, 10))}
+                            style={{ width: '100%', accentColor: frameColor, cursor: 'pointer' }}
+                          />
+                        </div>
+
+                        {/* Alignment */}
+                        <div>
+                          <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>{cT.alignLabel}:</span>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px' }}>
+                            {[
+                              { id: 'left', label: cT.alignLeft, icon: AlignLeft },
+                              { id: 'center', label: cT.alignCenter, icon: AlignCenter },
+                              { id: 'right', label: cT.alignRight, icon: AlignRight }
+                            ].map((al) => {
+                              const Icon = al.icon;
+                              const isActive = eventVenueAlign === al.id;
+                              return (
+                                <button
+                                  key={al.id}
+                                  onClick={() => setEventVenueAlign(al.id)}
+                                  style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '5px',
+                                    padding: '6px 10px',
+                                    borderRadius: '8px',
+                                    border: isActive ? `1px solid ${frameColor}` : '1px solid rgba(255, 255, 255, 0.08)',
+                                    background: isActive ? hexToRgba(frameColor, 0.2) : 'rgba(255, 255, 255, 0.04)',
+                                    color: isActive ? '#fff' : 'var(--text-muted)',
+                                    fontSize: '0.74rem',
+                                    fontWeight: 600,
+                                    cursor: 'pointer'
+                                  }}
+                                >
+                                  <Icon size={12} />
+                                  <span>{al.label}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Toggle Uppercase & Reset */}
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '6px', borderTop: '1px solid rgba(255, 255, 255, 0.06)' }}>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.76rem', color: 'var(--text-muted)' }}>
+                            <input
+                              type="checkbox"
+                              checked={eventVenueUpper}
+                              onChange={(e) => setEventVenueUpper(e.target.checked)}
+                              style={{ accentColor: frameColor, cursor: 'pointer' }}
+                            />
+                            <span>{cT.uppercaseLabel}</span>
+                          </label>
+
+                          <button
+                            onClick={() => handleResetText('eventVenue')}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '5px',
+                              background: 'none',
+                              border: 'none',
+                              color: 'var(--text-dim)',
+                              fontSize: '0.72rem',
+                              cursor: 'pointer',
+                              padding: '2px 6px'
+                            }}
+                          >
+                            <RotateCcw size={11} />
+                            <span>{cT.textResetThis}</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Next / Prev */}
