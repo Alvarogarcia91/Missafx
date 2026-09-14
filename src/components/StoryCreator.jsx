@@ -179,6 +179,15 @@ export default function StoryCreator({ onBack }) {
   const [eventVenueAlign, setEventVenueAlign] = useState('center');
   const [eventVenueUpper, setEventVenueUpper] = useState(true);
 
+  // 6. Booking / Contact Info ("BOOKING DIRECTO • WA +52 1 444 357 0777")
+  const [bookingText, setBookingText] = useState('BOOKING DIRECTO • WA +52 1 444 357 0777');
+  const [bookingTextSize, setBookingTextSize] = useState(13);
+  const [bookingTextOffsetY, setBookingTextOffsetY] = useState(0);
+  const [bookingTextOffsetX, setBookingTextOffsetX] = useState(0);
+  const [bookingTextTracking, setBookingTextTracking] = useState(1);
+  const [bookingTextAlign, setBookingTextAlign] = useState('center');
+  const [bookingTextUpper, setBookingTextUpper] = useState(true);
+
   // Expandable accordion section state (null or element id)
   const [expandedTextSection, setExpandedTextSection] = useState(null);
 
@@ -228,6 +237,14 @@ export default function StoryCreator({ onBack }) {
         setEventVenueAlign('center');
         setEventVenueUpper(true);
         break;
+      case 'booking':
+        setBookingTextSize(13);
+        setBookingTextOffsetY(0);
+        setBookingTextOffsetX(0);
+        setBookingTextTracking(1);
+        setBookingTextAlign('center');
+        setBookingTextUpper(true);
+        break;
       default:
         break;
     }
@@ -268,6 +285,13 @@ export default function StoryCreator({ onBack }) {
     setEventVenueTracking(1);
     setEventVenueAlign('center');
     setEventVenueUpper(true);
+
+    setBookingTextSize(13);
+    setBookingTextOffsetY(0);
+    setBookingTextOffsetX(0);
+    setBookingTextTracking(1);
+    setBookingTextAlign('center');
+    setBookingTextUpper(true);
   };
 
   // Granular Color Customization State
@@ -1147,14 +1171,21 @@ export default function StoryCreator({ onBack }) {
         ctx.fillText(textToRender, venueX, bottomBase + 45 + eventVenueOffsetY);
       }
 
-      // Booking Pill
-      ctx.font = '700 13px "Outfit", sans-serif';
-      if (ctx.letterSpacing !== undefined) {
-        ctx.letterSpacing = '0.5px';
+      // 6. Booking / Contact Info
+      if (bookingText.trim()) {
+        const textToRender = bookingTextUpper ? bookingText.trim().toUpperCase() : bookingText.trim();
+        ctx.font = `700 ${bookingTextSize}px "Outfit", sans-serif`;
+        if (ctx.letterSpacing !== undefined) {
+          ctx.letterSpacing = `${bookingTextTracking}px`;
+        }
+        let bookX = width / 2 + bookingTextOffsetX;
+        if (bookingTextAlign === 'left') bookX = width * 0.12 + bookingTextOffsetX;
+        if (bookingTextAlign === 'right') bookX = width * 0.88 + bookingTextOffsetX;
+
+        ctx.textAlign = bookingTextAlign;
+        ctx.fillStyle = techColor;
+        ctx.fillText(textToRender, bookX, bottomBase + 78 + bookingTextOffsetY);
       }
-      ctx.textAlign = 'center';
-      ctx.fillStyle = techColor;
-      ctx.fillText('BOOKING DIRECTO • WA +52 1 444 357 0777', width / 2, bottomBase + 78 + eventVenueOffsetY);
 
       ctx.restore();
 
@@ -1222,6 +1253,13 @@ export default function StoryCreator({ onBack }) {
       eventVenueTracking,
       eventVenueAlign,
       eventVenueUpper,
+      bookingText,
+      bookingTextSize,
+      bookingTextOffsetY,
+      bookingTextOffsetX,
+      bookingTextTracking,
+      bookingTextAlign,
+      bookingTextUpper,
       frameColor,
       titleColor,
       titleFxColor,
@@ -3220,6 +3258,233 @@ export default function StoryCreator({ onBack }) {
 
                           <button
                             onClick={() => handleResetText('eventVenue')}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '5px',
+                              background: 'none',
+                              border: 'none',
+                              color: 'var(--text-dim)',
+                              fontSize: '0.72rem',
+                              cursor: 'pointer',
+                              padding: '2px 6px'
+                            }}
+                          >
+                            <RotateCcw size={11} />
+                            <span>{cT.textResetThis}</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 6. Booking / Contact Info */}
+                  <div
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.02)',
+                      border: expandedTextSection === 'booking' ? `1px solid ${hexToRgba(frameColor, 0.35)}` : '1px solid rgba(255, 255, 255, 0.08)',
+                      borderRadius: '14px',
+                      padding: '14px 16px',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontSize: '0.84rem', fontWeight: 700, color: '#fff' }}>
+                          {cT.bookingLabel}
+                        </span>
+                        <span
+                          style={{
+                            fontSize: '0.72rem',
+                            color: 'rgba(255, 255, 255, 0.7)',
+                            background: 'rgba(255, 255, 255, 0.08)',
+                            padding: '2px 8px',
+                            borderRadius: '6px',
+                            fontWeight: 700,
+                            fontFamily: 'monospace'
+                          }}
+                        >
+                          {bookingTextSize}px • {bookingTextAlign.toUpperCase()}
+                        </span>
+                      </div>
+
+                      <button
+                        onClick={() => toggleTextSection('booking')}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          padding: '5px 10px',
+                          borderRadius: '8px',
+                          border: expandedTextSection === 'booking' ? `1px solid ${frameColor}` : '1px solid rgba(255, 255, 255, 0.1)',
+                          background: expandedTextSection === 'booking' ? hexToRgba(frameColor, 0.2) : 'rgba(255, 255, 255, 0.04)',
+                          color: expandedTextSection === 'booking' ? '#fff' : 'var(--text-muted)',
+                          fontSize: '0.74rem',
+                          fontWeight: 600,
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <Sliders size={13} />
+                        <span>{expandedTextSection === 'booking' ? 'Ocultar' : cT.textAdvancedToggle}</span>
+                        <ChevronDown size={13} style={{ transform: expandedTextSection === 'booking' ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+                      </button>
+                    </div>
+
+                    <input
+                      type="text"
+                      value={bookingText}
+                      maxLength={60}
+                      onChange={(e) => setBookingText(e.target.value)}
+                      placeholder={cT.bookingPlaceholder}
+                      style={{
+                        width: '100%',
+                        padding: '10px 14px',
+                        background: 'rgba(0, 0, 0, 0.4)',
+                        border: '1px solid rgba(255, 255, 255, 0.12)',
+                        borderRadius: '10px',
+                        color: '#fff',
+                        fontSize: '0.9rem',
+                        outline: 'none'
+                      }}
+                    />
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-dim)', marginTop: '4px', paddingLeft: '2px' }}>
+                      {cT.bookingHelp}
+                    </div>
+
+                    {/* Expandable Controls for Booking Text */}
+                    {expandedTextSection === 'booking' && (
+                      <div
+                        style={{
+                          marginTop: '14px',
+                          padding: '14px',
+                          background: 'rgba(0, 0, 0, 0.35)',
+                          borderRadius: '10px',
+                          border: '1px solid rgba(255, 255, 255, 0.05)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '12px'
+                        }}
+                      >
+                        {/* Size */}
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                            <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>{cT.fontSizeLabel}:</span>
+                            <span style={{ fontSize: '0.76rem', color: '#fff', fontFamily: 'monospace', fontWeight: 700 }}>{bookingTextSize} px</span>
+                          </div>
+                          <input
+                            type="range"
+                            min="8"
+                            max="50"
+                            step="1"
+                            value={bookingTextSize}
+                            onChange={(e) => setBookingTextSize(parseInt(e.target.value, 10))}
+                            style={{ width: '100%', accentColor: frameColor, cursor: 'pointer' }}
+                          />
+                        </div>
+
+                        {/* Position Y */}
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                            <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>{cT.positionYLabel} (Subir / Bajar):</span>
+                            <span style={{ fontSize: '0.76rem', color: '#fff', fontFamily: 'monospace', fontWeight: 700 }}>{bookingTextOffsetY > 0 ? `+${bookingTextOffsetY}` : bookingTextOffsetY} px</span>
+                          </div>
+                          <input
+                            type="range"
+                            min="-1650"
+                            max="450"
+                            step="5"
+                            value={bookingTextOffsetY}
+                            onChange={(e) => setBookingTextOffsetY(parseInt(e.target.value, 10))}
+                            style={{ width: '100%', accentColor: frameColor, cursor: 'pointer' }}
+                          />
+                        </div>
+
+                        {/* Position X */}
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                            <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>{cT.positionXLabel} (Izquierda / Derecha):</span>
+                            <span style={{ fontSize: '0.76rem', color: '#fff', fontFamily: 'monospace', fontWeight: 700 }}>{bookingTextOffsetX > 0 ? `+${bookingTextOffsetX}` : bookingTextOffsetX} px</span>
+                          </div>
+                          <input
+                            type="range"
+                            min="-650"
+                            max="650"
+                            step="5"
+                            value={bookingTextOffsetX}
+                            onChange={(e) => setBookingTextOffsetX(parseInt(e.target.value, 10))}
+                            style={{ width: '100%', accentColor: frameColor, cursor: 'pointer' }}
+                          />
+                        </div>
+
+                        {/* Tracking */}
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                            <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>{cT.letterSpacingLabel}:</span>
+                            <span style={{ fontSize: '0.76rem', color: '#fff', fontFamily: 'monospace', fontWeight: 700 }}>{bookingTextTracking} px</span>
+                          </div>
+                          <input
+                            type="range"
+                            min="0"
+                            max="30"
+                            step="1"
+                            value={bookingTextTracking}
+                            onChange={(e) => setBookingTextTracking(parseInt(e.target.value, 10))}
+                            style={{ width: '100%', accentColor: frameColor, cursor: 'pointer' }}
+                          />
+                        </div>
+
+                        {/* Alignment */}
+                        <div>
+                          <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>{cT.alignLabel}:</span>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px' }}>
+                            {[
+                              { id: 'left', label: cT.alignLeft, icon: AlignLeft },
+                              { id: 'center', label: cT.alignCenter, icon: AlignCenter },
+                              { id: 'right', label: cT.alignRight, icon: AlignRight }
+                            ].map((al) => {
+                              const Icon = al.icon;
+                              const isActive = bookingTextAlign === al.id;
+                              return (
+                                <button
+                                  key={al.id}
+                                  onClick={() => setBookingTextAlign(al.id)}
+                                  style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '5px',
+                                    padding: '6px 10px',
+                                    borderRadius: '8px',
+                                    border: isActive ? `1px solid ${frameColor}` : '1px solid rgba(255, 255, 255, 0.08)',
+                                    background: isActive ? hexToRgba(frameColor, 0.2) : 'rgba(255, 255, 255, 0.04)',
+                                    color: isActive ? '#fff' : 'var(--text-muted)',
+                                    fontSize: '0.74rem',
+                                    fontWeight: 600,
+                                    cursor: 'pointer'
+                                  }}
+                                >
+                                  <Icon size={12} />
+                                  <span>{al.label}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Toggle Uppercase & Reset */}
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '6px', borderTop: '1px solid rgba(255, 255, 255, 0.06)' }}>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.76rem', color: 'var(--text-muted)' }}>
+                            <input
+                              type="checkbox"
+                              checked={bookingTextUpper}
+                              onChange={(e) => setBookingTextUpper(e.target.checked)}
+                              style={{ accentColor: frameColor, cursor: 'pointer' }}
+                            />
+                            <span>{cT.uppercaseLabel}</span>
+                          </label>
+
+                          <button
+                            onClick={() => handleResetText('booking')}
                             style={{
                               display: 'flex',
                               alignItems: 'center',
