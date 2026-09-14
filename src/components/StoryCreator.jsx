@@ -16,7 +16,8 @@ import {
   Square,
   RectangleVertical,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Palette
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -58,11 +59,35 @@ const DEFAULT_PRESETS = [
   { id: 'capture1', nameKey: 'photoPreset1', src: '/missa-capture.jpg' }
 ];
 
+const COLOR_PRESETS = [
+  { id: 'red', nameKey: 'themeRed', hex: '#FF003C' },
+  { id: 'kick', nameKey: 'themeKick', hex: '#53FC18' },
+  { id: 'violet', nameKey: 'themeViolet', hex: '#A855F7' },
+  { id: 'cyan', nameKey: 'themeCyan', hex: '#00F0FF' },
+  { id: 'gold', nameKey: 'themeGold', hex: '#EAB308' },
+  { id: 'white', nameKey: 'themeWhite', hex: '#FFFFFF' }
+];
+
+// Helper to convert hex to rgba
+const hexToRgba = (hex, alpha = 1) => {
+  if (!hex) return `rgba(255, 0, 60, ${alpha})`;
+  let c = hex.replace('#', '');
+  if (c.length === 3) {
+    c = c.split('').map((char) => char + char).join('');
+  }
+  const num = parseInt(c, 16);
+  if (isNaN(num)) return `rgba(255, 0, 60, ${alpha})`;
+  const r = (num >> 16) & 255;
+  const g = (num >> 8) & 255;
+  const b = num & 255;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+
 export default function StoryCreator({ onBack }) {
   const { t } = useLanguage();
   const cT = t.storyCreator;
 
-  // Active step (1 to 5)
+  // Active step (1 to 6)
   const [activeStep, setActiveStep] = useState(1);
 
   // Format selection
@@ -82,7 +107,22 @@ export default function StoryCreator({ onBack }) {
   const [subTitle, setSubTitle] = useState('TECH HOUSE');
   const [eventDate, setEventDate] = useState('SÁBADO // LIVE SET');
   const [eventVenue, setEventVenue] = useState('SAN LUIS POTOSÍ • MÉXICO');
-  const [accentColor, setAccentColor] = useState('#FF003C');
+
+  // Granular Color Customization State
+  const [frameColor, setFrameColor] = useState('#FF003C');
+  const [titleColor, setTitleColor] = useState('#FF003C');
+  const [repeatTextColor, setRepeatTextColor] = useState('#FF003C');
+  const [badgeColor, setBadgeColor] = useState('#FF003C');
+  const [techColor, setTechColor] = useState('#FF003C');
+
+  // Apply unified color theme to all elements at once
+  const applyUnifiedColor = (hex) => {
+    setFrameColor(hex);
+    setTitleColor(hex);
+    setRepeatTextColor(hex);
+    setBadgeColor(hex);
+    setTechColor(hex);
+  };
 
   // Masks and layers toggles (on/off)
   const [showRepeatText, setShowRepeatText] = useState(true);
@@ -240,15 +280,15 @@ export default function StoryCreator({ onBack }) {
       for (let y = startY; y <= endY; y += stepY) {
         // Outline text styling
         ctx.lineWidth = 2.5;
-        ctx.strokeStyle = accentColor;
+        ctx.strokeStyle = repeatTextColor;
         ctx.strokeText(textToRepeat, posX, y);
 
         // One line gets filled solid accent for editorial rhythm
         if (count === 1) {
-          ctx.fillStyle = accentColor;
+          ctx.fillStyle = repeatTextColor;
           ctx.fillText(textToRepeat, posX, y);
         } else {
-          ctx.fillStyle = 'rgba(255, 0, 60, 0.04)';
+          ctx.fillStyle = hexToRgba(repeatTextColor, 0.04);
           ctx.fillText(textToRepeat, posX, y);
         }
         count++;
@@ -281,15 +321,15 @@ export default function StoryCreator({ onBack }) {
       ctx.lineTo(inset, inset + bevel);
       ctx.closePath();
 
-      ctx.strokeStyle = accentColor;
+      ctx.strokeStyle = frameColor;
       ctx.lineWidth = 4;
-      ctx.shadowColor = accentColor;
+      ctx.shadowColor = frameColor;
       ctx.shadowBlur = 14;
       ctx.stroke();
 
       // Corner accent brackets & notches
       ctx.shadowBlur = 0;
-      ctx.fillStyle = accentColor;
+      ctx.fillStyle = frameColor;
 
       // Top-left notch
       ctx.fillRect(inset + bevel, inset - 4, 30, 8);
@@ -342,7 +382,7 @@ export default function StoryCreator({ onBack }) {
 
       for (let i = 0; i < barCount; i++) {
         const barH = heights[i];
-        ctx.fillStyle = i % 3 === 0 ? accentColor : 'rgba(255, 255, 255, 0.7)';
+        ctx.fillStyle = i % 3 === 0 ? techColor : 'rgba(255, 255, 255, 0.7)';
         ctx.fillRect(eqX + i * 8, eqY + (28 - barH), 5, barH);
       }
 
@@ -363,7 +403,7 @@ export default function StoryCreator({ onBack }) {
       const tagY = height * 0.08;
 
       ctx.fillStyle = 'rgba(12, 12, 16, 0.85)';
-      ctx.strokeStyle = accentColor;
+      ctx.strokeStyle = badgeColor;
       ctx.lineWidth = 1.5;
 
       // Rounded rectangle
@@ -372,8 +412,8 @@ export default function StoryCreator({ onBack }) {
       ctx.fill();
       ctx.stroke();
 
-      // Red active dot
-      ctx.fillStyle = accentColor;
+      // Active dot
+      ctx.fillStyle = badgeColor;
       ctx.beginPath();
       ctx.arc(tagX + 16, tagY + tagH / 2, 4, 0, Math.PI * 2);
       ctx.fill();
@@ -397,6 +437,16 @@ export default function StoryCreator({ onBack }) {
     ctx.save();
     const bottomBase = height - (format === 'story' ? 180 : 130);
 
+    // Subtle atmospheric glow behind the artist title
+    const glowGrad = ctx.createRadialGradient(
+      width / 2, bottomBase - 85, 10,
+      width / 2, bottomBase - 85, width * 0.42
+    );
+    glowGrad.addColorStop(0, hexToRgba(titleColor, 0.22));
+    glowGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    ctx.fillStyle = glowGrad;
+    ctx.fillRect(0, bottomBase - 260, width, 360);
+
     // Subtitle Pill (e.g. TECH HOUSE)
     if (subTitle.trim()) {
       ctx.font = '800 18px "Syne", sans-serif';
@@ -406,7 +456,7 @@ export default function StoryCreator({ onBack }) {
       const subX = width / 2 - subW / 2;
       const subY = bottomBase - 180;
 
-      ctx.fillStyle = accentColor;
+      ctx.fillStyle = badgeColor;
       ctx.beginPath();
       ctx.roundRect(subX, subY, subW, subH, 6);
       ctx.fill();
@@ -436,7 +486,7 @@ export default function StoryCreator({ onBack }) {
         const startX = (width - fullW) / 2;
 
         ctx.textAlign = 'left';
-        ctx.fillStyle = accentColor;
+        ctx.fillStyle = titleColor;
         ctx.fillText(missaPart, startX, bottomBase - 90);
 
         ctx.fillStyle = '#FFFFFF';
@@ -475,7 +525,7 @@ export default function StoryCreator({ onBack }) {
 
     // Booking Pill
     ctx.font = '700 13px "Outfit", sans-serif';
-    ctx.fillStyle = accentColor;
+    ctx.fillStyle = techColor;
     ctx.fillText('BOOKING DIRECTO • WA +52 1 444 357 0777', width / 2, bottomBase + 78);
 
     ctx.restore();
@@ -514,7 +564,11 @@ export default function StoryCreator({ onBack }) {
     subTitle,
     eventDate,
     eventVenue,
-    accentColor,
+    frameColor,
+    titleColor,
+    repeatTextColor,
+    badgeColor,
+    techColor,
     showRepeatText,
     showCyberFrame,
     showTechAccents,
@@ -576,6 +630,66 @@ export default function StoryCreator({ onBack }) {
     setPhotoPanY(0);
   };
 
+  // Helper component for granular color picker row
+  const renderColorItem = (label, value, setter) => (
+    <div
+      style={{
+        padding: '12px 14px',
+        borderRadius: '12px',
+        background: 'rgba(255, 255, 255, 0.02)',
+        border: '1px solid rgba(255, 255, 255, 0.08)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: '10px'
+      }}
+    >
+      <div style={{ display: 'flex', flexDirection: 'column' }}>
+        <span style={{ fontSize: '0.84rem', fontWeight: 600, color: '#fff' }}>{label}</span>
+        <span style={{ fontSize: '0.72rem', fontFamily: 'monospace', color: 'var(--text-dim)' }}>
+          {value.toUpperCase()}
+        </span>
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        {/* Quick color dots */}
+        {['#FF003C', '#53FC18', '#A855F7', '#00F0FF', '#EAB308', '#FFFFFF'].map((c) => (
+          <button
+            key={c}
+            onClick={() => setter(c)}
+            style={{
+              width: '20px',
+              height: '20px',
+              borderRadius: '50%',
+              background: c,
+              border: value.toUpperCase() === c ? '2px solid #fff' : '1px solid rgba(0,0,0,0.5)',
+              cursor: 'pointer',
+              padding: 0,
+              boxShadow: value.toUpperCase() === c ? `0 0 8px ${c}` : 'none'
+            }}
+          />
+        ))}
+
+        {/* Native color picker */}
+        <input
+          type="color"
+          value={value}
+          onChange={(e) => setter(e.target.value)}
+          title="Selector de Color Personalizado"
+          style={{
+            width: '28px',
+            height: '28px',
+            border: 'none',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            background: 'transparent',
+            padding: 0
+          }}
+        />
+      </div>
+    </div>
+  );
+
   return (
     <div
       style={{
@@ -615,7 +729,7 @@ export default function StoryCreator({ onBack }) {
               border: '1px solid rgba(255, 255, 255, 0.12)'
             }}
           >
-            <ArrowLeft size={16} color="#FF003C" />
+            <ArrowLeft size={16} color={frameColor} />
             <span>{cT.backToHome}</span>
           </button>
 
@@ -627,9 +741,9 @@ export default function StoryCreator({ onBack }) {
                 letterSpacing: '0.08em',
                 padding: '4px 10px',
                 borderRadius: '6px',
-                background: 'rgba(255, 0, 60, 0.12)',
-                color: '#FF003C',
-                border: '1px solid rgba(255, 0, 60, 0.3)'
+                background: hexToRgba(frameColor, 0.12),
+                color: frameColor,
+                border: `1px solid ${hexToRgba(frameColor, 0.3)}`
               }}
             >
               {cT.badge}
@@ -665,7 +779,7 @@ export default function StoryCreator({ onBack }) {
           </p>
         </div>
 
-        {/* Step Progress Tabs Bar */}
+        {/* Step Progress Tabs Bar (6 Steps) */}
         <div
           style={{
             display: 'flex',
@@ -680,8 +794,9 @@ export default function StoryCreator({ onBack }) {
             { id: 1, label: cT.step1, icon: Maximize2 },
             { id: 2, label: cT.step2, icon: Sliders },
             { id: 3, label: cT.step3, icon: Type },
-            { id: 4, label: cT.step4, icon: Layers },
-            { id: 5, label: cT.step5, icon: Download }
+            { id: 4, label: cT.step4, icon: Palette },
+            { id: 5, label: cT.step5, icon: Layers },
+            { id: 6, label: cT.step6, icon: Download }
           ].map((step) => {
             const Icon = step.icon;
             const isActive = activeStep === step.id;
@@ -699,16 +814,16 @@ export default function StoryCreator({ onBack }) {
                   fontWeight: 600,
                   cursor: 'pointer',
                   border: isActive
-                    ? '1px solid #FF003C'
+                    ? `1px solid ${frameColor}`
                     : '1px solid rgba(255, 255, 255, 0.06)',
                   background: isActive
-                    ? 'rgba(255, 0, 60, 0.12)'
+                    ? hexToRgba(frameColor, 0.12)
                     : 'rgba(255, 255, 255, 0.02)',
                   color: isActive ? '#FFFFFF' : 'var(--text-muted)',
                   transition: 'all 0.2s ease'
                 }}
               >
-                <Icon size={15} color={isActive ? '#FF003C' : 'var(--text-dim)'} />
+                <Icon size={15} color={isActive ? frameColor : 'var(--text-dim)'} />
                 <span>{step.label}</span>
               </button>
             );
@@ -765,10 +880,10 @@ export default function StoryCreator({ onBack }) {
                           padding: '18px 20px',
                           borderRadius: '14px',
                           border: isSelected
-                            ? '2px solid #FF003C'
+                            ? `2px solid ${frameColor}`
                             : '1px solid rgba(255, 255, 255, 0.08)',
                           background: isSelected
-                            ? 'rgba(255, 0, 60, 0.08)'
+                            ? hexToRgba(frameColor, 0.08)
                             : 'rgba(255, 255, 255, 0.02)',
                           cursor: 'pointer',
                           display: 'flex',
@@ -784,12 +899,12 @@ export default function StoryCreator({ onBack }) {
                               height: '44px',
                               borderRadius: '10px',
                               background: isSelected
-                                ? 'rgba(255, 0, 60, 0.2)'
+                                ? hexToRgba(frameColor, 0.2)
                                 : 'rgba(255, 255, 255, 0.04)',
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
-                              color: isSelected ? '#FF003C' : 'var(--text-muted)'
+                              color: isSelected ? frameColor : 'var(--text-muted)'
                             }}
                           >
                             <Icon size={24} />
@@ -831,7 +946,7 @@ export default function StoryCreator({ onBack }) {
                           </div>
                         </div>
 
-                        {isSelected && <CheckCircle2 size={20} color="#FF003C" />}
+                        {isSelected && <CheckCircle2 size={20} color={frameColor} />}
                       </div>
                     );
                   })}
@@ -882,8 +997,8 @@ export default function StoryCreator({ onBack }) {
                   style={{
                     width: '100%',
                     padding: '16px',
-                    border: '1px dashed rgba(255, 0, 60, 0.5)',
-                    background: 'rgba(255, 0, 60, 0.04)',
+                    border: `1px dashed ${hexToRgba(frameColor, 0.5)}`,
+                    background: hexToRgba(frameColor, 0.04),
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
@@ -892,7 +1007,7 @@ export default function StoryCreator({ onBack }) {
                     cursor: 'pointer'
                   }}
                 >
-                  <Upload size={24} color="#FF003C" />
+                  <Upload size={24} color={frameColor} />
                   <span style={{ fontWeight: 600, color: '#fff' }}>{cT.photoUpload}</span>
                   <span style={{ fontSize: '0.78rem', color: 'var(--text-dim)' }}>
                     {cT.photoUploadSub}
@@ -926,7 +1041,7 @@ export default function StoryCreator({ onBack }) {
                             borderRadius: '12px',
                             overflow: 'hidden',
                             border: isChosen
-                              ? '2px solid #FF003C'
+                              ? `2px solid ${frameColor}`
                               : '1px solid rgba(255, 255, 255, 0.1)',
                             background: '#000',
                             cursor: 'pointer',
@@ -950,7 +1065,7 @@ export default function StoryCreator({ onBack }) {
                               padding: '6px 8px',
                               fontSize: '0.76rem',
                               fontWeight: 600,
-                              color: isChosen ? '#FF003C' : '#fff',
+                              color: isChosen ? frameColor : '#fff',
                               background: 'rgba(12, 12, 16, 0.9)',
                               textAlign: 'center'
                             }}
@@ -989,7 +1104,7 @@ export default function StoryCreator({ onBack }) {
                       style={{
                         background: 'transparent',
                         border: 'none',
-                        color: '#FF003C',
+                        color: frameColor,
                         fontSize: '0.78rem',
                         cursor: 'pointer',
                         display: 'flex',
@@ -1023,7 +1138,7 @@ export default function StoryCreator({ onBack }) {
                       step="0.05"
                       value={photoScale}
                       onChange={(e) => setPhotoScale(parseFloat(e.target.value))}
-                      style={{ width: '100%', accentColor: '#FF003C' }}
+                      style={{ width: '100%', accentColor: frameColor }}
                     />
                   </div>
 
@@ -1048,7 +1163,7 @@ export default function StoryCreator({ onBack }) {
                       step="5"
                       value={photoPanX}
                       onChange={(e) => setPhotoPanX(parseInt(e.target.value))}
-                      style={{ width: '100%', accentColor: '#FF003C' }}
+                      style={{ width: '100%', accentColor: frameColor }}
                     />
                   </div>
 
@@ -1073,7 +1188,7 @@ export default function StoryCreator({ onBack }) {
                       step="5"
                       value={photoPanY}
                       onChange={(e) => setPhotoPanY(parseInt(e.target.value))}
-                      style={{ width: '100%', accentColor: '#FF003C' }}
+                      style={{ width: '100%', accentColor: frameColor }}
                     />
                   </div>
                 </div>
@@ -1108,11 +1223,11 @@ export default function StoryCreator({ onBack }) {
                           cursor: 'pointer',
                           border:
                             photoFilter === f.id
-                              ? '1px solid #FF003C'
+                              ? `1px solid ${frameColor}`
                               : '1px solid rgba(255, 255, 255, 0.08)',
                           background:
                             photoFilter === f.id
-                              ? 'rgba(255, 0, 60, 0.15)'
+                              ? hexToRgba(frameColor, 0.15)
                               : 'rgba(255, 255, 255, 0.03)',
                           color: photoFilter === f.id ? '#fff' : 'var(--text-muted)'
                         }}
@@ -1325,62 +1440,6 @@ export default function StoryCreator({ onBack }) {
                   />
                 </div>
 
-                {/* Accent Color Picker */}
-                <div style={{ marginBottom: '24px' }}>
-                  <label
-                    style={{
-                      fontSize: '0.82rem',
-                      fontWeight: 600,
-                      color: 'var(--text-muted)',
-                      display: 'block',
-                      marginBottom: '10px'
-                    }}
-                  >
-                    {cT.accentColorLabel}
-                  </label>
-                  <div style={{ display: 'flex', gap: '12px' }}>
-                    {[
-                      { color: '#FF003C', label: 'Rojo' },
-                      { color: '#FFFFFF', label: 'Blanco' },
-                      { color: '#53FC18', label: 'Kick Neón' }
-                    ].map((item) => (
-                      <button
-                        key={item.color}
-                        onClick={() => setAccentColor(item.color)}
-                        style={{
-                          flex: 1,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '8px',
-                          padding: '10px',
-                          borderRadius: '8px',
-                          border:
-                            accentColor === item.color
-                              ? '2px solid #fff'
-                              : '1px solid rgba(255, 255, 255, 0.1)',
-                          background: 'rgba(255, 255, 255, 0.04)',
-                          cursor: 'pointer',
-                          color: '#fff',
-                          fontSize: '0.78rem',
-                          fontWeight: 600
-                        }}
-                      >
-                        <span
-                          style={{
-                            width: '14px',
-                            height: '14px',
-                            borderRadius: '50%',
-                            background: item.color,
-                            display: 'inline-block'
-                          }}
-                        />
-                        <span>{item.label}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
                 {/* Next / Prev */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '28px' }}>
                   <button
@@ -1395,14 +1454,108 @@ export default function StoryCreator({ onBack }) {
                     className="btn btn-primary btn-sm"
                     style={{ cursor: 'pointer' }}
                   >
+                    <span>Siguiente: Colores & Estilo →</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* STEP 4: Colors & Style Customization */}
+            {activeStep === 4 && (
+              <div>
+                <h3 className="font-display" style={{ fontSize: '1.25rem', marginBottom: '8px', color: '#fff' }}>
+                  {cT.colorsTitle}
+                </h3>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', marginBottom: '20px' }}>
+                  {cT.colorsHint}
+                </p>
+
+                {/* 1-Click Unified Color Themes */}
+                <div style={{ marginBottom: '24px' }}>
+                  <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: '10px' }}>
+                    {cT.colorThemesTitle}
+                  </label>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
+                    {COLOR_PRESETS.map((p) => {
+                      const isSelected = frameColor === p.hex && titleColor === p.hex && repeatTextColor === p.hex;
+                      return (
+                        <button
+                          key={p.id}
+                          onClick={() => applyUnifiedColor(p.hex)}
+                          style={{
+                            padding: '10px',
+                            borderRadius: '10px',
+                            border: isSelected ? `2px solid ${p.hex}` : '1px solid rgba(255, 255, 255, 0.1)',
+                            background: isSelected ? hexToRgba(p.hex, 0.15) : 'rgba(255, 255, 255, 0.03)',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            transition: 'all 0.2s ease'
+                          }}
+                        >
+                          <span
+                            style={{
+                              width: '14px',
+                              height: '14px',
+                              borderRadius: '50%',
+                              background: p.hex,
+                              boxShadow: `0 0 8px ${p.hex}`
+                            }}
+                          />
+                          <span style={{ fontSize: '0.78rem', fontWeight: 600, color: isSelected ? '#fff' : 'var(--text-muted)' }}>
+                            {cT[p.nameKey].split(' ')[0]}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Granular Elements Colors */}
+                <div style={{ marginBottom: '24px' }}>
+                  <label style={{ fontSize: '0.82rem', fontWeight: 600, color: '#fff', display: 'block', marginBottom: '12px' }}>
+                    {cT.colorElementsTitle}
+                  </label>
+
+                  {/* 1. Cyberpunk Frame */}
+                  {renderColorItem(cT.colorFrame, frameColor, setFrameColor)}
+
+                  {/* 2. Main Title (MISSA) */}
+                  {renderColorItem(cT.colorTitle, titleColor, setTitleColor)}
+
+                  {/* 3. Lateral Repeated Text */}
+                  {renderColorItem(cT.colorRepeatText, repeatTextColor, setRepeatTextColor)}
+
+                  {/* 4. Subtitle / Genre Badge */}
+                  {renderColorItem(cT.colorBadge, badgeColor, setBadgeColor)}
+
+                  {/* 5. Tech Accents, EQ & Booking */}
+                  {renderColorItem(cT.colorTech, techColor, setTechColor)}
+                </div>
+
+                {/* Next / Prev */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '28px' }}>
+                  <button
+                    onClick={() => setActiveStep(3)}
+                    className="btn btn-secondary btn-sm"
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <span>← Textos</span>
+                  </button>
+                  <button
+                    onClick={() => setActiveStep(5)}
+                    className="btn btn-primary btn-sm"
+                    style={{ cursor: 'pointer' }}
+                  >
                     <span>Siguiente: Máscaras →</span>
                   </button>
                 </div>
               </div>
             )}
 
-            {/* STEP 4: Masks & Layers Toggles (Prender/Apagar) */}
-            {activeStep === 4 && (
+            {/* STEP 5: Masks & Layers Toggles (Prender/Apagar) */}
+            {activeStep === 5 && (
               <div>
                 <h3
                   className="font-display"
@@ -1460,10 +1613,10 @@ export default function StoryCreator({ onBack }) {
                         padding: '16px 18px',
                         borderRadius: '12px',
                         border: layer.active
-                          ? '1px solid rgba(255, 0, 60, 0.4)'
+                          ? `1px solid ${hexToRgba(frameColor, 0.4)}`
                           : '1px solid rgba(255, 255, 255, 0.08)',
                         background: layer.active
-                          ? 'rgba(255, 0, 60, 0.06)'
+                          ? hexToRgba(frameColor, 0.06)
                           : 'rgba(255, 255, 255, 0.02)',
                         cursor: 'pointer',
                         display: 'flex',
@@ -1474,7 +1627,7 @@ export default function StoryCreator({ onBack }) {
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                         {layer.active ? (
-                          <Eye size={18} color="#FF003C" />
+                          <Eye size={18} color={frameColor} />
                         ) : (
                           <EyeOff size={18} color="var(--text-dim)" />
                         )}
@@ -1495,7 +1648,7 @@ export default function StoryCreator({ onBack }) {
                           width: '44px',
                           height: '24px',
                           borderRadius: '12px',
-                          background: layer.active ? '#FF003C' : 'rgba(255, 255, 255, 0.1)',
+                          background: layer.active ? frameColor : 'rgba(255, 255, 255, 0.1)',
                           position: 'relative',
                           transition: 'background 0.2s ease'
                         }}
@@ -1560,14 +1713,14 @@ export default function StoryCreator({ onBack }) {
                 {/* Next / Prev */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '28px' }}>
                   <button
-                    onClick={() => setActiveStep(3)}
+                    onClick={() => setActiveStep(4)}
                     className="btn btn-secondary btn-sm"
                     style={{ cursor: 'pointer' }}
                   >
-                    <span>← Textos</span>
+                    <span>← Colores</span>
                   </button>
                   <button
-                    onClick={() => setActiveStep(5)}
+                    onClick={() => setActiveStep(6)}
                     className="btn btn-primary btn-sm"
                     style={{ cursor: 'pointer' }}
                   >
@@ -1577,14 +1730,14 @@ export default function StoryCreator({ onBack }) {
               </div>
             )}
 
-            {/* STEP 5: Export & Final Download */}
-            {activeStep === 5 && (
+            {/* STEP 6: Export & Final Download */}
+            {activeStep === 6 && (
               <div>
                 <h3
                   className="font-display"
                   style={{ fontSize: '1.25rem', marginBottom: '8px', color: '#fff' }}
                 >
-                  {cT.step5}: Descargar en Alta Calidad
+                  {cT.step6}: Descargar en Alta Calidad
                 </h3>
                 <p
                   style={{
@@ -1628,7 +1781,7 @@ export default function StoryCreator({ onBack }) {
                     }}
                   >
                     <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>Resolución:</span>
-                    <strong style={{ color: '#FF003C', fontSize: '0.86rem', fontFamily: 'monospace' }}>
+                    <strong style={{ color: frameColor, fontSize: '0.86rem', fontFamily: 'monospace' }}>
                       {FORMATS[format].width} × {FORMATS[format].height} px
                     </strong>
                   </div>
@@ -1670,7 +1823,7 @@ export default function StoryCreator({ onBack }) {
                     cursor: isExporting ? 'wait' : 'pointer',
                     gap: '10px',
                     marginBottom: '16px',
-                    boxShadow: '0 8px 24px rgba(255, 0, 60, 0.4)'
+                    boxShadow: `0 8px 24px ${hexToRgba(frameColor, 0.4)}`
                   }}
                 >
                   <Download size={20} />
@@ -1710,7 +1863,7 @@ export default function StoryCreator({ onBack }) {
                 {/* Back to previous step */}
                 <div style={{ marginTop: '24px' }}>
                   <button
-                    onClick={() => setActiveStep(4)}
+                    onClick={() => setActiveStep(5)}
                     className="btn btn-secondary btn-sm"
                     style={{ cursor: 'pointer' }}
                   >
@@ -1739,7 +1892,7 @@ export default function StoryCreator({ onBack }) {
                 padding: '18px',
                 borderRadius: '24px',
                 border: '1px solid rgba(255, 255, 255, 0.1)',
-                boxShadow: '0 24px 48px rgba(0, 0, 0, 0.8), 0 0 30px rgba(255, 0, 60, 0.12)'
+                boxShadow: `0 24px 48px rgba(0, 0, 0, 0.8), 0 0 30px ${hexToRgba(frameColor, 0.12)}`
               }}
             >
               {/* Preview Header */}
@@ -1754,7 +1907,7 @@ export default function StoryCreator({ onBack }) {
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Sparkles size={16} color="#FF003C" />
+                  <Sparkles size={16} color={frameColor} />
                   <span style={{ fontSize: '0.84rem', fontWeight: 700, color: '#fff' }}>
                     {cT.previewTitle}
                   </span>
@@ -1766,9 +1919,9 @@ export default function StoryCreator({ onBack }) {
                     fontFamily: 'monospace',
                     padding: '2px 8px',
                     borderRadius: '6px',
-                    background: 'rgba(255, 0, 60, 0.15)',
-                    color: '#FF003C',
-                    border: '1px solid rgba(255, 0, 60, 0.25)'
+                    background: hexToRgba(frameColor, 0.15),
+                    color: frameColor,
+                    border: `1px solid ${hexToRgba(frameColor, 0.25)}`
                   }}
                 >
                   {FORMATS[format].width} × {FORMATS[format].height}
