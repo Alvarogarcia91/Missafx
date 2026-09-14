@@ -931,11 +931,13 @@ export default function StoryCreator({ onBack }) {
         ctx.letterSpacing = '1px';
 
         const crossSize = 10;
+        const topCornerY = format === 'story' ? 230 : 75;
+        const bottomCornerY = format === 'story' ? height - 230 : height - 75;
         const corners = [
-          [75, 75],
-          [width - 75, 75],
-          [75, height - 75],
-          [width - 75, height - 75]
+          [75, topCornerY],
+          [width - 75, topCornerY],
+          [75, bottomCornerY],
+          [width - 75, bottomCornerY]
         ];
 
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
@@ -956,7 +958,8 @@ export default function StoryCreator({ onBack }) {
             ctx.letterSpacing = `${hudCoordsTracking}px`;
           }
           ctx.fillStyle = '#F8FAFC';
-          ctx.fillText(coordsToRender, 110 + hudCoordsOffsetX, 80 + hudCoordsOffsetY);
+          const hudBaseY = format === 'story' ? 245 : 80;
+          ctx.fillText(coordsToRender, 110 + hudCoordsOffsetX, hudBaseY + hudCoordsOffsetY);
         }
 
         ctx.restore();
@@ -966,7 +969,7 @@ export default function StoryCreator({ onBack }) {
       if (showEq) {
         ctx.save();
         const baseEqX = width - 220 + eqOffsetX;
-        const baseEqY = 70 + eqOffsetY;
+        const baseEqY = (format === 'story' ? 238 : 70) + eqOffsetY;
         const barCount = 12;
         const baseHeights = [14, 22, 10, 26, 18, 12, 28, 20, 16, 24, 15, 8];
 
@@ -1025,7 +1028,8 @@ export default function StoryCreator({ onBack }) {
         let tagX = (width - tagW) / 2 + badgeTagOffsetX;
         if (badgeTagAlign === 'left') tagX = width * 0.12 + badgeTagOffsetX;
         if (badgeTagAlign === 'right') tagX = width * 0.88 - tagW + badgeTagOffsetX;
-        const tagY = height * 0.08 + badgeTagOffsetY;
+        const tagBaseY = format === 'story' ? 295 : height * 0.08;
+        const tagY = tagBaseY + badgeTagOffsetY;
 
         ctx.fillStyle = 'rgba(12, 12, 16, 0.85)';
         ctx.strokeStyle = badgeColor;
@@ -1066,7 +1070,8 @@ export default function StoryCreator({ onBack }) {
         if (audioSpecAlign === 'right') specX = width * 0.88 + audioSpecOffsetX;
         ctx.textAlign = audioSpecAlign;
 
-        const specY = height * 0.08 + (badgeTagSize * 2.4) + 16 + audioSpecOffsetY;
+        const specBaseY = format === 'story' ? 295 : height * 0.08;
+        const specY = specBaseY + (badgeTagSize * 2.4) + 16 + audioSpecOffsetY;
         ctx.fillText(specText, specX, specY);
 
         ctx.restore();
@@ -1074,7 +1079,7 @@ export default function StoryCreator({ onBack }) {
 
       // 9. Main Typography & Event Information (Element #2 FX: Titular)
       ctx.save();
-      const bottomBase = height - (format === 'story' ? 180 : 130);
+      const bottomBase = height - (format === 'story' ? 335 : (format === 'portrait' ? 160 : 130));
 
       let titleGlowBlur = 0;
       let titleShadowColor = titleColor;
