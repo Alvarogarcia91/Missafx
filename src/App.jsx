@@ -9,8 +9,11 @@ import Footer from './components/Footer.jsx';
 import DjTools from './components/DjTools.jsx';
 import StoryCreator from './components/StoryCreator.jsx';
 import CardCreator from './components/CardCreator.jsx';
+import UpcomingEvents from './components/UpcomingEvents.jsx';
+import EventAdminModal from './components/EventAdminModal.jsx';
 
 export default function App() {
+  const [adminModalOpen, setAdminModalOpen] = useState(false);
   const [view, setView] = useState(() => {
     if (window.location.hash === '#story-creator') return 'story-creator';
     if (window.location.hash === '#card-creator') return 'card-creator';
@@ -64,6 +67,7 @@ export default function App() {
             <Navbar />
             <main>
               <Hero />
+              <UpcomingEvents onOpenAdmin={() => setAdminModalOpen(true)} />
               <SocialHub />
               <About />
               <Booking />
@@ -72,7 +76,11 @@ export default function App() {
                 onOpenCardCreator={openCardCreator}
               />
             </main>
-            <Footer />
+            <Footer onOpenAdmin={() => setAdminModalOpen(true)} />
+            <EventAdminModal
+              isOpen={adminModalOpen}
+              onClose={() => setAdminModalOpen(false)}
+            />
           </>
         )}
       </div>

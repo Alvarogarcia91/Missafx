@@ -2,6 +2,7 @@ export const translations = {
   es: {
     nav: {
       home: 'Inicio',
+      events: 'Eventos',
       socials: 'Redes Oficiales',
       about: 'Bio & Rider',
       contact: 'Contacto',
@@ -486,6 +487,7 @@ export const translations = {
   en: {
     nav: {
       home: 'Home',
+      events: 'Events',
       socials: 'Official Links',
       about: 'Bio & Rider',
       contact: 'Booking',

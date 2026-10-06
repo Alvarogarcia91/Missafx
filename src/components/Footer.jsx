@@ -1,9 +1,9 @@
 import React from 'react';
-import { ArrowUp } from 'lucide-react';
+import { ArrowUp, Settings } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { InstagramIcon, WhatsAppIcon, KickIcon, YouTubeIcon, SoundCloudIcon } from './SocialIcons';
 
-export default function Footer() {
+export default function Footer({ onOpenAdmin }) {
   const { t } = useLanguage();
 
   const scrollToTop = () => {
@@ -110,7 +110,7 @@ export default function Footer() {
           </p>
         </div>
 
-        {/* Discreet Credit Bar: "bn sordo By Nexora IT LLC itnexora.com" */}
+        {/* Discreet Credit Bar: "bn sordo By Nexora IT LLC itnexora.com" + Admin Gear */}
         <div
           style={{
             borderTop: '1px solid rgba(255, 255, 255, 0.03)',
@@ -121,7 +121,8 @@ export default function Footer() {
             alignItems: 'center',
             fontSize: '0.74rem',
             color: 'rgba(255, 255, 255, 0.30)',
-            letterSpacing: '0.04em'
+            letterSpacing: '0.04em',
+            position: 'relative'
           }}
         >
           <span>
@@ -157,6 +158,39 @@ export default function Footer() {
               itnexora.com
             </a>
           </span>
+
+          {/* Discreet Admin Gear for Missa */}
+          {onOpenAdmin && (
+            <button
+              onClick={onOpenAdmin}
+              aria-label="Gestor de Eventos"
+              title="Administración de Eventos // Missafx"
+              style={{
+                position: 'absolute',
+                right: '0',
+                background: 'transparent',
+                border: 'none',
+                color: 'rgba(255, 255, 255, 0.20)',
+                cursor: 'pointer',
+                padding: '6px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: '6px',
+                transition: 'all 0.25s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = '#FF003C';
+                e.currentTarget.style.transform = 'rotate(45deg) scale(1.1)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = 'rgba(255, 255, 255, 0.20)';
+                e.currentTarget.style.transform = 'rotate(0deg) scale(1.0)';
+              }}
+            >
+              <Settings size={15} />
+            </button>
+          )}
         </div>
       </div>
     </footer>
