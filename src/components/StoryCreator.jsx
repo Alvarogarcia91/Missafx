@@ -169,7 +169,7 @@ export default function StoryCreator({ onBack }) {
   const [mainTitle, setMainTitle] = useState('MISSAFX');
   const [subTitle, setSubTitle] = useState('TECH HOUSE');
   const [eventDate, setEventDate] = useState('SÁBADO // LIVE SET');
-  const [eventVenue, setEventVenue] = useState('SAN LUIS POTOSÍ • MÉXICO');
+  const [eventVenue, setEventVenue] = useState('WWW.MISSAFX.COM');
 
   // Advanced Typography Controls (Size, Position X/Y, Tracking, Alignment, Uppercase)
   // 1. Repeated Lateral Text ("MISSA")
@@ -199,7 +199,7 @@ export default function StoryCreator({ onBack }) {
   const [subTitleColor, setSubTitleColor] = useState('');
 
   // 4. Date / Tagline ("SÁBADO // LIVE SET")
-  const [eventDateSize, setEventDateSize] = useState(32);
+  const [eventDateSize, setEventDateSize] = useState(38);
   const [eventDateOffsetY, setEventDateOffsetY] = useState(0);
   const [eventDateOffsetX, setEventDateOffsetX] = useState(0);
   const [eventDateTracking, setEventDateTracking] = useState(1);
@@ -207,8 +207,8 @@ export default function StoryCreator({ onBack }) {
   const [eventDateUpper, setEventDateUpper] = useState(true);
   const [eventDateColor, setEventDateColor] = useState('#FFFFFF');
 
-  // 5. Venue / City ("SAN LUIS POTOSÍ • MÉXICO")
-  const [eventVenueSize, setEventVenueSize] = useState(26);
+  // 5. Venue / City ("WWW.MISSAFX.COM")
+  const [eventVenueSize, setEventVenueSize] = useState(32);
   const [eventVenueOffsetY, setEventVenueOffsetY] = useState(0);
   const [eventVenueOffsetX, setEventVenueOffsetX] = useState(0);
   const [eventVenueTracking, setEventVenueTracking] = useState(1);
@@ -218,7 +218,7 @@ export default function StoryCreator({ onBack }) {
 
   // 6. Booking / Contact Info ("BOOKING DIRECTO • WA +52 1 444 357 0777")
   const [bookingText, setBookingText] = useState('BOOKING DIRECTO • WA +52 1 444 357 0777');
-  const [bookingTextSize, setBookingTextSize] = useState(20);
+  const [bookingTextSize, setBookingTextSize] = useState(24);
   const [bookingTextOffsetY, setBookingTextOffsetY] = useState(0);
   const [bookingTextOffsetX, setBookingTextOffsetX] = useState(0);
   const [bookingTextTracking, setBookingTextTracking] = useState(1);
@@ -228,7 +228,7 @@ export default function StoryCreator({ onBack }) {
 
   // 7. Top Badge / Tag ("PIONEER DJ PRO SESSION")
   const [badgeTagText, setBadgeTagText] = useState('PIONEER DJ PRO SESSION');
-  const [badgeTagSize, setBadgeTagSize] = useState(22);
+  const [badgeTagSize, setBadgeTagSize] = useState(26);
   const [badgeTagOffsetY, setBadgeTagOffsetY] = useState(0);
   const [badgeTagOffsetX, setBadgeTagOffsetX] = useState(0);
   const [badgeTagTracking, setBadgeTagTracking] = useState(0);
@@ -238,7 +238,7 @@ export default function StoryCreator({ onBack }) {
 
   // 8. Audio Spec / Sub-badge ("• 48kHz / 24-BIT MASTER AUDIO •")
   const [audioSpecText, setAudioSpecText] = useState('• 48kHz / 24-BIT MASTER AUDIO •');
-  const [audioSpecSize, setAudioSpecSize] = useState(18);
+  const [audioSpecSize, setAudioSpecSize] = useState(22);
   const [audioSpecOffsetY, setAudioSpecOffsetY] = useState(0);
   const [audioSpecOffsetX, setAudioSpecOffsetX] = useState(0);
   const [audioSpecTracking, setAudioSpecTracking] = useState(1);
@@ -248,7 +248,7 @@ export default function StoryCreator({ onBack }) {
 
   // 9. HUD Technical Coordinates ("[ 22° 09' N // 100° 58' W ]")
   const [hudCoordsText, setHudCoordsText] = useState('[ 22° 09\' N // 100° 58\' W ]');
-  const [hudCoordsSize, setHudCoordsSize] = useState(18);
+  const [hudCoordsSize, setHudCoordsSize] = useState(22);
   const [hudCoordsOffsetY, setHudCoordsOffsetY] = useState(0);
   const [hudCoordsOffsetX, setHudCoordsOffsetX] = useState(0);
   const [hudCoordsTracking, setHudCoordsTracking] = useState(1);
@@ -300,7 +300,7 @@ export default function StoryCreator({ onBack }) {
         setSubTitleColor('');
         break;
       case 'eventDate':
-        setEventDateSize(32);
+        setEventDateSize(38);
         setEventDateOffsetY(0);
         setEventDateOffsetX(0);
         setEventDateTracking(1);
@@ -309,7 +309,7 @@ export default function StoryCreator({ onBack }) {
         setEventDateColor('#FFFFFF');
         break;
       case 'eventVenue':
-        setEventVenueSize(26);
+        setEventVenueSize(32);
         setEventVenueOffsetY(0);
         setEventVenueOffsetX(0);
         setEventVenueTracking(1);
@@ -318,7 +318,7 @@ export default function StoryCreator({ onBack }) {
         setEventVenueColor('#CBD5E1');
         break;
       case 'booking':
-        setBookingTextSize(20);
+        setBookingTextSize(24);
         setBookingTextOffsetY(0);
         setBookingTextOffsetX(0);
         setBookingTextTracking(1);
@@ -327,7 +327,7 @@ export default function StoryCreator({ onBack }) {
         setBookingTextColor(techColor);
         break;
       case 'badgeTag':
-        setBadgeTagSize(22);
+        setBadgeTagSize(26);
         setBadgeTagOffsetY(0);
         setBadgeTagOffsetX(0);
         setBadgeTagTracking(0);
@@ -336,7 +336,7 @@ export default function StoryCreator({ onBack }) {
         setBadgeTagTextColor('#FFFFFF');
         break;
       case 'audioSpec':
-        setAudioSpecSize(18);
+        setAudioSpecSize(22);
         setAudioSpecOffsetY(0);
         setAudioSpecOffsetX(0);
         setAudioSpecTracking(1);
@@ -345,7 +345,7 @@ export default function StoryCreator({ onBack }) {
         setAudioSpecColor('rgba(255, 255, 255, 0.7)');
         break;
       case 'hudCoords':
-        setHudCoordsSize(18);
+        setHudCoordsSize(22);
         setHudCoordsOffsetY(0);
         setHudCoordsOffsetX(0);
         setHudCoordsTracking(1);
@@ -390,7 +390,7 @@ export default function StoryCreator({ onBack }) {
     setSubTitleUpper(true);
     setSubTitleColor('');
 
-    setEventDateSize(32);
+    setEventDateSize(38);
     setEventDateOffsetY(0);
     setEventDateOffsetX(0);
     setEventDateTracking(1);
@@ -398,7 +398,7 @@ export default function StoryCreator({ onBack }) {
     setEventDateUpper(true);
     setEventDateColor('#FFFFFF');
 
-    setEventVenueSize(26);
+    setEventVenueSize(32);
     setEventVenueOffsetY(0);
     setEventVenueOffsetX(0);
     setEventVenueTracking(1);
@@ -406,7 +406,7 @@ export default function StoryCreator({ onBack }) {
     setEventVenueUpper(true);
     setEventVenueColor('#CBD5E1');
 
-    setBookingTextSize(20);
+    setBookingTextSize(24);
     setBookingTextOffsetY(0);
     setBookingTextOffsetX(0);
     setBookingTextTracking(1);
@@ -414,7 +414,7 @@ export default function StoryCreator({ onBack }) {
     setBookingTextUpper(true);
     setBookingTextColor(techColor);
 
-    setBadgeTagSize(22);
+    setBadgeTagSize(26);
     setBadgeTagOffsetY(0);
     setBadgeTagOffsetX(0);
     setBadgeTagTracking(0);
@@ -422,7 +422,7 @@ export default function StoryCreator({ onBack }) {
     setBadgeTagUpper(true);
     setBadgeTagTextColor('#FFFFFF');
 
-    setAudioSpecSize(18);
+    setAudioSpecSize(22);
     setAudioSpecOffsetY(0);
     setAudioSpecOffsetX(0);
     setAudioSpecTracking(1);
@@ -430,7 +430,7 @@ export default function StoryCreator({ onBack }) {
     setAudioSpecUpper(true);
     setAudioSpecColor('rgba(255, 255, 255, 0.7)');
 
-    setHudCoordsSize(18);
+    setHudCoordsSize(22);
     setHudCoordsOffsetY(0);
     setHudCoordsOffsetX(0);
     setHudCoordsTracking(1);
@@ -1290,7 +1290,7 @@ export default function StoryCreator({ onBack }) {
           }
           ctx.fillStyle = hudCoordsColor || '#F8FAFC';
           ctx.textBaseline = 'middle';
-          const hudBaseY = (format === 'story' && frameFitSafeZone) ? 245 : 80;
+          const hudBaseY = (format === 'story' && frameFitSafeZone) ? 265 : 80;
 
           let hudX = 110 + hudCoordsOffsetX;
           if (hudCoordsAlign === 'center') {
@@ -1309,7 +1309,7 @@ export default function StoryCreator({ onBack }) {
       if (showEq) {
         ctx.save();
         const baseEqX = width - 220 + eqOffsetX;
-        const baseEqY = (format === 'story' ? 238 : 70) + eqOffsetY;
+        const baseEqY = (format === 'story' ? 258 : 70) + eqOffsetY;
         const barCount = 12;
         const baseHeights = [14, 22, 10, 26, 18, 12, 28, 20, 16, 24, 15, 8];
 
@@ -1368,7 +1368,7 @@ export default function StoryCreator({ onBack }) {
         let tagX = (width - tagW) / 2 + badgeTagOffsetX;
         if (badgeTagAlign === 'left') tagX = width * 0.12 + badgeTagOffsetX;
         if (badgeTagAlign === 'right') tagX = width * 0.88 - tagW + badgeTagOffsetX;
-        const tagBaseY = format === 'story' ? 300 : height * 0.08;
+        const tagBaseY = format === 'story' ? 345 : height * 0.08;
         const tagY = tagBaseY + badgeTagOffsetY;
 
         ctx.fillStyle = 'rgba(12, 12, 16, 0.85)';
@@ -1410,7 +1410,7 @@ export default function StoryCreator({ onBack }) {
         if (audioSpecAlign === 'right') specX = width * 0.88 + audioSpecOffsetX;
         ctx.textAlign = audioSpecAlign;
 
-        const specBaseY = format === 'story' ? 300 : height * 0.08;
+        const specBaseY = format === 'story' ? 345 : height * 0.08;
         const specY = specBaseY + (badgeTagSize * 2.4) + 20 + audioSpecOffsetY;
         ctx.fillText(specText, specX, specY);
 
@@ -1647,7 +1647,7 @@ export default function StoryCreator({ onBack }) {
 
         ctx.textAlign = eventVenueAlign;
         ctx.fillStyle = eventVenueColor || hexToRgba(textColor, 0.75);
-        ctx.fillText(textToRender, venueX, bottomBase + 55 + eventVenueOffsetY);
+        ctx.fillText(textToRender, venueX, bottomBase + 60 + eventVenueOffsetY);
       }
 
       // 6. Booking / Contact Info
@@ -1663,7 +1663,7 @@ export default function StoryCreator({ onBack }) {
 
         ctx.textAlign = bookingTextAlign;
         ctx.fillStyle = bookingTextColor || techColor;
-        ctx.fillText(textToRender, bookX, bottomBase + 92 + bookingTextOffsetY);
+        ctx.fillText(textToRender, bookX, bottomBase + 104 + bookingTextOffsetY);
       }
 
       ctx.restore();
