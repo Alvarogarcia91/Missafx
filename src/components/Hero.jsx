@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Flame, Volume2, VolumeX, RotateCcw } from 'lucide-react';
+import { Flame, Volume2, VolumeX, RotateCcw, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useSiteConfig } from '../context/SiteConfigContext';
 import { InstagramIcon, WhatsAppIcon, KickIcon, YouTubeIcon, SoundCloudIcon } from './SocialIcons';
@@ -140,6 +140,20 @@ export default function Hero() {
     if (lastVideoIndex !== null && lastVideoIndex >= 0 && lastVideoIndex < photos.length) {
       triggerHeroTransition(lastVideoIndex);
     }
+  };
+
+  const handlePrevSlide = (e) => {
+    if (e) e.stopPropagation();
+    if (photos.length <= 1) return;
+    const nextIdx = (photoIndex - 1 + photos.length) % photos.length;
+    triggerHeroTransition(nextIdx);
+  };
+
+  const handleNextSlide = (e) => {
+    if (e) e.stopPropagation();
+    if (photos.length <= 1) return;
+    const nextIdx = (photoIndex + 1) % photos.length;
+    triggerHeroTransition(nextIdx);
   };
 
   useEffect(() => {
@@ -874,6 +888,89 @@ export default function Hero() {
                     zIndex: 5
                   }}
                 />
+
+                {/* Carousel Navigation Arrows (Chiquitas) */}
+                {photos.length > 1 && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={handlePrevSlide}
+                      style={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: '10px',
+                        transform: 'translateY(-50%)',
+                        zIndex: 10,
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '50%',
+                        background: 'rgba(0, 0, 0, 0.65)',
+                        backdropFilter: 'blur(8px)',
+                        border: '1px solid rgba(255, 255, 255, 0.2)',
+                        color: '#FFFFFF',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: '0 4px 14px rgba(0, 0, 0, 0.6)',
+                        transition: 'all 0.2s ease',
+                        padding: 0
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.borderColor = '#FF003C';
+                        e.currentTarget.style.boxShadow = '0 0 14px rgba(255, 0, 60, 0.55)';
+                        e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+                        e.currentTarget.style.boxShadow = '0 4px 14px rgba(0, 0, 0, 0.6)';
+                        e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
+                      }}
+                      title="Elemento anterior"
+                    >
+                      <ChevronLeft size={16} />
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleNextSlide}
+                      style={{
+                        position: 'absolute',
+                        top: '50%',
+                        right: '10px',
+                        transform: 'translateY(-50%)',
+                        zIndex: 10,
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '50%',
+                        background: 'rgba(0, 0, 0, 0.65)',
+                        backdropFilter: 'blur(8px)',
+                        border: '1px solid rgba(255, 255, 255, 0.2)',
+                        color: '#FFFFFF',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: '0 4px 14px rgba(0, 0, 0, 0.6)',
+                        transition: 'all 0.2s ease',
+                        padding: 0
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.borderColor = '#FF003C';
+                        e.currentTarget.style.boxShadow = '0 0 14px rgba(255, 0, 60, 0.55)';
+                        e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+                        e.currentTarget.style.boxShadow = '0 4px 14px rgba(0, 0, 0, 0.6)';
+                        e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
+                      }}
+                      title="Siguiente elemento"
+                    >
+                      <ChevronRight size={16} />
+                    </button>
+                  </>
+                )}
               </div>
 
               {/* 10-Second countdown bar */}
