@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, MapPin, Ticket, Maximize2, X, ExternalLink, Sparkles, Play } from 'lucide-react';
+import { Calendar, MapPin, Ticket, Maximize2, X, ExternalLink, Sparkles, Play, Settings } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import {
   fetchEvents,
@@ -137,7 +137,36 @@ export default function UpcomingEvents({ onOpenAdmin, onEventsChange }) {
                 display: 'inline-block'
               }}
             />
-            {eText.tag}
+            <span>{eText.tag}</span>
+            {onOpenAdmin && (
+              <button
+                type="button"
+                onClick={onOpenAdmin}
+                title="Administrar eventos (PIN)"
+                aria-label="Administrar eventos"
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'rgba(255, 255, 255, 0.35)',
+                  cursor: 'pointer',
+                  padding: '2px 0 2px 4px',
+                  marginLeft: '4px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = '#FF003C';
+                  e.currentTarget.style.transform = 'rotate(45deg) scale(1.15)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = 'rgba(255, 255, 255, 0.35)';
+                  e.currentTarget.style.transform = 'rotate(0deg) scale(1.0)';
+                }}
+              >
+                <Settings size={13} />
+              </button>
+            )}
           </div>
 
           <h2
