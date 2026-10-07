@@ -114,13 +114,27 @@ export function checkIsVideo(file, url = '') {
 
 export function getCarouselItemAudio(url) {
   if (!url) return false;
-  return url.includes('#audio=true') || url.includes('#audio=1');
+  return url.includes('audio=true') || url.includes('audio=1');
+}
+
+export function getCarouselItemHidden(url) {
+  if (!url) return false;
+  return url.includes('hidden=true') || url.includes('active=false');
+}
+
+export function buildCarouselItemMetaUrl(url, { hasAudio = false, isHidden = false } = {}) {
+  if (!url) return '';
+  const clean = url.split('#')[0];
+  const tags = [];
+  if (hasAudio) tags.push('audio=true');
+  if (isHidden) tags.push('hidden=true');
+  return tags.length > 0 ? `${clean}#${tags.join('&')}` : clean;
 }
 
 export function buildCarouselItemUrl(url, hasAudio = false) {
   if (!url) return '';
-  const clean = url.split('#')[0];
-  return hasAudio ? `${clean}#audio=true` : clean;
+  const isHidden = getCarouselItemHidden(url);
+  return buildCarouselItemMetaUrl(url, { hasAudio, isHidden });
 }
 
 export function getCleanCarouselUrl(url) {
@@ -679,12 +693,20 @@ export async function fetchCarouselData() {
     cloudPhotos = DEFAULT_CAROUSEL_PHOTOS;
   }
 
-  return { photos: cloudPhotos, isRandom };
+  const activePhotos = cloudPhotos.filter(url => !getCarouselItemHidden(url));
+  const finalPhotos = activePhotos.length > 0 ? activePhotos : cloudPhotos;
+
+  return { photos: finalPhotos, allPhotos: cloudPhotos, isRandom };
 }
 
 export async function fetchCarouselPhotos() {
   const data = await fetchCarouselData();
   return data.photos;
+}
+
+export async function fetchAllCarouselPhotos() {
+  const data = await fetchCarouselData();
+  return data.allPhotos || data.photos;
 }
 
 export async function fetchCarouselRandom() {

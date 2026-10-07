@@ -28,7 +28,9 @@ import {
   Globe,
   Wand2,
   Volume2,
-  VolumeX
+  VolumeX,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import {
   fetchEvents,
@@ -51,12 +53,15 @@ import {
   isVideoMedia,
   checkIsVideo,
   fetchCarouselPhotos,
+  fetchAllCarouselPhotos,
   fetchCarouselData,
   saveCarouselPhotos,
   saveCarouselRandom,
   resetCarouselPhotos,
   DEFAULT_CAROUSEL_PHOTOS,
   getCarouselItemAudio,
+  getCarouselItemHidden,
+  buildCarouselItemMetaUrl,
   buildCarouselItemUrl,
   getCleanCarouselUrl
 } from '../utils/supabaseClient';
@@ -156,8 +161,11 @@ export default function EventAdminModal({ isOpen, onClose }) {
     setLoadingCarousel(true);
     try {
       const data = await fetchCarouselData();
-      if (data && Array.isArray(data.photos)) {
-        setCarouselPhotos(data.photos);
+      if (data) {
+        const fullList = (data.allPhotos && Array.isArray(data.allPhotos) && data.allPhotos.length > 0)
+          ? data.allPhotos
+          : (data.photos || []);
+        setCarouselPhotos(fullList);
         setCarouselIsRandom(Boolean(data.isRandom));
       }
     } catch (e) {
@@ -463,7 +471,8 @@ export default function EventAdminModal({ isOpen, onClose }) {
     try {
       const item = carouselPhotos[index];
       const currentlyHasAudio = getCarouselItemAudio(item);
-      const updatedItem = buildCarouselItemUrl(item, !currentlyHasAudio);
+      const isHidden = getCarouselItemHidden(item);
+      const updatedItem = buildCarouselItemMetaUrl(item, { hasAudio: !currentlyHasAudio, isHidden });
       const updated = [...carouselPhotos];
       updated[index] = updatedItem;
       await saveCarouselPhotos(updated);
@@ -471,6 +480,31 @@ export default function EventAdminModal({ isOpen, onClose }) {
       window.dispatchEvent(new CustomEvent('missafx-carousel-updated'));
     } catch (err) {
       alert('Error al cambiar audio: ' + err.message);
+    }
+  };
+
+  const handleToggleItemVisibility = async (index) => {
+    try {
+      const item = carouselPhotos[index];
+      const isHidden = getCarouselItemHidden(item);
+      const hasAudio = getCarouselItemAudio(item);
+      const nextHidden = !isHidden;
+
+      // Prevent hiding all items (must keep at least 1 active)
+      const activeCount = carouselPhotos.filter(p => !getCarouselItemHidden(p)).length;
+      if (!isHidden && activeCount <= 1) {
+        alert('Debe haber al menos 1 foto o video activo en el carrousel para que la página siempre tenga contenido visual.');
+        return;
+      }
+
+      const updatedItem = buildCarouselItemMetaUrl(item, { hasAudio, isHidden: nextHidden });
+      const updated = [...carouselPhotos];
+      updated[index] = updatedItem;
+      await saveCarouselPhotos(updated);
+      setCarouselPhotos(updated);
+      window.dispatchEvent(new CustomEvent('missafx-carousel-updated'));
+    } catch (err) {
+      alert('Error al cambiar visibilidad: ' + err.message);
     }
   };
 
@@ -525,6 +559,7 @@ export default function EventAdminModal({ isOpen, onClose }) {
   const detectedSetId = getYouTubeId(setYoutubeUrl);
   const isFlyerVideo = checkIsVideo(flyerFile, flyerPreview);
   const isCarouselVideo = checkIsVideo(carouselFile, carouselPreview);
+  const activeCarouselCount = carouselPhotos.filter(p => !getCarouselItemHidden(p)).length;
 
   return (
     <div
@@ -2114,11 +2149,13 @@ export default function EventAdminModal({ isOpen, onClose }) {
                     }}
                   >
                     <div>
-                      <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#FFFFFF' }}>
-                        FOTOS ACTIVAS EN CARROUSEL: {carouselPhotos.length}
+                      <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#FFFFFF', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                        <span>ELEMENTOS EN CARROUSEL:</span>
+                        <span style={{ color: '#22c55e' }}>{activeCarouselCount} ACTIVOS</span>
+                        <span style={{ color: '#94a3b8', fontSize: '0.80rem', fontWeight: 600 }}>({carouselPhotos.length} TOTALES)</span>
                       </div>
-                      <div style={{ fontSize: '0.74rem', color: '#94a3b8' }}>
-                        Aparecen en el Hero principal y en la sección Bio & Rider.
+                      <div style={{ fontSize: '0.74rem', color: '#94a3b8', marginTop: '2px' }}>
+                        Solo los activos se muestran en la web. Puedes pausar u ocultar cualquiera sin tener que borrarlo.
                       </div>
                     </div>
 
@@ -2488,6 +2525,7 @@ export default function EventAdminModal({ isOpen, onClose }) {
                         {carouselPhotos.map((photoUrl, idx) => {
                           const isVid = isVideoMedia(photoUrl);
                           const hasAudio = getCarouselItemAudio(photoUrl);
+                          const isHidden = getCarouselItemHidden(photoUrl);
 
                           return (
                             <div
@@ -2496,10 +2534,12 @@ export default function EventAdminModal({ isOpen, onClose }) {
                                 display: 'flex',
                                 alignItems: 'center',
                                 gap: '12px',
-                                background: 'rgba(255, 255, 255, 0.03)',
-                                border: '1px solid rgba(255, 255, 255, 0.08)',
+                                background: isHidden ? 'rgba(255, 255, 255, 0.015)' : 'rgba(255, 255, 255, 0.03)',
+                                border: isHidden ? '1px dashed rgba(239, 68, 68, 0.35)' : '1px solid rgba(255, 255, 255, 0.08)',
                                 padding: '10px 14px',
-                                borderRadius: '10px'
+                                borderRadius: '10px',
+                                opacity: isHidden ? 0.65 : 1,
+                                transition: 'all 0.2s ease'
                               }}
                             >
                               {/* Position Number */}
@@ -2508,8 +2548,8 @@ export default function EventAdminModal({ isOpen, onClose }) {
                                   width: '26px',
                                   height: '26px',
                                   borderRadius: '50%',
-                                  background: 'rgba(255, 0, 60, 0.15)',
-                                  color: '#FF003C',
+                                  background: isHidden ? 'rgba(255, 255, 255, 0.06)' : 'rgba(255, 0, 60, 0.15)',
+                                  color: isHidden ? '#94a3b8' : '#FF003C',
                                   display: 'flex',
                                   alignItems: 'center',
                                   justifyContent: 'center',
@@ -2522,46 +2562,69 @@ export default function EventAdminModal({ isOpen, onClose }) {
                               </span>
 
                               {/* Thumbnail */}
-                              {isVid ? (
-                                <video
-                                  src={getCleanCarouselUrl(photoUrl)}
-                                  autoPlay
-                                  loop
-                                  muted
-                                  playsInline
-                                  style={{
-                                    width: '48px',
-                                    height: '48px',
-                                    objectFit: 'cover',
-                                    borderRadius: '6px',
-                                    border: '1px solid rgba(255, 255, 255, 0.1)'
-                                  }}
-                                />
-                              ) : (
-                                <img
-                                  src={photoUrl}
-                                  alt=""
-                                  style={{
-                                    width: '48px',
-                                    height: '48px',
-                                    objectFit: 'cover',
-                                    borderRadius: '6px',
-                                    border: '1px solid rgba(255, 255, 255, 0.1)'
-                                  }}
-                                />
-                              )}
+                              <div style={{ position: 'relative', width: '48px', height: '48px', flexShrink: 0 }}>
+                                {isVid ? (
+                                  <video
+                                    src={getCleanCarouselUrl(photoUrl)}
+                                    autoPlay
+                                    loop
+                                    muted
+                                    playsInline
+                                    style={{
+                                      width: '100%',
+                                      height: '100%',
+                                      objectFit: 'cover',
+                                      borderRadius: '6px',
+                                      border: isHidden ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(255, 255, 255, 0.1)',
+                                      filter: isHidden ? 'grayscale(0.85)' : 'none'
+                                    }}
+                                  />
+                                ) : (
+                                  <img
+                                    src={photoUrl}
+                                    alt=""
+                                    style={{
+                                      width: '100%',
+                                      height: '100%',
+                                      objectFit: 'cover',
+                                      borderRadius: '6px',
+                                      border: isHidden ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(255, 255, 255, 0.1)',
+                                      filter: isHidden ? 'grayscale(0.85)' : 'none'
+                                    }}
+                                  />
+                                )}
+                                {isHidden && (
+                                  <div
+                                    style={{
+                                      position: 'absolute',
+                                      inset: 0,
+                                      background: 'rgba(0,0,0,0.55)',
+                                      borderRadius: '6px',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      color: '#f87171'
+                                    }}
+                                    title="Pausado / Oculto de la web"
+                                  >
+                                    <EyeOff size={16} />
+                                  </div>
+                                )}
+                              </div>
 
                               {/* Media path / url preview and badges */}
                               <div style={{ flex: 1, minWidth: 0 }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px', flexWrap: 'wrap' }}>
-                                  <span style={{ fontSize: '0.80rem', color: '#FFFFFF', fontWeight: 600 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '3px', flexWrap: 'wrap' }}>
+                                  <span style={{ fontSize: '0.80rem', color: isHidden ? '#94a3b8' : '#FFFFFF', fontWeight: 600 }}>
                                     {isVid ? 'Video Subido' : (photoUrl.startsWith('http') ? 'Foto Subida' : photoUrl.replace('/gallery/', 'Oficial: '))}
                                   </span>
+
                                   {isVid && (
                                     <span style={{ fontSize: '0.64rem', fontWeight: 800, color: '#38bdf8', background: 'rgba(56,189,248,0.2)', padding: '1px 6px', borderRadius: '4px' }}>
                                       MP4
                                     </span>
                                   )}
+
                                   {isVid && (
                                     <button
                                       type="button"
@@ -2585,75 +2648,123 @@ export default function EventAdminModal({ isOpen, onClose }) {
                                       <span>{hasAudio ? 'AUDIO 50%' : 'MUTE'}</span>
                                     </button>
                                   )}
+
+                                  {/* Visibility status tag */}
+                                  <span
+                                    style={{
+                                      fontSize: '0.64rem',
+                                      fontWeight: 800,
+                                      padding: '1px 6px',
+                                      borderRadius: '4px',
+                                      background: isHidden ? 'rgba(239, 68, 68, 0.18)' : 'rgba(34, 197, 94, 0.18)',
+                                      color: isHidden ? '#f87171' : '#22c55e',
+                                      border: isHidden ? '1px solid rgba(239, 68, 68, 0.35)' : '1px solid rgba(34, 197, 94, 0.35)'
+                                    }}
+                                  >
+                                    {isHidden ? 'OCULTO EN WEB' : 'ACTIVO EN WEB'}
+                                  </span>
                                 </div>
-                                <div style={{ fontSize: '0.70rem', color: '#94a3b8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                <div style={{ fontSize: '0.70rem', color: '#64748b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                   {getCleanCarouselUrl(photoUrl)}
                                 </div>
                               </div>
 
-                            {/* Reorder and Delete Actions */}
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                              <button
-                                onClick={() => handleMoveCarouselPhoto(idx, -1)}
-                                disabled={idx === 0}
-                                style={{
-                                  width: '28px',
-                                  height: '28px',
-                                  borderRadius: '6px',
-                                  background: 'rgba(255, 255, 255, 0.06)',
-                                  border: '1px solid rgba(255, 255, 255, 0.12)',
-                                  color: idx === 0 ? '#475569' : '#FFFFFF',
-                                  cursor: idx === 0 ? 'not-allowed' : 'pointer',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center'
-                                }}
-                                title="Subir orden"
-                              >
-                                <ArrowUp size={14} />
-                              </button>
+                              {/* Reorder, Visibility Toggle, and Delete Actions */}
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                {/* Visibility Toggle button */}
+                                <button
+                                  type="button"
+                                  onClick={() => handleToggleItemVisibility(idx)}
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '5px',
+                                    padding: '5px 9px',
+                                    borderRadius: '6px',
+                                    fontSize: '0.72rem',
+                                    fontWeight: 800,
+                                    cursor: 'pointer',
+                                    background: isHidden ? 'rgba(255, 255, 255, 0.05)' : 'rgba(34, 197, 94, 0.16)',
+                                    border: isHidden ? '1px solid rgba(255, 255, 255, 0.15)' : '1px solid rgba(34, 197, 94, 0.4)',
+                                    color: isHidden ? '#94a3b8' : '#22c55e',
+                                    transition: 'all 0.2s ease'
+                                  }}
+                                  title={isHidden ? 'Toca para activar en el carrousel' : 'Toca para pausar u ocultar del carrousel'}
+                                >
+                                  {isHidden ? (
+                                    <>
+                                      <EyeOff size={13} color="#94a3b8" />
+                                      <span>MOSTRAR</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Eye size={13} color="#22c55e" />
+                                      <span>EN WEB</span>
+                                    </>
+                                  )}
+                                </button>
 
-                              <button
-                                onClick={() => handleMoveCarouselPhoto(idx, 1)}
-                                disabled={idx === carouselPhotos.length - 1}
-                                style={{
-                                  width: '28px',
-                                  height: '28px',
-                                  borderRadius: '6px',
-                                  background: 'rgba(255, 255, 255, 0.06)',
-                                  border: '1px solid rgba(255, 255, 255, 0.12)',
-                                  color: idx === carouselPhotos.length - 1 ? '#475569' : '#FFFFFF',
-                                  cursor: idx === carouselPhotos.length - 1 ? 'not-allowed' : 'pointer',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center'
-                                }}
-                                title="Bajar orden"
-                              >
-                                <ArrowDown size={14} />
-                              </button>
+                                <button
+                                  onClick={() => handleMoveCarouselPhoto(idx, -1)}
+                                  disabled={idx === 0}
+                                  style={{
+                                    width: '28px',
+                                    height: '28px',
+                                    borderRadius: '6px',
+                                    background: 'rgba(255, 255, 255, 0.06)',
+                                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                                    color: idx === 0 ? '#475569' : '#FFFFFF',
+                                    cursor: idx === 0 ? 'not-allowed' : 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                  }}
+                                  title="Subir orden"
+                                >
+                                  <ArrowUp size={14} />
+                                </button>
 
-                              <button
-                                onClick={() => handleDeleteCarouselPhoto(idx)}
-                                disabled={carouselPhotos.length <= 1}
-                                style={{
-                                  width: '28px',
-                                  height: '28px',
-                                  borderRadius: '6px',
-                                  background: 'rgba(239, 68, 68, 0.15)',
-                                  border: '1px solid rgba(239, 68, 68, 0.3)',
-                                  color: carouselPhotos.length <= 1 ? '#475569' : '#ef4444',
-                                  cursor: carouselPhotos.length <= 1 ? 'not-allowed' : 'pointer',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  marginLeft: '4px'
-                                }}
-                                title="Eliminar del carrousel"
-                              >
-                                <Trash2 size={13} />
-                              </button>
-                            </div>
+                                <button
+                                  onClick={() => handleMoveCarouselPhoto(idx, 1)}
+                                  disabled={idx === carouselPhotos.length - 1}
+                                  style={{
+                                    width: '28px',
+                                    height: '28px',
+                                    borderRadius: '6px',
+                                    background: 'rgba(255, 255, 255, 0.06)',
+                                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                                    color: idx === carouselPhotos.length - 1 ? '#475569' : '#FFFFFF',
+                                    cursor: idx === carouselPhotos.length - 1 ? 'not-allowed' : 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                  }}
+                                  title="Bajar orden"
+                                >
+                                  <ArrowDown size={14} />
+                                </button>
+
+                                <button
+                                  onClick={() => handleDeleteCarouselPhoto(idx)}
+                                  disabled={carouselPhotos.length <= 1}
+                                  style={{
+                                    width: '28px',
+                                    height: '28px',
+                                    borderRadius: '6px',
+                                    background: 'rgba(239, 68, 68, 0.15)',
+                                    border: '1px solid rgba(239, 68, 68, 0.3)',
+                                    color: carouselPhotos.length <= 1 ? '#475569' : '#ef4444',
+                                    cursor: carouselPhotos.length <= 1 ? 'not-allowed' : 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    marginLeft: '2px'
+                                  }}
+                                  title="Eliminar del carrousel"
+                                >
+                                  <Trash2 size={13} />
+                                </button>
+                              </div>
                             </div>
                           );
                         })}
