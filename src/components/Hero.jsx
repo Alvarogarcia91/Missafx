@@ -1,9 +1,15 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Flame } from 'lucide-react';
+import { Flame, Volume2, VolumeX } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { InstagramIcon, WhatsAppIcon, KickIcon, YouTubeIcon, SoundCloudIcon } from './SocialIcons';
 import { PhotoQueueManager } from '../utils/shuffleQueue';
-import { fetchCarouselData, DEFAULT_CAROUSEL_PHOTOS } from '../utils/supabaseClient';
+import {
+  fetchCarouselData,
+  DEFAULT_CAROUSEL_PHOTOS,
+  isVideoMedia,
+  getCarouselItemAudio,
+  getCleanCarouselUrl
+} from '../utils/supabaseClient';
 
 export default function Hero() {
   const { t } = useLanguage();
@@ -15,10 +21,16 @@ export default function Hero() {
   const [prevPhotoIndex, setPrevPhotoIndex] = useState(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [progressKey, setProgressKey] = useState(0);
+  const [userMuted, setUserMuted] = useState(false);
 
+  const videoRef = useRef(null);
   const queueManager = useRef(null);
   const currentIdxRef = useRef(0);
   currentIdxRef.current = photoIndex;
+
+  const currentItem = photos[photoIndex % photos.length] || photos[0];
+  const isCurrentVideo = isVideoMedia(currentItem);
+  const hasAudioConfig = getCarouselItemAudio(currentItem);
 
   const loadPhotos = async () => {
     try {
@@ -74,6 +86,36 @@ export default function Hero() {
     }, 10000);
     return () => clearInterval(timer);
   }, [photos, isRandom, triggerHeroTransition]);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    if (isCurrentVideo) {
+      if (hasAudioConfig && !userMuted) {
+        video.volume = 0.5; // Default 50% volume as requested
+        video.muted = false;
+      } else {
+        video.muted = true;
+      }
+
+      const playPromise = video.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(() => {
+          // If browser policy blocked unmuted autoplay, fallback to muted
+          video.muted = true;
+          video.play().catch(() => {});
+        });
+      }
+    }
+
+    return () => {
+      if (video) {
+        video.pause();
+        video.muted = true;
+      }
+    };
+  }, [photoIndex, photos, isCurrentVideo, hasAudioConfig, userMuted]);
 
   return (
     <section
@@ -436,38 +478,132 @@ export default function Hero() {
 
                 {/* PREVIOUS SLIDE (glitch exit animation) */}
                 {prevPhotoIndex !== null && isTransitioning && photos[prevPhotoIndex] && (
-                  <img
-                    key={`hero-prev-${prevPhotoIndex}`}
-                    src={photos[prevPhotoIndex]}
-                    alt="DJ Missa en vivo"
-                    className="carousel-slide-exit"
+                  isVideoMedia(photos[prevPhotoIndex]) ? (
+                    <video
+                      key={`hero-prev-${prevPhotoIndex}`}
+                      src={getCleanCarouselUrl(photos[prevPhotoIndex])}
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                      className="carousel-slide-exit"
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        objectPosition: 'center 20%'
+                      }}
+                    />
+                  ) : (
+                    <img
+                      key={`hero-prev-${prevPhotoIndex}`}
+                      src={photos[prevPhotoIndex]}
+                      alt="DJ Missa en vivo"
+                      className="carousel-slide-exit"
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        objectPosition: 'center 20%'
+                      }}
+                    />
+                  )
+                )}
+
+                {/* CURRENT ACTIVE SLIDE */}
+                {isCurrentVideo ? (
+                  <video
+                    ref={videoRef}
+                    key={`hero-curr-${photoIndex}-${progressKey}`}
+                    src={getCleanCarouselUrl(currentItem)}
+                    autoPlay
+                    loop
+                    playsInline
+                    muted={!hasAudioConfig || userMuted}
+                    className={isTransitioning ? 'carousel-slide-enter' : 'carousel-ken-burns'}
                     style={{
                       position: 'absolute',
                       inset: 0,
                       width: '100%',
                       height: '100%',
                       objectFit: 'cover',
-                      objectPosition: 'center 20%'
+                      objectPosition: 'center 20%',
+                      filter: 'contrast(1.08) brightness(0.95)'
+                    }}
+                  />
+                ) : (
+                  <img
+                    key={`hero-curr-${photoIndex}-${progressKey}`}
+                    src={currentItem}
+                    alt="DJ Missa en vivo"
+                    className={isTransitioning ? 'carousel-slide-enter' : 'carousel-ken-burns'}
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      objectPosition: 'center 20%',
+                      filter: 'contrast(1.08) brightness(0.95)'
                     }}
                   />
                 )}
 
-                {/* CURRENT ACTIVE SLIDE */}
-                <img
-                  key={`hero-curr-${photoIndex}-${progressKey}`}
-                  src={photos[photoIndex % photos.length] || photos[0]}
-                  alt="DJ Missa en vivo"
-                  className={isTransitioning ? 'carousel-slide-enter' : 'carousel-ken-burns'}
-                  style={{
-                    position: 'absolute',
-                    inset: 0,
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                    objectPosition: 'center 20%',
-                    filter: 'contrast(1.08) brightness(0.95)'
-                  }}
-                />
+                {/* Floating mini audio toggle for videos */}
+                {isCurrentVideo && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setUserMuted((prev) => {
+                        const next = !prev;
+                        if (videoRef.current) {
+                          videoRef.current.volume = 0.5;
+                          videoRef.current.muted = next;
+                          if (!next) videoRef.current.play().catch(() => {});
+                        }
+                        return next;
+                      });
+                    }}
+                    style={{
+                      position: 'absolute',
+                      top: '16px',
+                      right: '16px',
+                      zIndex: 10,
+                      background: 'rgba(0, 0, 0, 0.75)',
+                      backdropFilter: 'blur(8px)',
+                      border: '1px solid rgba(255, 255, 255, 0.25)',
+                      borderRadius: '20px',
+                      padding: '5px 12px',
+                      color: '#FFFFFF',
+                      fontSize: '0.74rem',
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      boxShadow: '0 4px 15px rgba(0,0,0,0.5)',
+                      transition: 'all 0.2s ease'
+                    }}
+                    title={hasAudioConfig && !userMuted ? 'Silenciar audio' : 'Activar audio (50%)'}
+                  >
+                    {hasAudioConfig && !userMuted ? (
+                      <>
+                        <Volume2 size={14} color="#22c55e" />
+                        <span style={{ color: '#22c55e' }}>AUDIO 50%</span>
+                      </>
+                    ) : (
+                      <>
+                        <VolumeX size={14} color="#94a3b8" />
+                        <span style={{ color: '#94a3b8' }}>MUTE</span>
+                      </>
+                    )}
+                  </button>
+                )}
 
                 {/* Vignette Gradients */}
                 <div

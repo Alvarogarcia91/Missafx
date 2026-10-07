@@ -99,6 +99,22 @@ export function isVideoMedia(url) {
   return /\.(mp4|webm|mov)(\?.*)?$/i.test(url) || url.includes('/video/') || url.includes('.mp4');
 }
 
+export function getCarouselItemAudio(url) {
+  if (!url) return false;
+  return url.includes('#audio=true') || url.includes('#audio=1');
+}
+
+export function buildCarouselItemUrl(url, hasAudio = false) {
+  if (!url) return '';
+  const clean = url.split('#')[0];
+  return hasAudio ? `${clean}#audio=true` : clean;
+}
+
+export function getCleanCarouselUrl(url) {
+  if (!url) return '';
+  return url.split('#')[0];
+}
+
 export function getEventStatus(event) {
   if (!event) return 'none';
   if (event.status_badge && event.status_badge !== 'none') {

@@ -26,7 +26,9 @@ import {
   Phone,
   UserCheck,
   Globe,
-  Wand2
+  Wand2,
+  Volume2,
+  VolumeX
 } from 'lucide-react';
 import {
   fetchEvents,
@@ -52,7 +54,10 @@ import {
   saveCarouselPhotos,
   saveCarouselRandom,
   resetCarouselPhotos,
-  DEFAULT_CAROUSEL_PHOTOS
+  DEFAULT_CAROUSEL_PHOTOS,
+  getCarouselItemAudio,
+  buildCarouselItemUrl,
+  getCleanCarouselUrl
 } from '../utils/supabaseClient';
 
 const REQUIRED_PIN = '2305';
@@ -112,6 +117,7 @@ export default function EventAdminModal({ isOpen, onClose }) {
   const [carouselPreview, setCarouselPreview] = useState('');
   const [carouselStatus, setCarouselStatus] = useState('');
   const [carouselStatusMsg, setCarouselStatusMsg] = useState('');
+  const [carouselAudio, setCarouselAudio] = useState(false);
 
   useEffect(() => {
     if (isOpen && isAuthenticated) {
@@ -416,23 +422,43 @@ export default function EventAdminModal({ isOpen, onClose }) {
     setCarouselStatusMsg('');
 
     try {
-      const uploadedUrl = await uploadFlyerImage(carouselFile);
+      const isVid = (carouselFile && carouselFile.type?.startsWith('video/')) || isVideoMedia(carouselPreview);
+      let uploadedUrl = await uploadFlyerImage(carouselFile);
+      if (isVid && carouselAudio) {
+        uploadedUrl = buildCarouselItemUrl(uploadedUrl, true);
+      }
       const updated = [...carouselPhotos, uploadedUrl];
       await saveCarouselPhotos(updated);
       setCarouselPhotos(updated);
 
       setCarouselStatus('success');
-      setCarouselStatusMsg('¡Foto agregada al carrousel con éxito!');
+      setCarouselStatusMsg(isVid ? '¡Video agregado al carrousel con éxito!' : '¡Foto agregada al carrousel con éxito!');
       setCarouselFile(null);
       setCarouselPreview('');
+      setCarouselAudio(false);
 
       window.dispatchEvent(new CustomEvent('missafx-carousel-updated'));
     } catch (err) {
       console.error(err);
       setCarouselStatus('error');
-      setCarouselStatusMsg(err.message || 'Error al subir foto');
+      setCarouselStatusMsg(err.message || 'Error al subir archivo');
     } finally {
       setUploadingCarousel(false);
+    }
+  };
+
+  const handleToggleItemAudio = async (index) => {
+    try {
+      const item = carouselPhotos[index];
+      const currentlyHasAudio = getCarouselItemAudio(item);
+      const updatedItem = buildCarouselItemUrl(item, !currentlyHasAudio);
+      const updated = [...carouselPhotos];
+      updated[index] = updatedItem;
+      await saveCarouselPhotos(updated);
+      setCarouselPhotos(updated);
+      window.dispatchEvent(new CustomEvent('missafx-carousel-updated'));
+    } catch (err) {
+      alert('Error al cambiar audio: ' + err.message);
     }
   };
 
@@ -2213,7 +2239,7 @@ export default function EventAdminModal({ isOpen, onClose }) {
                     </label>
                   </div>
 
-                  {/* Upload New Photo Form */}
+                  {/* Upload New Photo/Video Form */}
                   <form onSubmit={handleUploadCarouselPhoto} style={{ marginBottom: '28px' }}>
                     <div
                       style={{
@@ -2229,7 +2255,7 @@ export default function EventAdminModal({ isOpen, onClose }) {
                     >
                       <input
                         type="file"
-                        accept="image/png, image/jpeg, image/webp"
+                        accept="image/png, image/jpeg, image/webp, video/mp4, video/webm, video/quicktime"
                         onChange={handleCarouselFileChange}
                         style={{
                           position: 'absolute',
@@ -2241,32 +2267,116 @@ export default function EventAdminModal({ isOpen, onClose }) {
 
                       {carouselPreview ? (
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
-                          <img
-                            src={carouselPreview}
-                            alt="Preview"
-                            style={{
-                              maxHeight: '140px',
-                              borderRadius: '8px',
-                              border: '1px solid rgba(255, 255, 255, 0.2)',
-                              display: 'block'
-                            }}
-                          />
+                          {(carouselFile && carouselFile.type?.startsWith('video/')) || isVideoMedia(carouselPreview) ? (
+                            <video
+                              src={carouselPreview}
+                              autoPlay
+                              loop
+                              muted={!carouselAudio}
+                              playsInline
+                              style={{
+                                maxHeight: '160px',
+                                maxWidth: '100%',
+                                borderRadius: '8px',
+                                border: '1px solid rgba(255, 255, 255, 0.2)',
+                                display: 'block'
+                              }}
+                            />
+                          ) : (
+                            <img
+                              src={carouselPreview}
+                              alt="Preview"
+                              style={{
+                                maxHeight: '140px',
+                                borderRadius: '8px',
+                                border: '1px solid rgba(255, 255, 255, 0.2)',
+                                display: 'block'
+                              }}
+                            />
+                          )}
                           <span style={{ fontSize: '0.78rem', color: '#22c55e', fontWeight: 700 }}>
-                            ✓ Foto seleccionada (toca para cambiar)
+                            ✓ {((carouselFile && carouselFile.type?.startsWith('video/')) || isVideoMedia(carouselPreview)) ? 'Video MP4 cargado' : 'Foto seleccionada'} (toca para cambiar)
                           </span>
                         </div>
                       ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
                           <Upload size={28} color="#FF003C" />
                           <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#FFFFFF' }}>
-                            Toca aquí para subir una nueva foto al carrousel
+                            Toca aquí para subir una nueva foto o video al carrousel
                           </div>
                           <div style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
-                            Acepta JPG, PNG, WEBP (se optimiza y sube a Supabase)
+                            Acepta Fotos (JPG, PNG, WEBP) o Videos (MP4, WEBM)
                           </div>
                         </div>
                       )}
                     </div>
+
+                    {/* Audio configuration if video is selected */}
+                    {carouselPreview && ((carouselFile && carouselFile.type?.startsWith('video/')) || isVideoMedia(carouselPreview)) && (
+                      <div
+                        style={{
+                          marginTop: '12px',
+                          padding: '12px 14px',
+                          borderRadius: '10px',
+                          background: 'rgba(255, 255, 255, 0.04)',
+                          border: '1px solid rgba(255, 255, 255, 0.1)'
+                        }}
+                      >
+                        <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: '#FFFFFF', marginBottom: '8px' }}>
+                          🔊 CONFIGURACIÓN DE AUDIO DEL VIDEO EN CARROUSEL:
+                        </label>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                          <button
+                            type="button"
+                            onClick={() => setCarouselAudio(false)}
+                            style={{
+                              padding: '10px 8px',
+                              borderRadius: '8px',
+                              border: !carouselAudio ? '2px solid #ef4444' : '1px solid rgba(255, 255, 255, 0.1)',
+                              background: !carouselAudio ? 'rgba(239, 68, 68, 0.18)' : 'rgba(255, 255, 255, 0.04)',
+                              color: !carouselAudio ? '#ef4444' : '#94a3b8',
+                              fontWeight: 800,
+                              fontSize: '0.76rem',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '6px'
+                            }}
+                          >
+                            <VolumeX size={15} />
+                            <span>🔇 SIN AUDIO (MUTE)</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => setCarouselAudio(true)}
+                            style={{
+                              padding: '10px 8px',
+                              borderRadius: '8px',
+                              border: carouselAudio ? '2px solid #22c55e' : '1px solid rgba(255, 255, 255, 0.1)',
+                              background: carouselAudio ? 'rgba(34, 197, 94, 0.18)' : 'rgba(255, 255, 255, 0.04)',
+                              color: carouselAudio ? '#22c55e' : '#94a3b8',
+                              fontWeight: 800,
+                              fontSize: '0.76rem',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '6px'
+                            }}
+                          >
+                            <Volume2 size={15} />
+                            <span>🔊 CON AUDIO (50% VOL)</span>
+                          </button>
+                        </div>
+                        <div style={{ fontSize: '0.70rem', color: '#94a3b8', marginTop: '6px' }}>
+                          {carouselAudio
+                            ? '✓ El video se reproducirá con audio al 50% de volumen de forma predeterminada cuando esté visible.'
+                            : '✓ El video se reproducirá en silencio como fondo animado continuo.'}
+                        </div>
+                      </div>
+                    )}
 
                     {carouselStatus === 'error' && (
                       <div
@@ -2330,7 +2440,11 @@ export default function EventAdminModal({ isOpen, onClose }) {
                           boxShadow: '0 4px 15px rgba(255, 0, 60, 0.4)'
                         }}
                       >
-                        {uploadingCarousel ? 'SUBIENDO A SUPABASE...' : 'AGREGAR ESTA FOTO AL CARROUSEL 🔥'}
+                        {uploadingCarousel
+                          ? 'SUBIENDO A SUPABASE...'
+                          : ((carouselFile && carouselFile.type?.startsWith('video/')) || isVideoMedia(carouselPreview))
+                          ? 'AGREGAR ESTE VIDEO AL CARROUSEL 🔥'
+                          : 'AGREGAR ESTA FOTO AL CARROUSEL 🔥'}
                       </button>
                     )}
                   </form>
@@ -2338,7 +2452,7 @@ export default function EventAdminModal({ isOpen, onClose }) {
                   {/* List of Carousel Photos */}
                   <div>
                     <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#FFFFFF', marginBottom: '12px' }}>
-                      FOTOS ACTUALES (ORDEN DE REPRODUCCIÓN)
+                      ELEMENTOS ACTUALES (FOTOS Y VIDEOS)
                     </div>
 
                     {loadingCarousel ? (
@@ -2347,60 +2461,111 @@ export default function EventAdminModal({ isOpen, onClose }) {
                       </div>
                     ) : (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                        {carouselPhotos.map((photoUrl, idx) => (
-                          <div
-                            key={photoUrl + idx}
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '12px',
-                              background: 'rgba(255, 255, 255, 0.03)',
-                              border: '1px solid rgba(255, 255, 255, 0.08)',
-                              padding: '10px 14px',
-                              borderRadius: '10px'
-                            }}
-                          >
-                            {/* Position Number */}
-                            <span
+                        {carouselPhotos.map((photoUrl, idx) => {
+                          const isVid = isVideoMedia(photoUrl);
+                          const hasAudio = getCarouselItemAudio(photoUrl);
+
+                          return (
+                            <div
+                              key={photoUrl + idx}
                               style={{
-                                width: '26px',
-                                height: '26px',
-                                borderRadius: '50%',
-                                background: 'rgba(255, 0, 60, 0.15)',
-                                color: '#FF003C',
                                 display: 'flex',
                                 alignItems: 'center',
-                                justifyContent: 'center',
-                                fontSize: '0.74rem',
-                                fontWeight: 900,
-                                fontFamily: 'monospace'
+                                gap: '12px',
+                                background: 'rgba(255, 255, 255, 0.03)',
+                                border: '1px solid rgba(255, 255, 255, 0.08)',
+                                padding: '10px 14px',
+                                borderRadius: '10px'
                               }}
                             >
-                              {idx + 1}
-                            </span>
+                              {/* Position Number */}
+                              <span
+                                style={{
+                                  width: '26px',
+                                  height: '26px',
+                                  borderRadius: '50%',
+                                  background: 'rgba(255, 0, 60, 0.15)',
+                                  color: '#FF003C',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  fontSize: '0.74rem',
+                                  fontWeight: 900,
+                                  fontFamily: 'monospace'
+                                }}
+                              >
+                                {idx + 1}
+                              </span>
 
-                            {/* Thumbnail */}
-                            <img
-                              src={photoUrl}
-                              alt=""
-                              style={{
-                                width: '48px',
-                                height: '48px',
-                                objectFit: 'cover',
-                                borderRadius: '6px',
-                                border: '1px solid rgba(255, 255, 255, 0.1)'
-                              }}
-                            />
+                              {/* Thumbnail */}
+                              {isVid ? (
+                                <video
+                                  src={getCleanCarouselUrl(photoUrl)}
+                                  autoPlay
+                                  loop
+                                  muted
+                                  playsInline
+                                  style={{
+                                    width: '48px',
+                                    height: '48px',
+                                    objectFit: 'cover',
+                                    borderRadius: '6px',
+                                    border: '1px solid rgba(255, 255, 255, 0.1)'
+                                  }}
+                                />
+                              ) : (
+                                <img
+                                  src={photoUrl}
+                                  alt=""
+                                  style={{
+                                    width: '48px',
+                                    height: '48px',
+                                    objectFit: 'cover',
+                                    borderRadius: '6px',
+                                    border: '1px solid rgba(255, 255, 255, 0.1)'
+                                  }}
+                                />
+                              )}
 
-                            {/* Photo path / url preview */}
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ fontSize: '0.80rem', color: '#FFFFFF', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: 600 }}>
-                                {photoUrl.startsWith('http') ? 'Foto Subida (Supabase)' : photoUrl.replace('/gallery/', 'Oficial: ')}
+                              {/* Media path / url preview and badges */}
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px', flexWrap: 'wrap' }}>
+                                  <span style={{ fontSize: '0.80rem', color: '#FFFFFF', fontWeight: 600 }}>
+                                    {isVid ? 'Video Subido' : (photoUrl.startsWith('http') ? 'Foto Subida' : photoUrl.replace('/gallery/', 'Oficial: '))}
+                                  </span>
+                                  {isVid && (
+                                    <span style={{ fontSize: '0.64rem', fontWeight: 800, color: '#38bdf8', background: 'rgba(56,189,248,0.2)', padding: '1px 6px', borderRadius: '4px' }}>
+                                      MP4
+                                    </span>
+                                  )}
+                                  {isVid && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleToggleItemAudio(idx)}
+                                      style={{
+                                        background: hasAudio ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.15)',
+                                        border: hasAudio ? '1px solid rgba(34, 197, 94, 0.4)' : '1px solid rgba(239, 68, 68, 0.3)',
+                                        color: hasAudio ? '#22c55e' : '#ef4444',
+                                        borderRadius: '4px',
+                                        padding: '1px 6px',
+                                        fontSize: '0.64rem',
+                                        fontWeight: 800,
+                                        cursor: 'pointer',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '3px'
+                                      }}
+                                      title={hasAudio ? 'Clic para silenciar este video' : 'Clic para activar audio al 50%'}
+                                    >
+                                      {hasAudio ? <Volume2 size={11} /> : <VolumeX size={11} />}
+                                      <span>{hasAudio ? 'AUDIO 50%' : 'MUTE'}</span>
+                                    </button>
+                                  )}
+                                </div>
+                                <div style={{ fontSize: '0.70rem', color: '#94a3b8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                  {getCleanCarouselUrl(photoUrl)}
+                                </div>
                               </div>
-                              <div style={{ fontSize: '0.70rem', color: '#94a3b8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                {photoUrl}
-                              </div>
-                            </div>
 
                             {/* Reorder and Delete Actions */}
                             <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -2465,8 +2630,9 @@ export default function EventAdminModal({ isOpen, onClose }) {
                                 <Trash2 size={13} />
                               </button>
                             </div>
-                          </div>
-                        ))}
+                            </div>
+                          );
+                        })}
                       </div>
                     )}
                   </div>

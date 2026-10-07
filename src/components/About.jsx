@@ -3,7 +3,7 @@ import { Sliders, Headphones } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { WhatsAppIcon } from './SocialIcons';
 import { PhotoQueueManager } from '../utils/shuffleQueue';
-import { fetchCarouselData, DEFAULT_CAROUSEL_PHOTOS } from '../utils/supabaseClient';
+import { fetchCarouselData, DEFAULT_CAROUSEL_PHOTOS, isVideoMedia, getCleanCarouselUrl } from '../utils/supabaseClient';
 
 export default function About() {
   const { t } = useLanguage();
@@ -163,38 +163,79 @@ export default function About() {
 
                 {/* PREVIOUS SLIDE (glitch exit animation) */}
                 {prevPhotoIndex !== null && isTransitioning && photos[prevPhotoIndex] && (
-                  <img
-                    key={`about-prev-${prevPhotoIndex}`}
-                    src={photos[prevPhotoIndex]}
-                    alt="DJ Missa"
-                    className="carousel-slide-exit"
+                  isVideoMedia(photos[prevPhotoIndex]) ? (
+                    <video
+                      key={`about-prev-${prevPhotoIndex}`}
+                      src={getCleanCarouselUrl(photos[prevPhotoIndex])}
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                      className="carousel-slide-exit"
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        objectPosition: 'center 20%'
+                      }}
+                    />
+                  ) : (
+                    <img
+                      key={`about-prev-${prevPhotoIndex}`}
+                      src={photos[prevPhotoIndex]}
+                      alt="DJ Missa"
+                      className="carousel-slide-exit"
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        objectPosition: 'center 20%'
+                      }}
+                    />
+                  )
+                )}
+
+                {/* CURRENT ACTIVE SLIDE */}
+                {isVideoMedia(photos[photoIndex % photos.length] || photos[0]) ? (
+                  <video
+                    key={`about-curr-${photoIndex}-${progressKey}`}
+                    src={getCleanCarouselUrl(photos[photoIndex % photos.length] || photos[0])}
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    className={isTransitioning ? 'carousel-slide-enter' : 'carousel-ken-burns'}
                     style={{
                       position: 'absolute',
                       inset: 0,
                       width: '100%',
                       height: '100%',
                       objectFit: 'cover',
-                      objectPosition: 'center 20%'
+                      objectPosition: 'center 20%',
+                      filter: 'contrast(1.08) brightness(0.96)'
+                    }}
+                  />
+                ) : (
+                  <img
+                    key={`about-curr-${photoIndex}-${progressKey}`}
+                    src={photos[photoIndex % photos.length] || photos[0]}
+                    alt="DJ Missa"
+                    className={isTransitioning ? 'carousel-slide-enter' : 'carousel-ken-burns'}
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      objectPosition: 'center 20%',
+                      filter: 'contrast(1.08) brightness(0.96)'
                     }}
                   />
                 )}
-
-                {/* CURRENT ACTIVE SLIDE */}
-                <img
-                  key={`about-curr-${photoIndex}-${progressKey}`}
-                  src={photos[photoIndex % photos.length] || photos[0]}
-                  alt="DJ Missa"
-                  className={isTransitioning ? 'carousel-slide-enter' : 'carousel-ken-burns'}
-                  style={{
-                    position: 'absolute',
-                    inset: 0,
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                    objectPosition: 'center 20%',
-                    filter: 'contrast(1.08) brightness(0.96)'
-                  }}
-                />
 
                 {/* Vignette Gradients */}
                 <div
