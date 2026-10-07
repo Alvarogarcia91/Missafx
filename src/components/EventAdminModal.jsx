@@ -47,7 +47,8 @@ import {
   Monitor,
   RefreshCw,
   BarChart2,
-  TrendingUp
+  TrendingUp,
+  Zap
 } from 'lucide-react';
 import {
   fetchEvents,
@@ -99,7 +100,10 @@ import {
   fetchSiteAnalytics,
   resetSiteAnalytics,
   resetEventClicks,
-  resetSetClicks
+  resetSetClicks,
+  formatFileSize,
+  getFileSizeAdvice,
+  compressImageFile
 } from '../utils/supabaseClient';
 
 const REQUIRED_PIN = '2305';
@@ -120,6 +124,8 @@ export default function EventAdminModal({ isOpen, onClose }) {
   const [editingEventId, setEditingEventId] = useState(null);
   const [flyerFile, setFlyerFile] = useState(null);
   const [flyerPreview, setFlyerPreview] = useState('');
+  const [isCompressingFlyer, setIsCompressingFlyer] = useState(false);
+  const [flyerCompressedInfo, setFlyerCompressedInfo] = useState(null);
   const [eventDate, setEventDate] = useState('');
   const [eventVenue, setEventVenue] = useState('SAN LUIS POTOSÍ • CLUB DOME');
   const [eventTitle, setEventTitle] = useState('EXCLUSIVE DJ SET');
@@ -157,6 +163,8 @@ export default function EventAdminModal({ isOpen, onClose }) {
   const [uploadingCarousel, setUploadingCarousel] = useState(false);
   const [carouselFile, setCarouselFile] = useState(null);
   const [carouselPreview, setCarouselPreview] = useState('');
+  const [isCompressingCarousel, setIsCompressingCarousel] = useState(false);
+  const [carouselCompressedInfo, setCarouselCompressedInfo] = useState(null);
   const [carouselStatus, setCarouselStatus] = useState('');
   const [carouselStatusMsg, setCarouselStatusMsg] = useState('');
   const [carouselAudio, setCarouselAudio] = useState(false);
@@ -507,10 +515,30 @@ export default function EventAdminModal({ isOpen, onClose }) {
         URL.revokeObjectURL(flyerPreview);
       }
       setFlyerFile(file);
+      setFlyerCompressedInfo(null);
       const url = URL.createObjectURL(file);
       setFlyerPreview(url);
     }
     e.target.value = '';
+  };
+
+  const handleCompressFlyer = async (e) => {
+    if (e) e.stopPropagation();
+    if (!flyerFile || isFlyerVideo) return;
+    setIsCompressingFlyer(true);
+    try {
+      const res = await compressImageFile(flyerFile, { maxWidth: 1920, maxHeight: 1920, quality: 0.82 });
+      if (flyerPreview && flyerPreview.startsWith('blob:')) {
+        URL.revokeObjectURL(flyerPreview);
+      }
+      setFlyerFile(res.file);
+      setFlyerPreview(res.previewUrl);
+      setFlyerCompressedInfo(`¡Comprimido con éxito! De ${formatFileSize(res.originalSize)} a ${formatFileSize(res.compressedSize)} (-${res.savingsPct}%)`);
+    } catch (err) {
+      alert('Error al comprimir flyer: ' + err.message);
+    } finally {
+      setIsCompressingFlyer(false);
+    }
   };
 
   const startEditEvent = (ev) => {
@@ -709,6 +737,7 @@ export default function EventAdminModal({ isOpen, onClose }) {
         URL.revokeObjectURL(carouselPreview);
       }
       setCarouselFile(file);
+      setCarouselCompressedInfo(null);
       const url = URL.createObjectURL(file);
       setCarouselPreview(url);
       setCarouselStartTime(0);
@@ -718,6 +747,25 @@ export default function EventAdminModal({ isOpen, onClose }) {
       setCarouselVolume(50);
     }
     e.target.value = '';
+  };
+
+  const handleCompressCarousel = async (e) => {
+    if (e) e.stopPropagation();
+    if (!carouselFile || isCarouselVideo) return;
+    setIsCompressingCarousel(true);
+    try {
+      const res = await compressImageFile(carouselFile, { maxWidth: 1920, maxHeight: 1920, quality: 0.82 });
+      if (carouselPreview && carouselPreview.startsWith('blob:')) {
+        URL.revokeObjectURL(carouselPreview);
+      }
+      setCarouselFile(res.file);
+      setCarouselPreview(res.previewUrl);
+      setCarouselCompressedInfo(`¡Comprimido con éxito! De ${formatFileSize(res.originalSize)} a ${formatFileSize(res.compressedSize)} (-${res.savingsPct}%)`);
+    } catch (err) {
+      alert('Error al comprimir foto: ' + err.message);
+    } finally {
+      setIsCompressingCarousel(false);
+    }
   };
 
   const handleUploadCarouselPhoto = async (e) => {
@@ -1477,6 +1525,143 @@ export default function EventAdminModal({ isOpen, onClose }) {
                             </div>
                           )}
                         </div>
+
+                        {/* File Weight & 1-Click Compression for Flyer */}
+                        {flyerFile && (() => {
+                          const advice = getFileSizeAdvice(flyerFile.size, isFlyerVideo);
+                          return (
+                            <div
+                              style={{
+                                marginTop: '10px',
+                                padding: '12px 14px',
+                                borderRadius: '10px',
+                                background:
+                                  advice.level === 'danger'
+                                    ? 'rgba(239, 68, 68, 0.08)'
+                                    : advice.level === 'warning'
+                                    ? 'rgba(245, 158, 11, 0.08)'
+                                    : 'rgba(34, 197, 94, 0.08)',
+                                border: `1px solid ${
+                                  advice.level === 'danger'
+                                    ? 'rgba(239, 68, 68, 0.3)'
+                                    : advice.level === 'warning'
+                                    ? 'rgba(245, 158, 11, 0.3)'
+                                    : 'rgba(34, 197, 94, 0.3)'
+                                }`,
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '8px'
+                              }}
+                            >
+                              <div
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'space-between',
+                                  flexWrap: 'wrap',
+                                  gap: '6px'
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    fontSize: '0.80rem',
+                                    color: '#FFFFFF',
+                                    fontWeight: 800
+                                  }}
+                                >
+                                  <span>⚖️ Peso del archivo:</span>
+                                  <span style={{ color: advice.color, fontSize: '0.92rem', fontWeight: 900 }}>
+                                    {formatFileSize(flyerFile.size)}
+                                  </span>
+                                </div>
+                                <span
+                                  style={{
+                                    fontSize: '0.72rem',
+                                    fontWeight: 800,
+                                    color: advice.color,
+                                    background: 'rgba(0, 0, 0, 0.4)',
+                                    padding: '3px 8px',
+                                    borderRadius: '6px',
+                                    border: `1px solid ${advice.color}40`
+                                  }}
+                                >
+                                  {advice.label}
+                                </span>
+                              </div>
+                              <div style={{ fontSize: '0.74rem', color: '#94a3b8', lineHeight: 1.4 }}>
+                                {advice.tip}
+                              </div>
+
+                              {flyerCompressedInfo && (
+                                <div
+                                  style={{
+                                    fontSize: '0.74rem',
+                                    color: '#22c55e',
+                                    fontWeight: 800,
+                                    background: 'rgba(34, 197, 94, 0.12)',
+                                    padding: '6px 10px',
+                                    borderRadius: '6px',
+                                    border: '1px solid rgba(34, 197, 94, 0.3)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '6px'
+                                  }}
+                                >
+                                  <CheckCircle size={14} />
+                                  <span>{flyerCompressedInfo}</span>
+                                </div>
+                              )}
+
+                              {!isFlyerVideo && (
+                                <button
+                                  type="button"
+                                  onClick={handleCompressFlyer}
+                                  disabled={isCompressingFlyer || flyerFile.size < 350 * 1024}
+                                  style={{
+                                    padding: '9px 14px',
+                                    borderRadius: '8px',
+                                    border: 'none',
+                                    background:
+                                      flyerFile.size < 350 * 1024
+                                        ? 'rgba(255, 255, 255, 0.05)'
+                                        : '#FF003C',
+                                    color:
+                                      flyerFile.size < 350 * 1024
+                                        ? '#94a3b8'
+                                        : '#FFFFFF',
+                                    fontWeight: 800,
+                                    fontSize: '0.78rem',
+                                    cursor:
+                                      isCompressingFlyer || flyerFile.size < 350 * 1024
+                                        ? 'default'
+                                        : 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '6px',
+                                    transition: 'all 0.2s ease',
+                                    boxShadow:
+                                      flyerFile.size >= 350 * 1024
+                                        ? '0 4px 14px rgba(255, 0, 60, 0.35)'
+                                        : 'none'
+                                  }}
+                                >
+                                  <Zap size={14} />
+                                  <span>
+                                    {isCompressingFlyer
+                                      ? 'Comprimiendo flyer...'
+                                      : flyerFile.size < 350 * 1024
+                                      ? 'Flyer optimizado (< 350 KB)'
+                                      : '⚡ Comprimir y Optimizar Flyer'}
+                                  </span>
+                                </button>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </div>
 
                       {/* Step 2: Date */}
@@ -3676,6 +3861,143 @@ export default function EventAdminModal({ isOpen, onClose }) {
                         </div>
                       )}
                     </div>
+
+                    {/* File Weight & 1-Click Compression for Carousel Media */}
+                    {carouselFile && (() => {
+                      const advice = getFileSizeAdvice(carouselFile.size, isCarouselVideo);
+                      return (
+                        <div
+                          style={{
+                            marginTop: '12px',
+                            padding: '12px 14px',
+                            borderRadius: '10px',
+                            background:
+                              advice.level === 'danger'
+                                ? 'rgba(239, 68, 68, 0.08)'
+                                : advice.level === 'warning'
+                                ? 'rgba(245, 158, 11, 0.08)'
+                                : 'rgba(34, 197, 94, 0.08)',
+                            border: `1px solid ${
+                              advice.level === 'danger'
+                                ? 'rgba(239, 68, 68, 0.3)'
+                                : advice.level === 'warning'
+                                ? 'rgba(245, 158, 11, 0.3)'
+                                : 'rgba(34, 197, 94, 0.3)'
+                            }`,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '8px'
+                          }}
+                        >
+                          <div
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              flexWrap: 'wrap',
+                              gap: '6px'
+                            }}
+                          >
+                            <div
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                fontSize: '0.80rem',
+                                color: '#FFFFFF',
+                                fontWeight: 800
+                              }}
+                            >
+                              <span>⚖️ Peso del archivo:</span>
+                              <span style={{ color: advice.color, fontSize: '0.92rem', fontWeight: 900 }}>
+                                {formatFileSize(carouselFile.size)}
+                              </span>
+                            </div>
+                            <span
+                              style={{
+                                fontSize: '0.72rem',
+                                fontWeight: 800,
+                                color: advice.color,
+                                background: 'rgba(0, 0, 0, 0.4)',
+                                padding: '3px 8px',
+                                borderRadius: '6px',
+                                border: `1px solid ${advice.color}40`
+                              }}
+                            >
+                              {advice.label}
+                            </span>
+                          </div>
+                          <div style={{ fontSize: '0.74rem', color: '#94a3b8', lineHeight: 1.4 }}>
+                            {advice.tip}
+                          </div>
+
+                          {carouselCompressedInfo && (
+                            <div
+                              style={{
+                                fontSize: '0.74rem',
+                                color: '#22c55e',
+                                fontWeight: 800,
+                                background: 'rgba(34, 197, 94, 0.12)',
+                                padding: '6px 10px',
+                                borderRadius: '6px',
+                                border: '1px solid rgba(34, 197, 94, 0.3)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px'
+                              }}
+                            >
+                              <CheckCircle size={14} />
+                              <span>{carouselCompressedInfo}</span>
+                            </div>
+                          )}
+
+                          {!isCarouselVideo && (
+                            <button
+                              type="button"
+                              onClick={handleCompressCarousel}
+                              disabled={isCompressingCarousel || carouselFile.size < 350 * 1024}
+                              style={{
+                                padding: '9px 14px',
+                                borderRadius: '8px',
+                                border: 'none',
+                                background:
+                                  carouselFile.size < 350 * 1024
+                                    ? 'rgba(255, 255, 255, 0.05)'
+                                    : '#FF003C',
+                                color:
+                                  carouselFile.size < 350 * 1024
+                                    ? '#94a3b8'
+                                    : '#FFFFFF',
+                                fontWeight: 800,
+                                fontSize: '0.78rem',
+                                cursor:
+                                  isCompressingCarousel || carouselFile.size < 350 * 1024
+                                    ? 'default'
+                                    : 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '6px',
+                                transition: 'all 0.2s ease',
+                                boxShadow:
+                                  carouselFile.size >= 350 * 1024
+                                    ? '0 4px 14px rgba(255, 0, 60, 0.35)'
+                                    : 'none'
+                              }}
+                            >
+                              <Zap size={14} />
+                              <span>
+                                {isCompressingCarousel
+                                  ? 'Comprimiendo imagen...'
+                                  : carouselFile.size < 350 * 1024
+                                  ? 'Imagen optimizada (< 350 KB)'
+                                  : '⚡ Comprimir y Optimizar Imagen'}
+                              </span>
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })()}
 
                     {/* Framing & Audio Controls when media is selected */}
                     {carouselPreview && (

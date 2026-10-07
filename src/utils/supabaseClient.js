@@ -1514,6 +1514,162 @@ export async function resetSetClicks(setId) {
   }
 }
 
+/**
+ * CLIENT-SIDE IMAGE COMPRESSION & FILE SIZE ADVICE
+ */
+export function formatFileSize(bytes) {
+  if (!bytes || bytes <= 0) return '0 KB';
+  if (bytes < 1024 * 1024) {
+    return `${(bytes / 1024).toFixed(0)} KB`;
+  }
+  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+}
+
+export function getFileSizeAdvice(bytes, isVideo = false) {
+  if (!bytes || bytes <= 0) {
+    return { level: 'good', label: 'Sin archivo', color: '#94a3b8', tip: '' };
+  }
+
+  if (isVideo) {
+    if (bytes > 6 * 1024 * 1024) {
+      return {
+        level: 'danger',
+        label: '🚨 Muy pesado (> 6 MB)',
+        color: '#ef4444',
+        tip: 'Los celulares tardarán en descargarlo. Se recomienda recortarlo o usar videos de menos de 4 MB para máxima fluidez.'
+      };
+    }
+    if (bytes > 3 * 1024 * 1024) {
+      return {
+        level: 'warning',
+        label: '⚠️ Peso moderado (3 - 6 MB)',
+        color: '#f59e0b',
+        tip: 'Aceptable, pero en redes móviles con 4G lento puede tomar algunos segundos antes de reproducir.'
+      };
+    }
+    return {
+      level: 'good',
+      label: '✅ Peso óptimo (< 3 MB)',
+      color: '#22c55e',
+      tip: 'Excelente tamaño para video web. Reproducirá de inmediato sin pausas.'
+    };
+  } else {
+    if (bytes > 1.8 * 1024 * 1024) {
+      return {
+        level: 'danger',
+        label: '🚨 Muy pesada (> 1.8 MB)',
+        color: '#ef4444',
+        tip: 'Alenta la carga en teléfonos. Toca el botón "Comprimir Imagen" para reducir hasta un 90% el peso manteniendo calidad HD.'
+      };
+    }
+    if (bytes > 650 * 1024) {
+      return {
+        level: 'warning',
+        label: '⚠️ Peso moderado (650 KB - 1.8 MB)',
+        color: '#f59e0b',
+        tip: 'Se sugiere comprimir para que la página cargue en milisegundos en cualquier conexión.'
+      };
+    }
+    return {
+      level: 'good',
+      label: '✅ Peso óptimo (< 650 KB)',
+      color: '#22c55e',
+      tip: 'Excelente tamaño ligero para la web. Cargará de inmediato.'
+    };
+  }
+}
+
+export async function compressImageFile(file, options = {}) {
+  return new Promise((resolve, reject) => {
+    if (!file || typeof window === 'undefined') {
+      return reject(new Error('Archivo no disponible'));
+    }
+    if (!file.type || !file.type.startsWith('image/')) {
+      return reject(new Error('El archivo seleccionado no es una imagen'));
+    }
+
+    const maxWidth = options.maxWidth || 1920;
+    const maxHeight = options.maxHeight || 1920;
+    const quality = options.quality !== undefined ? options.quality : 0.82;
+
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      let width = img.naturalWidth || img.width;
+      let height = img.naturalHeight || img.height;
+
+      if (!width || !height) {
+        width = img.width || 1200;
+        height = img.height || 1200;
+      }
+
+      // Constrain to maximum bounds preserving aspect ratio
+      if (width > maxWidth || height > maxHeight) {
+        if (width / height > maxWidth / maxHeight) {
+          height = Math.round((height * maxWidth) / width);
+          width = maxWidth;
+        } else {
+          width = Math.round((width * maxHeight) / height);
+          height = maxHeight;
+        }
+      }
+
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        return reject(new Error('No se pudo inicializar canvas 2D'));
+      }
+
+      // Smooth resampling
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(img, 0, 0, width, height);
+
+      // Always compress to JPEG for optimal size (unless small PNG icon)
+      const outputType = 'image/jpeg';
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) {
+            return reject(new Error('Error al procesar blob de imagen'));
+          }
+
+          let newName = file.name || 'compressed_image.jpg';
+          if (!newName.toLowerCase().endsWith('.jpg') && !newName.toLowerCase().endsWith('.jpeg')) {
+            newName = newName.replace(/\.[^.]+$/, '') + '.jpg';
+          }
+
+          const compressedFile = new File([blob], newName, {
+            type: outputType,
+            lastModified: Date.now()
+          });
+
+          resolve({
+            file: compressedFile,
+            originalSize: file.size,
+            compressedSize: compressedFile.size,
+            savingsPct: Math.round(((file.size - compressedFile.size) / file.size) * 100),
+            previewUrl: URL.createObjectURL(compressedFile)
+          });
+        },
+        outputType,
+        quality
+      );
+    };
+
+    img.onerror = (err) => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error('Error al cargar imagen para compresión: ' + (err.message || 'desconocido')));
+    };
+
+    img.src = objectUrl;
+  });
+}
+
 
 
 
