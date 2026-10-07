@@ -8,22 +8,29 @@ import {
   Calendar,
   MapPin,
   Trash2,
+  Edit2,
   Sparkles,
   ExternalLink,
   Plus,
   Tv,
   Play,
-  Film
+  Film,
+  Video
 } from 'lucide-react';
 import {
   fetchEvents,
   uploadFlyerImage,
   createEventRecord,
+  updateEventRecord,
   deleteEventRecord,
   fetchSets,
   createSetRecord,
   deleteSetRecord,
-  getYouTubeId
+  getYouTubeId,
+  getEventStatus,
+  getCleanTicketUrl,
+  getCleanTitle,
+  isVideoMedia
 } from '../utils/supabaseClient';
 
 const REQUIRED_PIN = '2305';
@@ -41,12 +48,14 @@ export default function EventAdminModal({ isOpen, onClose }) {
 
   // Events wizard form state
   const [activeTab, setActiveTab] = useState('create'); // 'create' | 'manage'
+  const [editingEventId, setEditingEventId] = useState(null);
   const [flyerFile, setFlyerFile] = useState(null);
   const [flyerPreview, setFlyerPreview] = useState('');
   const [eventDate, setEventDate] = useState('');
   const [eventVenue, setEventVenue] = useState('SAN LUIS POTOSÍ • CLUB DOME');
   const [eventTitle, setEventTitle] = useState('EXCLUSIVE DJ SET');
   const [ticketUrl, setTicketUrl] = useState('https://wa.me/5214443570777');
+  const [eventStatusBadge, setEventStatusBadge] = useState('none'); // 'none' | 'sold_out' | 'last_tickets'
 
   const [publishing, setPublishing] = useState(false);
   const [publishStatus, setPublishStatus] = useState(''); // 'success' | 'error' | ''
@@ -142,11 +151,38 @@ export default function EventAdminModal({ isOpen, onClose }) {
     }
   };
 
+  const startEditEvent = (ev) => {
+    setEditingEventId(ev.id);
+    setEventDate(ev.date || '');
+    setEventVenue(ev.venue || '');
+    setEventTitle(getCleanTitle(ev.title));
+    setTicketUrl(getCleanTicketUrl(ev.ticket_url));
+    setEventStatusBadge(getEventStatus(ev));
+    setFlyerPreview(ev.image_url || '');
+    setFlyerFile(null);
+    setPublishStatus('');
+    setStatusMessage('');
+    setActiveTab('create');
+  };
+
+  const cancelEditEvent = () => {
+    setEditingEventId(null);
+    setEventDate('');
+    setEventVenue('SAN LUIS POTOSÍ • CLUB DOME');
+    setEventTitle('EXCLUSIVE DJ SET');
+    setTicketUrl('https://wa.me/5214443570777');
+    setEventStatusBadge('none');
+    setFlyerPreview('');
+    setFlyerFile(null);
+    setPublishStatus('');
+    setStatusMessage('');
+  };
+
   const handlePublish = async (e) => {
     e.preventDefault();
-    if (!flyerFile) {
+    if (!flyerFile && !flyerPreview) {
       setPublishStatus('error');
-      setStatusMessage('Por favor selecciona o sube una imagen de flyer');
+      setStatusMessage('Por favor selecciona o sube un flyer (foto o video MP4)');
       return;
     }
     if (!eventDate.trim() || !eventVenue.trim()) {
@@ -160,25 +196,45 @@ export default function EventAdminModal({ isOpen, onClose }) {
     setStatusMessage('');
 
     try {
-      // 1. Upload flyer image to Supabase Storage
-      const uploadedUrl = await uploadFlyerImage(flyerFile);
+      let finalMediaUrl = flyerPreview;
+      if (flyerFile) {
+        finalMediaUrl = await uploadFlyerImage(flyerFile);
+      }
 
-      // 2. Create event record in Supabase Database
-      await createEventRecord({
-        title: eventTitle || 'EXCLUSIVE DJ SET',
-        date: eventDate,
-        venue: eventVenue,
-        imageUrl: uploadedUrl,
-        ticketUrl: ticketUrl
-      });
+      if (editingEventId) {
+        // UPDATE EVENT
+        await updateEventRecord(editingEventId, {
+          title: eventTitle || 'EXCLUSIVE DJ SET',
+          date: eventDate,
+          venue: eventVenue,
+          imageUrl: finalMediaUrl,
+          ticketUrl: ticketUrl,
+          statusBadge: eventStatusBadge
+        });
 
-      setPublishStatus('success');
-      setStatusMessage('¡Evento publicado con éxito en missafx.com!');
+        setPublishStatus('success');
+        setStatusMessage('¡Evento actualizado con éxito en missafx.com!');
+        setEditingEventId(null);
+      } else {
+        // CREATE EVENT
+        await createEventRecord({
+          title: eventTitle || 'EXCLUSIVE DJ SET',
+          date: eventDate,
+          venue: eventVenue,
+          imageUrl: finalMediaUrl,
+          ticketUrl: ticketUrl,
+          statusBadge: eventStatusBadge
+        });
+
+        setPublishStatus('success');
+        setStatusMessage('¡Evento publicado con éxito en missafx.com!');
+      }
 
       // Reset form
       setFlyerFile(null);
       setFlyerPreview('');
       setEventDate('');
+      setEventStatusBadge('none');
 
       // Notify parent component and reload list
       window.dispatchEvent(new CustomEvent('missafx-events-updated'));
@@ -186,7 +242,7 @@ export default function EventAdminModal({ isOpen, onClose }) {
     } catch (err) {
       console.error(err);
       setPublishStatus('error');
-      setStatusMessage(err.message || 'Error al publicar el evento');
+      setStatusMessage(err.message || 'Error al guardar el evento');
     } finally {
       setPublishing(false);
     }
@@ -197,6 +253,7 @@ export default function EventAdminModal({ isOpen, onClose }) {
     try {
       await deleteEventRecord(id);
       setEventsList((prev) => prev.filter((ev) => ev.id !== id));
+      if (editingEventId === id) cancelEditEvent();
       window.dispatchEvent(new CustomEvent('missafx-events-updated'));
     } catch (err) {
       alert('Error al eliminar: ' + err.message);
@@ -254,6 +311,7 @@ export default function EventAdminModal({ isOpen, onClose }) {
   if (!isOpen) return null;
 
   const detectedSetId = getYouTubeId(setYoutubeUrl);
+  const isFlyerVideo = (flyerFile && flyerFile.type?.startsWith('video/')) || isVideoMedia(flyerPreview);
 
   return (
     <div
@@ -274,7 +332,7 @@ export default function EventAdminModal({ isOpen, onClose }) {
         onClick={(e) => e.stopPropagation()}
         style={{
           width: '100%',
-          maxWidth: isAuthenticated ? '700px' : '380px',
+          maxWidth: isAuthenticated ? '720px' : '380px',
           maxHeight: '92vh',
           background: '#0c0c10',
           border: '1px solid rgba(255, 0, 60, 0.35)',
@@ -578,7 +636,9 @@ export default function EventAdminModal({ isOpen, onClose }) {
                     }}
                   >
                     <button
-                      onClick={() => setActiveTab('create')}
+                      onClick={() => {
+                        setActiveTab('create');
+                      }}
                       style={{
                         flex: 1,
                         padding: '10px 14px',
@@ -595,8 +655,8 @@ export default function EventAdminModal({ isOpen, onClose }) {
                         gap: '6px'
                       }}
                     >
-                      <Plus size={15} />
-                      Publicar Nuevo Flyer
+                      {editingEventId ? <Edit2 size={15} /> : <Plus size={15} />}
+                      {editingEventId ? 'Editando Evento' : 'Publicar Nuevo Flyer'}
                     </button>
 
                     <button
@@ -622,12 +682,51 @@ export default function EventAdminModal({ isOpen, onClose }) {
                   </div>
 
                   {activeTab === 'create' ? (
-                    /* FLYER WIZARD FORM */
+                    /* FLYER WIZARD FORM (CREATE / EDIT) */
                     <form onSubmit={handlePublish} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-                      {/* Step 1: Upload Flyer */}
+                      {/* Editing Banner */}
+                      {editingEventId && (
+                        <div
+                          style={{
+                            padding: '12px 16px',
+                            background: 'rgba(255, 0, 60, 0.12)',
+                            border: '1px solid rgba(255, 0, 60, 0.4)',
+                            borderRadius: '10px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            gap: '10px'
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <Edit2 size={16} color="#FF003C" />
+                            <span style={{ fontSize: '0.84rem', fontWeight: 800, color: '#FFFFFF' }}>
+                              MODO EDICIÓN DE EVENTO
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={cancelEditEvent}
+                            style={{
+                              background: 'transparent',
+                              border: '1px solid rgba(255, 255, 255, 0.2)',
+                              color: '#94a3b8',
+                              padding: '4px 10px',
+                              borderRadius: '6px',
+                              fontSize: '0.74rem',
+                              fontWeight: 700,
+                              cursor: 'pointer'
+                            }}
+                          >
+                            Cancelar edición
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Step 1: Upload Flyer (Photo or MP4 Video) */}
                       <div>
                         <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: 800, color: '#fff', marginBottom: '8px' }}>
-                          1. SELECCIONA EL FLYER (FOTO)
+                          1. SELECCIONA EL FLYER (FOTO O VIDEO MP4)
                         </label>
                         <div
                           style={{
@@ -643,7 +742,7 @@ export default function EventAdminModal({ isOpen, onClose }) {
                         >
                           <input
                             type="file"
-                            accept="image/png, image/jpeg, image/webp"
+                            accept="image/png, image/jpeg, image/webp, video/mp4, video/webm, video/quicktime"
                             onChange={handleFileChange}
                             style={{
                               position: 'absolute',
@@ -655,28 +754,45 @@ export default function EventAdminModal({ isOpen, onClose }) {
 
                           {flyerPreview ? (
                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
-                              <img
-                                src={flyerPreview}
-                                alt="Preview"
-                                style={{
-                                  maxHeight: '180px',
-                                  borderRadius: '8px',
-                                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                                  display: 'block'
-                                }}
-                              />
+                              {isFlyerVideo ? (
+                                <video
+                                  src={flyerPreview}
+                                  autoPlay
+                                  loop
+                                  muted
+                                  playsInline
+                                  style={{
+                                    maxHeight: '190px',
+                                    maxWidth: '100%',
+                                    borderRadius: '8px',
+                                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                                    display: 'block'
+                                  }}
+                                />
+                              ) : (
+                                <img
+                                  src={flyerPreview}
+                                  alt="Preview"
+                                  style={{
+                                    maxHeight: '180px',
+                                    borderRadius: '8px',
+                                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                                    display: 'block'
+                                  }}
+                                />
+                              )}
                               <span style={{ fontSize: '0.78rem', color: '#22c55e', fontWeight: 700 }}>
-                                ✓ Flyer seleccionado (clic para cambiar)
+                                ✓ Flyer {isFlyerVideo ? 'Video MP4' : 'Foto'} cargado (toca para cambiar)
                               </span>
                             </div>
                           ) : (
                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
                               <Upload size={32} color="#FF003C" />
                               <div style={{ fontSize: '0.90rem', fontWeight: 700, color: '#FFFFFF' }}>
-                                Toca aquí para subir el flyer desde tu celular o PC
+                                Toca aquí para subir flyer o video desde tu celular o PC
                               </div>
                               <div style={{ fontSize: '0.74rem', color: '#94a3b8' }}>
-                                Acepta JPG, PNG, WEBP (Flyers generados con StoryCreator)
+                                Acepta Fotos (JPG, PNG, WEBP) o Videos (MP4, WEBM)
                               </div>
                             </div>
                           )}
@@ -760,6 +876,71 @@ export default function EventAdminModal({ isOpen, onClose }) {
                         />
                       </div>
 
+                      {/* Step 5: Status Badge (Sold Out / Últimos Boletos / Normal) */}
+                      <div>
+                        <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: 800, color: '#fff', marginBottom: '8px' }}>
+                          5. ESTADO DE BOLETOS // MARCA DEL EVENTO
+                        </label>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
+                          <button
+                            type="button"
+                            onClick={() => setEventStatusBadge('none')}
+                            style={{
+                              padding: '12px 8px',
+                              borderRadius: '8px',
+                              border: eventStatusBadge === 'none' ? '2px solid #22c55e' : '1px solid rgba(255, 255, 255, 0.1)',
+                              background: eventStatusBadge === 'none' ? 'rgba(34, 197, 94, 0.18)' : 'rgba(255, 255, 255, 0.04)',
+                              color: eventStatusBadge === 'none' ? '#22c55e' : '#94a3b8',
+                              fontWeight: 800,
+                              fontSize: '0.78rem',
+                              cursor: 'pointer',
+                              textAlign: 'center',
+                              transition: 'all 0.2s ease'
+                            }}
+                          >
+                            🟢 EN VENTA (NORMAL)
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => setEventStatusBadge('last_tickets')}
+                            style={{
+                              padding: '12px 8px',
+                              borderRadius: '8px',
+                              border: eventStatusBadge === 'last_tickets' ? '2px solid #f59e0b' : '1px solid rgba(255, 255, 255, 0.1)',
+                              background: eventStatusBadge === 'last_tickets' ? 'rgba(245, 158, 11, 0.2)' : 'rgba(255, 255, 255, 0.04)',
+                              color: eventStatusBadge === 'last_tickets' ? '#fbbf24' : '#94a3b8',
+                              fontWeight: 800,
+                              fontSize: '0.78rem',
+                              cursor: 'pointer',
+                              textAlign: 'center',
+                              transition: 'all 0.2s ease'
+                            }}
+                          >
+                            ⚡ ÚLTIMOS BOLETOS
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => setEventStatusBadge('sold_out')}
+                            style={{
+                              padding: '12px 8px',
+                              borderRadius: '8px',
+                              border: eventStatusBadge === 'sold_out' ? '2px solid #ef4444' : '1px solid rgba(255, 255, 255, 0.1)',
+                              background: eventStatusBadge === 'sold_out' ? 'rgba(239, 68, 68, 0.22)' : 'rgba(255, 255, 255, 0.04)',
+                              color: eventStatusBadge === 'sold_out' ? '#ef4444' : '#94a3b8',
+                              fontWeight: 800,
+                              fontSize: '0.78rem',
+                              cursor: 'pointer',
+                              textAlign: 'center',
+                              transition: 'all 0.2s ease'
+                            }}
+                          >
+                            🔴 SOLD OUT (AGOTADO)
+                          </button>
+                        </div>
+                      </div>
+
                       {/* Status alert */}
                       {publishStatus === 'error' && (
                         <div
@@ -821,7 +1002,11 @@ export default function EventAdminModal({ isOpen, onClose }) {
                           transition: 'all 0.2s ease'
                         }}
                       >
-                        {publishing ? 'PUBLICANDO EN LA NUBE...' : 'PUBLICAR EVENTO AHORA 🔥'}
+                        {publishing
+                          ? 'GUARDANDO EN LA NUBE...'
+                          : editingEventId
+                          ? 'GUARDAR CAMBIOS // ACTUALIZAR EVENTO 💾'
+                          : 'PUBLICAR EVENTO AHORA 🔥'}
                       </button>
                     </form>
                   ) : (
@@ -833,7 +1018,7 @@ export default function EventAdminModal({ isOpen, onClose }) {
                         </div>
                       ) : eventsList.length === 0 ? (
                         <div style={{ textAlign: 'center', padding: '40px 0', color: '#94a3b8' }}>
-                          <p style={{ margin: '0 0 12px 0' }}>No hay eventos personalizados publicados todavía.</p>
+                          <p style={{ margin: '0 0 12px 0' }}>No hay eventos publicados todavía.</p>
                           <button
                             onClick={() => setActiveTab('create')}
                             style={{
@@ -851,64 +1036,136 @@ export default function EventAdminModal({ isOpen, onClose }) {
                         </div>
                       ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                          {eventsList.map((ev) => (
-                            <div
-                              key={ev.id}
-                              style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '14px',
-                                background: 'rgba(255, 255, 255, 0.03)',
-                                border: '1px solid rgba(255, 255, 255, 0.08)',
-                                padding: '12px 16px',
-                                borderRadius: '12px'
-                              }}
-                            >
-                              <img
-                                src={ev.image_url}
-                                alt=""
-                                style={{
-                                  width: '46px',
-                                  height: '64px',
-                                  objectFit: 'cover',
-                                  borderRadius: '6px',
-                                  border: '1px solid rgba(255, 255, 255, 0.1)'
-                                }}
-                              />
-                              <div style={{ flex: 1, minWidth: 0 }}>
-                                <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                  {ev.date}
-                                </div>
-                                <div style={{ fontSize: '0.78rem', color: '#94a3b8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                  {ev.venue}
-                                </div>
-                                <div style={{ fontSize: '0.72rem', color: '#FF003C', fontWeight: 700 }}>
-                                  {ev.title}
-                                </div>
-                              </div>
+                          {eventsList.map((ev) => {
+                            const status = getEventStatus(ev);
+                            const isVid = isVideoMedia(ev.image_url);
 
-                              <button
-                                onClick={() => handleDelete(ev.id)}
+                            return (
+                              <div
+                                key={ev.id}
                                 style={{
-                                  background: 'rgba(239, 68, 68, 0.15)',
-                                  border: '1px solid rgba(239, 68, 68, 0.3)',
-                                  borderRadius: '8px',
-                                  color: '#ef4444',
-                                  padding: '8px 12px',
                                   display: 'flex',
                                   alignItems: 'center',
-                                  gap: '6px',
-                                  cursor: 'pointer',
-                                  fontWeight: 700,
-                                  fontSize: '0.78rem'
+                                  gap: '14px',
+                                  background: 'rgba(255, 255, 255, 0.03)',
+                                  border: status === 'sold_out'
+                                    ? '1px solid rgba(239, 68, 68, 0.4)'
+                                    : status === 'last_tickets'
+                                    ? '1px solid rgba(245, 158, 11, 0.4)'
+                                    : '1px solid rgba(255, 255, 255, 0.08)',
+                                  padding: '12px 16px',
+                                  borderRadius: '12px'
                                 }}
-                                title="Eliminar evento"
                               >
-                                <Trash2 size={14} />
-                                <span>Eliminar</span>
-                              </button>
-                            </div>
-                          ))}
+                                <div
+                                  style={{
+                                    width: '46px',
+                                    height: '64px',
+                                    borderRadius: '6px',
+                                    overflow: 'hidden',
+                                    background: '#000',
+                                    flexShrink: 0,
+                                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                                    position: 'relative'
+                                  }}
+                                >
+                                  {isVid ? (
+                                    <video
+                                      src={ev.image_url}
+                                      autoPlay
+                                      loop
+                                      muted
+                                      playsInline
+                                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                    />
+                                  ) : (
+                                    <img
+                                      src={ev.image_url}
+                                      alt=""
+                                      style={{
+                                        width: '100%',
+                                        height: '100%',
+                                        objectFit: 'cover'
+                                      }}
+                                    />
+                                  )}
+                                </div>
+
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
+                                    <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                      {ev.date}
+                                    </div>
+                                    {status === 'sold_out' && (
+                                      <span style={{ fontSize: '0.66rem', fontWeight: 800, color: '#ef4444', background: 'rgba(239,68,68,0.2)', padding: '1px 6px', borderRadius: '4px' }}>
+                                        SOLD OUT
+                                      </span>
+                                    )}
+                                    {status === 'last_tickets' && (
+                                      <span style={{ fontSize: '0.66rem', fontWeight: 800, color: '#fbbf24', background: 'rgba(245,158,11,0.2)', padding: '1px 6px', borderRadius: '4px' }}>
+                                        ÚLTIMOS BOLETOS
+                                      </span>
+                                    )}
+                                    {isVid && (
+                                      <span style={{ fontSize: '0.64rem', fontWeight: 800, color: '#38bdf8', background: 'rgba(56,189,248,0.2)', padding: '1px 5px', borderRadius: '4px' }}>
+                                        MP4
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div style={{ fontSize: '0.78rem', color: '#94a3b8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                    {ev.venue}
+                                  </div>
+                                  <div style={{ fontSize: '0.72rem', color: '#FF003C', fontWeight: 700 }}>
+                                    {getCleanTitle(ev.title)}
+                                  </div>
+                                </div>
+
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                  <button
+                                    onClick={() => startEditEvent(ev)}
+                                    style={{
+                                      background: 'rgba(255, 255, 255, 0.08)',
+                                      border: '1px solid rgba(255, 255, 255, 0.15)',
+                                      borderRadius: '8px',
+                                      color: '#FFFFFF',
+                                      padding: '8px 12px',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: '6px',
+                                      cursor: 'pointer',
+                                      fontWeight: 700,
+                                      fontSize: '0.78rem'
+                                    }}
+                                    title="Editar evento"
+                                  >
+                                    <Edit2 size={14} color="#FF003C" />
+                                    <span>Editar</span>
+                                  </button>
+
+                                  <button
+                                    onClick={() => handleDelete(ev.id)}
+                                    style={{
+                                      background: 'rgba(239, 68, 68, 0.15)',
+                                      border: '1px solid rgba(239, 68, 68, 0.3)',
+                                      borderRadius: '8px',
+                                      color: '#ef4444',
+                                      padding: '8px 12px',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: '6px',
+                                      cursor: 'pointer',
+                                      fontWeight: 700,
+                                      fontSize: '0.78rem'
+                                    }}
+                                    title="Eliminar evento"
+                                  >
+                                    <Trash2 size={14} />
+                                    <span>Eliminar</span>
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
                       )}
                     </div>

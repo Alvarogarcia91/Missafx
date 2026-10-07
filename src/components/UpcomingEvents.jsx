@@ -1,12 +1,36 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, MapPin, Ticket, Maximize2, X, ExternalLink, Sparkles } from 'lucide-react';
-import { fetchEvents } from '../utils/supabaseClient';
+import { Calendar, MapPin, Ticket, Maximize2, X, ExternalLink, Sparkles, Play } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
+import {
+  fetchEvents,
+  isVideoMedia,
+  getEventStatus,
+  getCleanTicketUrl,
+  getCleanTitle
+} from '../utils/supabaseClient';
 import { WhatsAppIcon } from './SocialIcons';
 
 export default function UpcomingEvents({ onOpenAdmin, onEventsChange }) {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeFlyer, setActiveFlyer] = useState(null);
+  const { lang, t } = useLanguage();
+  const eText = t.events || {
+    tag: 'TOUR DATES // FECHAS EN VIVO',
+    title1: 'PRÓXIMOS',
+    title2: 'EVENTOS',
+    desc: 'Presentaciones en vivo, residencias y sesiones oficiales de Missafx. Selecciona cualquier flyer para verlo a pantalla completa o reservar tus accesos directos.',
+    loading: 'CARGANDO FECHAS DE TOQUINES...',
+    btnBook: 'Reservar // WhatsApp',
+    btnSoldOut: 'EVENTO AGOTADO',
+    btnLastTickets: 'ÚLTIMOS BOLETOS // WhatsApp',
+    badgeLive: 'LIVE SET',
+    badgeSoldOut: '🔴 AGOTADO // SOLD OUT',
+    badgeLastTickets: '⚡ ÚLTIMOS BOLETOS',
+    lightboxBook: 'Reservar',
+    lightboxSoldOut: 'Agotado',
+    videoBadge: 'VIDEO MP4'
+  };
 
   const loadEvents = async () => {
     setLoading(true);
@@ -27,11 +51,22 @@ export default function UpcomingEvents({ onOpenAdmin, onEventsChange }) {
   useEffect(() => {
     loadEvents();
 
-    // Listen to custom refresh event when Missa publishes or deletes from the wizard
+    // Listen to custom refresh event when Missa publishes, edits or deletes from the wizard
     const handleRefresh = () => loadEvents();
     window.addEventListener('missafx-events-updated', handleRefresh);
     return () => window.removeEventListener('missafx-events-updated', handleRefresh);
   }, []);
+
+  // Close lightbox on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') setActiveFlyer(null);
+    };
+    if (activeFlyer) {
+      window.addEventListener('keydown', handleKeyDown);
+    }
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [activeFlyer]);
 
   // When there are no events, hide the entire module completely so no fake events are displayed
   if (events.length === 0) {
@@ -96,7 +131,7 @@ export default function UpcomingEvents({ onOpenAdmin, onEventsChange }) {
                 display: 'inline-block'
               }}
             />
-            TOUR DATES // FECHAS EN VIVO
+            {eText.tag}
           </div>
 
           <h2
@@ -110,7 +145,7 @@ export default function UpcomingEvents({ onOpenAdmin, onEventsChange }) {
               color: '#FFFFFF'
             }}
           >
-            PRÓXIMOS <span style={{ color: '#FF003C', textShadow: '0 0 24px rgba(255, 0, 60, 0.6)' }}>EVENTOS</span>
+            {eText.title1} <span style={{ color: '#FF003C', textShadow: '0 0 24px rgba(255, 0, 60, 0.6)' }}>{eText.title2}</span>
           </h2>
 
           <p
@@ -122,7 +157,7 @@ export default function UpcomingEvents({ onOpenAdmin, onEventsChange }) {
               lineHeight: 1.6
             }}
           >
-            Presentaciones en vivo, residencias y sesiones oficiales de Missafx. Selecciona cualquier flyer para verlo a pantalla completa o reservar tus accesos directos.
+            {eText.desc}
           </p>
         </div>
 
@@ -150,7 +185,7 @@ export default function UpcomingEvents({ onOpenAdmin, onEventsChange }) {
                 animation: 'spin 0.8s linear infinite'
               }}
             />
-            CARGANDO FECHAS DE TOQUINES...
+            {eText.loading}
           </div>
         ) : (
           <div
@@ -161,228 +196,444 @@ export default function UpcomingEvents({ onOpenAdmin, onEventsChange }) {
               gap: '32px'
             }}
           >
-            {events.map((event) => (
-              <div
-                key={event.id}
-                style={{
-                  background: 'rgba(15, 15, 20, 0.85)',
-                  border: '1px solid rgba(255, 255, 255, 0.10)',
-                  borderRadius: '16px',
-                  overflow: 'hidden',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-                  boxShadow: '0 12px 30px rgba(0, 0, 0, 0.45)',
-                  position: 'relative'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = 'rgba(255, 0, 60, 0.5)';
-                  e.currentTarget.style.transform = 'translateY(-6px)';
-                  e.currentTarget.style.boxShadow = '0 18px 40px rgba(255, 0, 60, 0.2)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.10)';
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 12px 30px rgba(0, 0, 0, 0.45)';
-                }}
-              >
-                {/* HUD Header Bar: Fecha y Lugar */}
+            {events.map((event) => {
+              const status = getEventStatus(event);
+              const isVideo = isVideoMedia(event.image_url);
+              const cleanTitle = getCleanTitle(event.title);
+              const cleanTicket = getCleanTicketUrl(event.ticket_url);
+
+              return (
                 <div
+                  key={event.id}
                   style={{
-                    padding: '14px 16px',
-                    background: 'rgba(20, 20, 28, 0.95)',
-                    borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '6px'
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-                    <span
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        fontSize: '0.86rem',
-                        fontWeight: 900,
-                        fontFamily: '"Outfit", sans-serif',
-                        color: '#FFFFFF',
-                        letterSpacing: '0.04em'
-                      }}
-                    >
-                      <Calendar size={14} color="#FF003C" />
-                      {event.date}
-                    </span>
-
-                    <span
-                      style={{
-                        fontSize: '0.68rem',
-                        fontFamily: 'monospace',
-                        padding: '2px 8px',
-                        borderRadius: '4px',
-                        background: 'rgba(255, 0, 60, 0.15)',
-                        color: '#FF003C',
-                        fontWeight: 700,
-                        border: '1px solid rgba(255, 0, 60, 0.3)'
-                      }}
-                    >
-                      LIVE SET
-                    </span>
-                  </div>
-
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem', color: '#94a3b8' }}>
-                    <MapPin size={13} color="#94a3b8" />
-                    <span style={{ textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600 }}>
-                      {event.venue}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Vertical Flyer Container (9:16 aspect ratio) */}
-                <div
-                  onClick={() => setActiveFlyer(event)}
-                  style={{
-                    position: 'relative',
-                    aspectRatio: '9 / 14',
-                    width: '100%',
+                    background: 'rgba(15, 15, 20, 0.85)',
+                    border: status === 'sold_out'
+                      ? '1px solid rgba(239, 68, 68, 0.35)'
+                      : status === 'last_tickets'
+                      ? '1px solid rgba(245, 158, 11, 0.4)'
+                      : '1px solid rgba(255, 255, 255, 0.10)',
+                    borderRadius: '16px',
                     overflow: 'hidden',
-                    cursor: 'pointer',
-                    background: '#060608'
-                  }}
-                >
-                  <img
-                    src={event.image_url}
-                    alt={event.title || 'Flyer Missafx'}
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover',
-                      display: 'block',
-                      transition: 'transform 0.4s ease'
-                    }}
-                    onMouseEnter={(e) => e.target.style.transform = 'scale(1.04)'}
-                    onMouseLeave={(e) => e.target.style.transform = 'scale(1.0)'}
-                  />
-
-                  {/* Hover Overlay Hint */}
-                  <div
-                    style={{
-                      position: 'absolute',
-                      top: '12px',
-                      right: '12px',
-                      background: 'rgba(0, 0, 0, 0.65)',
-                      backdropFilter: 'blur(6px)',
-                      border: '1px solid rgba(255, 255, 255, 0.2)',
-                      borderRadius: '8px',
-                      padding: '6px',
-                      color: '#FFFFFF',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                    }}
-                    title="Ver a pantalla completa"
-                  >
-                    <Maximize2 size={14} />
-                  </div>
-                </div>
-
-                {/* Footer Bar: Title & Booking Button */}
-                <div
-                  style={{
-                    padding: '16px',
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '12px',
-                    background: 'rgba(12, 12, 16, 0.98)',
-                    borderTop: '1px solid rgba(255, 255, 255, 0.06)'
+                    transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+                    boxShadow: status === 'sold_out'
+                      ? '0 12px 30px rgba(239, 68, 68, 0.15)'
+                      : status === 'last_tickets'
+                      ? '0 12px 30px rgba(245, 158, 11, 0.18)'
+                      : '0 12px 30px rgba(0, 0, 0, 0.45)',
+                    position: 'relative'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = status === 'sold_out'
+                      ? 'rgba(239, 68, 68, 0.7)'
+                      : status === 'last_tickets'
+                      ? 'rgba(245, 158, 11, 0.8)'
+                      : 'rgba(255, 0, 60, 0.5)';
+                    e.currentTarget.style.transform = 'translateY(-6px)';
+                    e.currentTarget.style.boxShadow = status === 'sold_out'
+                      ? '0 18px 40px rgba(239, 68, 68, 0.3)'
+                      : status === 'last_tickets'
+                      ? '0 18px 40px rgba(245, 158, 11, 0.35)'
+                      : '0 18px 40px rgba(255, 0, 60, 0.2)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = status === 'sold_out'
+                      ? 'rgba(239, 68, 68, 0.35)'
+                      : status === 'last_tickets'
+                      ? 'rgba(245, 158, 11, 0.4)'
+                      : 'rgba(255, 255, 255, 0.10)';
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 12px 30px rgba(0, 0, 0, 0.45)';
                   }}
                 >
+                  {/* HUD Header Bar: Fecha y Lugar */}
                   <div
                     style={{
-                      fontSize: '0.92rem',
-                      fontWeight: 800,
-                      fontFamily: '"Syne", sans-serif',
-                      color: '#FFFFFF',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.02em',
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis'
+                      padding: '14px 16px',
+                      background: 'rgba(20, 20, 28, 0.95)',
+                      borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '6px'
                     }}
                   >
-                    {event.title || 'EXCLUSIVE DJ SET'}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                      <span
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          fontSize: '0.86rem',
+                          fontWeight: 900,
+                          fontFamily: '"Outfit", sans-serif',
+                          color: '#FFFFFF',
+                          letterSpacing: '0.04em'
+                        }}
+                      >
+                        <Calendar size={14} color="#FF003C" />
+                        {event.date}
+                      </span>
+
+                      {/* Header Badge */}
+                      {status === 'sold_out' ? (
+                        <span
+                          style={{
+                            fontSize: '0.68rem',
+                            fontFamily: 'monospace',
+                            padding: '2px 8px',
+                            borderRadius: '4px',
+                            background: 'rgba(239, 68, 68, 0.2)',
+                            color: '#ef4444',
+                            fontWeight: 800,
+                            border: '1px solid rgba(239, 68, 68, 0.5)',
+                            boxShadow: '0 0 10px rgba(239, 68, 68, 0.25)'
+                          }}
+                        >
+                          {eText.badgeSoldOut}
+                        </span>
+                      ) : status === 'last_tickets' ? (
+                        <span
+                          style={{
+                            fontSize: '0.68rem',
+                            fontFamily: 'monospace',
+                            padding: '2px 8px',
+                            borderRadius: '4px',
+                            background: 'rgba(245, 158, 11, 0.2)',
+                            color: '#fbbf24',
+                            fontWeight: 800,
+                            border: '1px solid rgba(245, 158, 11, 0.5)',
+                            boxShadow: '0 0 10px rgba(245, 158, 11, 0.25)'
+                          }}
+                        >
+                          {eText.badgeLastTickets}
+                        </span>
+                      ) : (
+                        <span
+                          style={{
+                            fontSize: '0.68rem',
+                            fontFamily: 'monospace',
+                            padding: '2px 8px',
+                            borderRadius: '4px',
+                            background: 'rgba(255, 0, 60, 0.15)',
+                            color: '#FF003C',
+                            fontWeight: 700,
+                            border: '1px solid rgba(255, 0, 60, 0.3)'
+                          }}
+                        >
+                          {eText.badgeLive}
+                        </span>
+                      )}
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem', color: '#94a3b8' }}>
+                      <MapPin size={13} color="#94a3b8" />
+                      <span style={{ textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600 }}>
+                        {event.venue}
+                      </span>
+                    </div>
                   </div>
 
-                  <a
-                    href={event.ticket_url || 'https://wa.me/5214443570777'}
-                    target="_blank"
-                    rel="noreferrer"
+                  {/* Vertical Flyer Container (9:14 aspect ratio) */}
+                  <div
+                    onClick={() => setActiveFlyer(event)}
                     style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '8px',
-                      padding: '10px 16px',
-                      borderRadius: '8px',
-                      background: '#FF003C',
-                      color: '#FFFFFF',
-                      fontWeight: 800,
-                      fontSize: '0.84rem',
-                      textDecoration: 'none',
-                      letterSpacing: '0.05em',
-                      textTransform: 'uppercase',
-                      transition: 'all 0.2s ease',
-                      boxShadow: '0 4px 15px rgba(255, 0, 60, 0.3)'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = '#ff1a4f';
-                      e.currentTarget.style.boxShadow = '0 6px 20px rgba(255, 0, 60, 0.5)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = '#FF003C';
-                      e.currentTarget.style.boxShadow = '0 4px 15px rgba(255, 0, 60, 0.3)';
+                      position: 'relative',
+                      aspectRatio: '9 / 14',
+                      width: '100%',
+                      overflow: 'hidden',
+                      cursor: 'pointer',
+                      background: '#060608'
                     }}
                   >
-                    <WhatsAppIcon size={16} color="#FFFFFF" />
-                    <span>Reservar // WhatsApp</span>
-                  </a>
+                    {/* Status Badge Watermark on Top of Flyer */}
+                    {status === 'sold_out' && (
+                      <div
+                        style={{
+                          position: 'absolute',
+                          top: '14px',
+                          left: '14px',
+                          background: 'rgba(220, 38, 38, 0.95)',
+                          backdropFilter: 'blur(8px)',
+                          color: '#FFFFFF',
+                          fontSize: '0.72rem',
+                          fontWeight: 900,
+                          fontFamily: 'monospace',
+                          padding: '4px 10px',
+                          borderRadius: '6px',
+                          letterSpacing: '0.08em',
+                          boxShadow: '0 4px 14px rgba(220, 38, 38, 0.6)',
+                          zIndex: 3
+                        }}
+                      >
+                        {eText.badgeSoldOut}
+                      </div>
+                    )}
+
+                    {status === 'last_tickets' && (
+                      <div
+                        style={{
+                          position: 'absolute',
+                          top: '14px',
+                          left: '14px',
+                          background: 'linear-gradient(135deg, #d97706 0%, #dc2626 100%)',
+                          backdropFilter: 'blur(8px)',
+                          color: '#FFFFFF',
+                          fontSize: '0.72rem',
+                          fontWeight: 900,
+                          fontFamily: 'monospace',
+                          padding: '4px 10px',
+                          borderRadius: '6px',
+                          letterSpacing: '0.08em',
+                          boxShadow: '0 4px 14px rgba(217, 119, 6, 0.6)',
+                          zIndex: 3
+                        }}
+                      >
+                        {eText.badgeLastTickets}
+                      </div>
+                    )}
+
+                    {/* Media: Video or Image */}
+                    {isVideo ? (
+                      <>
+                        <video
+                          src={event.image_url}
+                          autoPlay
+                          loop
+                          muted
+                          playsInline
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                            display: 'block'
+                          }}
+                        />
+                        <div
+                          style={{
+                            position: 'absolute',
+                            bottom: '12px',
+                            left: '12px',
+                            background: 'rgba(0, 0, 0, 0.75)',
+                            backdropFilter: 'blur(6px)',
+                            border: '1px solid rgba(255, 255, 255, 0.2)',
+                            borderRadius: '4px',
+                            padding: '3px 8px',
+                            color: '#FFFFFF',
+                            fontSize: '0.66rem',
+                            fontWeight: 800,
+                            fontFamily: 'monospace',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            zIndex: 2
+                          }}
+                        >
+                          <Play size={10} fill="#fff" />
+                          <span>{eText.videoBadge}</span>
+                        </div>
+                      </>
+                    ) : (
+                      <img
+                        src={event.image_url}
+                        alt={cleanTitle}
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                          display: 'block',
+                          transition: 'transform 0.4s ease'
+                        }}
+                        onMouseEnter={(e) => e.target.style.transform = 'scale(1.04)'}
+                        onMouseLeave={(e) => e.target.style.transform = 'scale(1.0)'}
+                      />
+                    )}
+
+                    {/* Hover Overlay Hint */}
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: '12px',
+                        right: '12px',
+                        background: 'rgba(0, 0, 0, 0.65)',
+                        backdropFilter: 'blur(6px)',
+                        border: '1px solid rgba(255, 255, 255, 0.2)',
+                        borderRadius: '8px',
+                        padding: '6px',
+                        color: '#FFFFFF',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 3
+                      }}
+                      title="Ver a pantalla completa"
+                    >
+                      <Maximize2 size={14} />
+                    </div>
+                  </div>
+
+                  {/* Footer Bar: Title & Booking Button */}
+                  <div
+                    style={{
+                      padding: '16px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '12px',
+                      background: 'rgba(12, 12, 16, 0.98)',
+                      borderTop: '1px solid rgba(255, 255, 255, 0.06)'
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: '0.92rem',
+                        fontWeight: 800,
+                        fontFamily: '"Syne", sans-serif',
+                        color: '#FFFFFF',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.02em',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                      }}
+                    >
+                      {cleanTitle}
+                    </div>
+
+                    {/* Action Button */}
+                    {status === 'sold_out' ? (
+                      <a
+                        href={cleanTicket}
+                        target="_blank"
+                        rel="noreferrer"
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '8px',
+                          padding: '10px 16px',
+                          borderRadius: '8px',
+                          background: 'rgba(239, 68, 68, 0.16)',
+                          border: '1px solid rgba(239, 68, 68, 0.45)',
+                          color: '#ef4444',
+                          fontWeight: 800,
+                          fontSize: '0.84rem',
+                          textDecoration: 'none',
+                          letterSpacing: '0.05em',
+                          textTransform: 'uppercase',
+                          boxShadow: '0 2px 10px rgba(239, 68, 68, 0.15)',
+                          transition: 'all 0.2s ease'
+                        }}
+                      >
+                        <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#ef4444' }} />
+                        <span>{eText.btnSoldOut}</span>
+                      </a>
+                    ) : status === 'last_tickets' ? (
+                      <a
+                        href={cleanTicket}
+                        target="_blank"
+                        rel="noreferrer"
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '8px',
+                          padding: '10px 16px',
+                          borderRadius: '8px',
+                          background: 'linear-gradient(135deg, #d97706 0%, #FF003C 100%)',
+                          color: '#FFFFFF',
+                          fontWeight: 800,
+                          fontSize: '0.84rem',
+                          textDecoration: 'none',
+                          letterSpacing: '0.05em',
+                          textTransform: 'uppercase',
+                          transition: 'all 0.2s ease',
+                          boxShadow: '0 4px 18px rgba(217, 119, 6, 0.4)'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.boxShadow = '0 6px 24px rgba(217, 119, 6, 0.6)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.boxShadow = '0 4px 18px rgba(217, 119, 6, 0.4)';
+                        }}
+                      >
+                        <WhatsAppIcon size={16} color="#FFFFFF" />
+                        <span>{eText.btnLastTickets}</span>
+                      </a>
+                    ) : (
+                      <a
+                        href={cleanTicket}
+                        target="_blank"
+                        rel="noreferrer"
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '8px',
+                          padding: '10px 16px',
+                          borderRadius: '8px',
+                          background: '#FF003C',
+                          color: '#FFFFFF',
+                          fontWeight: 800,
+                          fontSize: '0.84rem',
+                          textDecoration: 'none',
+                          letterSpacing: '0.05em',
+                          textTransform: 'uppercase',
+                          transition: 'all 0.2s ease',
+                          boxShadow: '0 4px 15px rgba(255, 0, 60, 0.3)'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = '#ff1a4f';
+                          e.currentTarget.style.boxShadow = '0 6px 20px rgba(255, 0, 60, 0.5)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = '#FF003C';
+                          e.currentTarget.style.boxShadow = '0 4px 15px rgba(255, 0, 60, 0.3)';
+                        }}
+                      >
+                        <WhatsAppIcon size={16} color="#FFFFFF" />
+                        <span>{eText.btnBook}</span>
+                      </a>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
 
-      {/* Lightbox Modal (Full HD Flyer View) */}
+      {/* Lightbox Modal (Full HD Flyer / Video View) */}
       {activeFlyer && (
         <div
           onClick={() => setActiveFlyer(null)}
           style={{
             position: 'fixed',
             inset: 0,
-            background: 'rgba(0, 0, 0, 0.92)',
-            backdropFilter: 'blur(10px)',
+            background: 'rgba(0, 0, 0, 0.94)',
+            backdropFilter: 'blur(12px)',
             zIndex: 99999,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: '24px'
+            padding: '20px'
           }}
         >
           <div
             onClick={(e) => e.stopPropagation()}
             style={{
               position: 'relative',
-              maxWidth: '540px',
+              maxWidth: '560px',
               width: '100%',
-              maxHeight: '90vh',
+              maxHeight: '92vh',
               display: 'flex',
               flexDirection: 'column',
               borderRadius: '16px',
               overflow: 'hidden',
               background: '#0c0c10',
-              border: '1px solid rgba(255, 0, 60, 0.35)',
-              boxShadow: '0 0 50px rgba(255, 0, 60, 0.25)'
+              border: getEventStatus(activeFlyer) === 'sold_out'
+                ? '1px solid rgba(239, 68, 68, 0.5)'
+                : '1px solid rgba(255, 0, 60, 0.35)',
+              boxShadow: '0 0 60px rgba(0, 0, 0, 0.9)'
             }}
           >
             {/* Close Button */}
@@ -408,13 +659,25 @@ export default function UpcomingEvents({ onOpenAdmin, onEventsChange }) {
               <X size={20} />
             </button>
 
-            {/* Flyer Image */}
-            <div style={{ flex: 1, overflow: 'auto', background: '#000000' }}>
-              <img
-                src={activeFlyer.image_url}
-                alt={activeFlyer.title}
-                style={{ width: '100%', height: 'auto', display: 'block' }}
-              />
+            {/* Media Content */}
+            <div style={{ flex: 1, overflow: 'auto', background: '#000000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {isVideoMedia(activeFlyer.image_url) ? (
+                <video
+                  src={activeFlyer.image_url}
+                  autoPlay
+                  loop
+                  muted
+                  controls
+                  playsInline
+                  style={{ width: '100%', maxHeight: '74vh', objectFit: 'contain', display: 'block' }}
+                />
+              ) : (
+                <img
+                  src={activeFlyer.image_url}
+                  alt={getCleanTitle(activeFlyer.title)}
+                  style={{ width: '100%', height: 'auto', maxHeight: '74vh', objectFit: 'contain', display: 'block' }}
+                />
+              )}
             </div>
 
             {/* Lightbox Footer */}
@@ -439,13 +702,13 @@ export default function UpcomingEvents({ onOpenAdmin, onEventsChange }) {
               </div>
 
               <a
-                href={activeFlyer.ticket_url || 'https://wa.me/5214443570777'}
+                href={getCleanTicketUrl(activeFlyer.ticket_url)}
                 target="_blank"
                 rel="noreferrer"
                 style={{
                   padding: '10px 18px',
                   borderRadius: '8px',
-                  background: '#FF003C',
+                  background: getEventStatus(activeFlyer) === 'sold_out' ? '#ef4444' : '#FF003C',
                   color: '#FFFFFF',
                   fontWeight: 800,
                   fontSize: '0.84rem',
@@ -455,7 +718,11 @@ export default function UpcomingEvents({ onOpenAdmin, onEventsChange }) {
                   gap: '6px'
                 }}
               >
-                <span>Reservar</span>
+                <span>
+                  {getEventStatus(activeFlyer) === 'sold_out'
+                    ? eText.lightboxSoldOut
+                    : eText.lightboxBook}
+                </span>
                 <ExternalLink size={14} />
               </a>
             </div>

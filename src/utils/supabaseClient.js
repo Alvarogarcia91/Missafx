@@ -29,45 +29,118 @@ export async function fetchEvents() {
   }
 }
 
+export function isVideoMedia(url) {
+  if (!url) return false;
+  return /\.(mp4|webm|mov)(\?.*)?$/i.test(url) || url.includes('/video/') || url.includes('.mp4');
+}
+
+export function getEventStatus(event) {
+  if (!event) return 'none';
+  if (event.status_badge && event.status_badge !== 'none') {
+    return event.status_badge;
+  }
+  const tUrl = event.ticket_url || '';
+  if (tUrl.includes('#status=sold_out') || tUrl.includes('#sold_out')) return 'sold_out';
+  if (tUrl.includes('#status=last_tickets') || tUrl.includes('#last_tickets')) return 'last_tickets';
+
+  const title = event.title || '';
+  if (title.includes('[SOLD_OUT]') || title.includes('[AGOTADO]')) return 'sold_out';
+  if (title.includes('[LAST_TICKETS]') || title.includes('[ULTIMOS_BOLETOS]')) return 'last_tickets';
+
+  return 'none';
+}
+
+export function getCleanTicketUrl(url) {
+  if (!url) return 'https://wa.me/5214443570777';
+  return url.split('#')[0];
+}
+
+export function getCleanTitle(title) {
+  if (!title) return 'EXCLUSIVE DJ SET';
+  return title.replace(/\[(SOLD_OUT|AGOTADO|LAST_TICKETS|ULTIMOS_BOLETOS)\]/gi, '').trim();
+}
+
 export async function uploadFlyerImage(file) {
-  const ext = file.name ? file.name.split('.').pop().toLowerCase() : 'jpg';
-  const cleanExt = ['jpg', 'jpeg', 'png', 'webp'].includes(ext) ? ext : 'jpg';
-  const fileName = `flyer_${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${cleanExt}`;
+  const rawExt = file.name ? file.name.split('.').pop().toLowerCase() : '';
+  const isVideo = ['mp4', 'webm', 'mov'].includes(rawExt) || (file.type && file.type.startsWith('video/'));
+  const validExts = ['jpg', 'jpeg', 'png', 'webp', 'mp4', 'webm', 'mov'];
+  const ext = validExts.includes(rawExt) ? rawExt : (isVideo ? 'mp4' : 'jpg');
+  
+  const fileName = `flyer_${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${ext}`;
   const uploadUrl = `${SUPABASE_URL}/storage/v1/object/flyers/${fileName}`;
+
+  let contentType = file.type;
+  if (!contentType) {
+    if (ext === 'mp4') contentType = 'video/mp4';
+    else if (ext === 'webm') contentType = 'video/webm';
+    else if (ext === 'mov') contentType = 'video/quicktime';
+    else contentType = 'image/jpeg';
+  }
 
   const res = await fetch(uploadUrl, {
     method: 'POST',
     headers: {
       apikey: SUPABASE_KEY,
       Authorization: `Bearer ${SUPABASE_KEY}`,
-      'Content-Type': file.type || 'image/jpeg'
+      'Content-Type': contentType
     },
     body: file
   });
 
   if (!res.ok) {
     const errText = await res.text();
-    throw new Error(`Error al subir imagen a Supabase: ${errText}`);
+    throw new Error(`Error al subir archivo a Supabase: ${errText}`);
   }
 
   // Returns public CDN URL
   return `${SUPABASE_URL}/storage/v1/object/public/flyers/${fileName}`;
 }
 
-export async function createEventRecord({ title, date, venue, imageUrl, ticketUrl }) {
+export async function createEventRecord({ title, date, venue, imageUrl, ticketUrl, statusBadge = 'none' }) {
+  let cleanTicketUrl = getCleanTicketUrl(ticketUrl);
+  if (statusBadge === 'sold_out') {
+    cleanTicketUrl += '#status=sold_out';
+  } else if (statusBadge === 'last_tickets') {
+    cleanTicketUrl += '#status=last_tickets';
+  }
+
+  const basePayload = {
+    title: title ? title.trim() : 'EXCLUSIVE DJ SET',
+    date: date.trim(),
+    venue: venue.trim(),
+    image_url: imageUrl,
+    ticket_url: cleanTicketUrl
+  };
+
+  // Try with status_badge column
+  try {
+    const resWithCol = await fetch(`${SUPABASE_URL}/rest/v1/events`, {
+      method: 'POST',
+      headers: {
+        ...defaultHeaders,
+        Prefer: 'return=representation'
+      },
+      body: JSON.stringify({
+        ...basePayload,
+        status_badge: statusBadge
+      })
+    });
+    if (resWithCol.ok) {
+      const data = await resWithCol.json();
+      return Array.isArray(data) ? data[0] : data;
+    }
+  } catch (e) {
+    // fallback
+  }
+
+  // Fallback without status_badge column (status preserved via ticket_url hash)
   const res = await fetch(`${SUPABASE_URL}/rest/v1/events`, {
     method: 'POST',
     headers: {
       ...defaultHeaders,
       Prefer: 'return=representation'
     },
-    body: JSON.stringify({
-      title: title || 'EXCLUSIVE DJ SET',
-      date: date.trim(),
-      venue: venue.trim(),
-      image_url: imageUrl,
-      ticket_url: ticketUrl ? ticketUrl.trim() : 'https://wa.me/5214443570777'
-    })
+    body: JSON.stringify(basePayload)
   });
 
   if (!res.ok) {
@@ -77,6 +150,71 @@ export async function createEventRecord({ title, date, venue, imageUrl, ticketUr
 
   const data = await res.json();
   return Array.isArray(data) ? data[0] : data;
+}
+
+export async function updateEventRecord(id, { title, date, venue, imageUrl, ticketUrl, statusBadge = 'none' }) {
+  let cleanTicketUrl = getCleanTicketUrl(ticketUrl);
+  if (statusBadge === 'sold_out') {
+    cleanTicketUrl += '#status=sold_out';
+  } else if (statusBadge === 'last_tickets') {
+    cleanTicketUrl += '#status=last_tickets';
+  }
+
+  const payload = {
+    title: title ? title.trim() : 'EXCLUSIVE DJ SET',
+    date: date.trim(),
+    venue: venue.trim(),
+    ticket_url: cleanTicketUrl
+  };
+  if (imageUrl) {
+    payload.image_url = imageUrl;
+  }
+
+  // 1. Try PATCH with status_badge column
+  try {
+    const resWithBadge = await fetch(`${SUPABASE_URL}/rest/v1/events?id=eq.${id}`, {
+      method: 'PATCH',
+      headers: {
+        ...defaultHeaders,
+        Prefer: 'return=representation'
+      },
+      body: JSON.stringify({
+        ...payload,
+        status_badge: statusBadge
+      })
+    });
+    if (resWithBadge.ok) {
+      const data = await resWithBadge.json();
+      if (Array.isArray(data) && data.length > 0) return data[0];
+    }
+  } catch (e) {}
+
+  // 2. Try PATCH without status_badge column
+  try {
+    const resPatch = await fetch(`${SUPABASE_URL}/rest/v1/events?id=eq.${id}`, {
+      method: 'PATCH',
+      headers: {
+        ...defaultHeaders,
+        Prefer: 'return=representation'
+      },
+      body: JSON.stringify(payload)
+    });
+    if (resPatch.ok) {
+      const data = await resPatch.json();
+      if (Array.isArray(data) && data.length > 0) return data[0];
+    }
+  } catch (e) {}
+
+  // 3. Fallback: If PATCH is blocked by RLS policies (0 rows updated), perform Delete + Re-Insert
+  await deleteEventRecord(id);
+  return await createEventRecord({
+    title: payload.title,
+    date: payload.date,
+    venue: payload.venue,
+    imageUrl: payload.image_url || imageUrl,
+    ticketUrl: payload.ticket_url,
+    statusBadge
+  });
 }
 
 export async function deleteEventRecord(id) {

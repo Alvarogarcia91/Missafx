@@ -28,6 +28,22 @@ export const translations = {
       photoTab1: '01 EN CABINA PIONEER',
       photoTab2: '02 ARCHIVO CLUBBER'
     },
+    events: {
+      tag: 'TOUR DATES // FECHAS EN VIVO',
+      title1: 'PRÓXIMOS',
+      title2: 'EVENTOS',
+      desc: 'Presentaciones en vivo, residencias y sesiones oficiales de Missafx. Selecciona cualquier flyer para verlo a pantalla completa o reservar tus accesos directos.',
+      loading: 'CARGANDO FECHAS DE TOQUINES...',
+      btnBook: 'Reservar // WhatsApp',
+      btnSoldOut: 'EVENTO AGOTADO',
+      btnLastTickets: 'ÚLTIMOS BOLETOS // WhatsApp',
+      badgeLive: 'LIVE SET',
+      badgeSoldOut: '🔴 AGOTADO // SOLD OUT',
+      badgeLastTickets: '⚡ ÚLTIMOS BOLETOS',
+      lightboxBook: 'Reservar',
+      lightboxSoldOut: 'Agotado',
+      videoBadge: 'VIDEO MP4'
+    },
     socialHub: {
       tag: 'ECOSISTEMA DIGITAL',
       title: 'REDES & CANALES OFICIALES',
@@ -513,6 +529,22 @@ export const translations = {
       quickSocialsTitle: 'OFFICIAL NETWORKS & CHANNELS',
       photoTab1: '01 PIONEER DJ BOOTH',
       photoTab2: '02 CLUB ARCHIVE'
+    },
+    events: {
+      tag: 'TOUR DATES // LIVE SHOWS',
+      title1: 'UPCOMING',
+      title2: 'EVENTS',
+      desc: 'Official tour dates, club residencies, and live sessions by Missafx. Select any flyer to view in high definition or reserve your tickets directly.',
+      loading: 'LOADING TOUR DATES...',
+      btnBook: 'Book // WhatsApp',
+      btnSoldOut: 'SOLD OUT',
+      btnLastTickets: 'LAST TICKETS // WhatsApp',
+      badgeLive: 'LIVE SET',
+      badgeSoldOut: '🔴 SOLD OUT',
+      badgeLastTickets: '⚡ LAST TICKETS',
+      lightboxBook: 'Book Access',
+      lightboxSoldOut: 'Sold Out',
+      videoBadge: 'VIDEO MP4'
     },
     socialHub: {
       tag: 'DIGITAL ECOSYSTEM',
