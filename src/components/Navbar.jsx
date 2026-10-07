@@ -66,6 +66,7 @@ export default function Navbar({ hasEvents }) {
           <a href="#home" className="nav-link">{t.nav.home}</a>
           {hasEvents && <a href="#upcoming-events" className="nav-link">{t.nav.events}</a>}
           <a href="#social-hub" className="nav-link">{t.nav.socials}</a>
+          <a href="#live-sets" className="nav-link">{t.nav.sets}</a>
           <a href="#about" className="nav-link">{t.nav.about}</a>
           <a href="#contact" className="nav-link">{t.nav.contact}</a>
 
@@ -229,6 +230,14 @@ export default function Navbar({ hasEvents }) {
             style={{ fontSize: '1.1rem' }}
           >
             {t.nav.socials}
+          </a>
+          <a
+            href="#live-sets"
+            onClick={() => setMobileMenuOpen(false)}
+            className="nav-link"
+            style={{ fontSize: '1.1rem' }}
+          >
+            {t.nav.sets}
           </a>
           <a
             href="#about"

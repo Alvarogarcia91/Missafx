@@ -10,6 +10,7 @@ import DjTools from './components/DjTools.jsx';
 import StoryCreator from './components/StoryCreator.jsx';
 import CardCreator from './components/CardCreator.jsx';
 import UpcomingEvents from './components/UpcomingEvents.jsx';
+import LiveSets from './components/LiveSets.jsx';
 import EventAdminModal from './components/EventAdminModal.jsx';
 
 export default function App() {
@@ -73,6 +74,7 @@ export default function App() {
                 onEventsChange={(count) => setHasEvents(count > 0)}
               />
               <SocialHub />
+              <LiveSets />
               <About />
               <Booking />
               <DjTools

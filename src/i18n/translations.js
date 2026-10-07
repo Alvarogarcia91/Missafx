@@ -4,6 +4,7 @@ export const translations = {
       home: 'Inicio',
       events: 'Eventos',
       socials: 'Redes Oficiales',
+      sets: 'Live Sets',
       about: 'Bio & Rider',
       contact: 'Contacto',
       whatsapp: 'WhatsApp Directo'
@@ -489,6 +490,7 @@ export const translations = {
       home: 'Home',
       events: 'Events',
       socials: 'Official Links',
+      sets: 'Live Sets',
       about: 'Bio & Rider',
       contact: 'Booking',
       whatsapp: 'Direct WhatsApp'
