@@ -12,6 +12,10 @@ export default function Footer({ onOpenAdmin }) {
   const brandName = `${config.artistName1 || 'MISSA'}${config.artistName2 || 'FX'}`;
   const tagline = config.footerTagline || t.footer.tagline;
   const bookingPhone = config.bookingPhone || '5214443570777';
+  const instagramUrl = `https://www.instagram.com/${config.instagramUser || 'missaa.fx'}/`;
+  const kickUrl = `https://kick.com/${config.kickChannel || '7missa'}`;
+  const youtubeUrl = config.youtubeUrl || 'https://www.youtube.com/@missaelarath6364';
+  const soundcloudUrl = config.soundcloudUrl || 'https://soundcloud.com/missael-arath';
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -52,11 +56,11 @@ export default function Footer({ onOpenAdmin }) {
           {/* Social Links */}
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
             {[
-              { name: 'Instagram', url: 'https://www.instagram.com/missaa.fx/', color: '#E1306C', icon: InstagramIcon },
+              { name: 'Instagram', url: instagramUrl, color: '#E1306C', icon: InstagramIcon },
               { name: 'WhatsApp', url: `https://wa.me/${bookingPhone}`, color: '#25D366', icon: WhatsAppIcon },
-              { name: 'Kick', url: 'https://kick.com/7missa', color: '#53FC18', icon: KickIcon },
-              { name: 'YouTube', url: 'https://www.youtube.com/@missaelarath6364', color: '#FF0000', icon: YouTubeIcon },
-              { name: 'SoundCloud', url: 'https://soundcloud.com/missael-arath', color: '#FF5500', icon: SoundCloudIcon }
+              { name: 'Kick', url: kickUrl, color: '#53FC18', icon: KickIcon },
+              { name: 'YouTube', url: youtubeUrl, color: '#FF0000', icon: YouTubeIcon },
+              { name: 'SoundCloud', url: soundcloudUrl, color: '#FF5500', icon: SoundCloudIcon }
             ].map((social) => {
               const Icon = social.icon;
               return (

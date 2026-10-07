@@ -1,17 +1,29 @@
-﻿import React from 'react';
+import React from 'react';
 import { ExternalLink } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { useSiteConfig } from '../context/SiteConfigContext';
 import { InstagramIcon, WhatsAppIcon, KickIcon, YouTubeIcon, SoundCloudIcon } from './SocialIcons';
 
 export default function SocialHub() {
   const { t } = useLanguage();
+  const { config } = useSiteConfig();
+
+  const bookingPhone = config.bookingPhone || '5214443570777';
+  const displayPhone = bookingPhone.startsWith('+') ? bookingPhone : (bookingPhone.length === 10 ? `+52 ${bookingPhone}` : `+${bookingPhone}`);
+  const instagramUser = config.instagramUser || 'missaa.fx';
+  const kickChannel = config.kickChannel || '7missa';
+  const youtubeUrl = config.youtubeUrl || 'https://www.youtube.com/@missaelarath6364';
+  const soundcloudUrl = config.soundcloudUrl || 'https://soundcloud.com/missael-arath';
+
+  const youtubeHandle = youtubeUrl.includes('@') ? `@${youtubeUrl.split('@')[1].split('/')[0]}` : 'Canal Oficial';
+  const soundcloudHandle = soundcloudUrl.includes('.com/') ? soundcloudUrl.split('.com/')[1].split('/')[0] : 'Sets & Tracks';
 
   const SOCIAL_CHANNELS = [
     {
       name: 'WhatsApp',
       tag: t.socialHub.channels.whatsapp.tag,
-      handle: '+52 1 444 357 0777',
-      url: 'https://wa.me/5214443570777?text=Hola%20Missa,%20me%20gustar%C3%ADa%20cotizar%20una%20fecha%20o%20evento',
+      handle: displayPhone,
+      url: `https://wa.me/${bookingPhone}?text=Hola%20Missa,%20me%20gustar%C3%ADa%20cotizar%20una%20fecha%20o%20evento`,
       description: t.socialHub.channels.whatsapp.desc,
       color: '#25D366',
       icon: WhatsAppIcon,
@@ -20,8 +32,8 @@ export default function SocialHub() {
     {
       name: 'Instagram',
       tag: t.socialHub.channels.instagram.tag,
-      handle: '@missaa.fx',
-      url: 'https://www.instagram.com/missaa.fx/',
+      handle: `@${instagramUser}`,
+      url: `https://www.instagram.com/${instagramUser}/`,
       description: t.socialHub.channels.instagram.desc,
       color: '#E1306C',
       icon: InstagramIcon,
@@ -30,8 +42,8 @@ export default function SocialHub() {
     {
       name: 'Kick Live Stream',
       tag: t.socialHub.channels.kick.tag,
-      handle: 'kick.com/7missa',
-      url: 'https://kick.com/7missa',
+      handle: `kick.com/${kickChannel}`,
+      url: `https://kick.com/${kickChannel}`,
       description: t.socialHub.channels.kick.desc,
       color: '#53FC18',
       icon: KickIcon,
@@ -40,8 +52,8 @@ export default function SocialHub() {
     {
       name: 'YouTube',
       tag: t.socialHub.channels.youtube.tag,
-      handle: '@missaelarath6364',
-      url: 'https://www.youtube.com/@missaelarath6364',
+      handle: youtubeHandle,
+      url: youtubeUrl,
       description: t.socialHub.channels.youtube.desc,
       color: '#FF0000',
       icon: YouTubeIcon,
@@ -50,8 +62,8 @@ export default function SocialHub() {
     {
       name: 'SoundCloud',
       tag: t.socialHub.channels.soundcloud.tag,
-      handle: 'soundcloud.com/missael-arath',
-      url: 'https://soundcloud.com/missael-arath',
+      handle: soundcloudHandle,
+      url: soundcloudUrl,
       description: t.socialHub.channels.soundcloud.desc,
       color: '#FF5500',
       icon: SoundCloudIcon,

@@ -4116,7 +4116,7 @@ export default function EventAdminModal({ isOpen, onClose }) {
                               }}
                             />
                             <span style={{ fontSize: '0.76rem', fontWeight: 700, color: '#f1f5f9', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                              {generalConfig.artistName1 || 'MISSA'} {generalConfig.artistName2 || 'FX'} | OFFICIAL DJ
+                              {generalConfig.tabTitle || `${generalConfig.artistName1 || 'MISSA'} ${generalConfig.artistName2 || 'FX'} | OFFICIAL DJ`}
                             </span>
                           </div>
 
@@ -4145,6 +4145,32 @@ export default function EventAdminModal({ isOpen, onClose }) {
                             <Download size={11} />
                             <span>BAJAR</span>
                           </button>
+                        </div>
+
+                        {/* Tab Title Input */}
+                        <div>
+                          <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 800, color: '#38bdf8', marginBottom: '6px' }}>
+                            TÍTULO DE LA PESTAÑA (TAB TITLE & GOOGLE)
+                          </label>
+                          <input
+                            type="text"
+                            value={generalConfig.tabTitle || ''}
+                            onChange={(e) => setGeneralConfig({ ...generalConfig, tabTitle: e.target.value })}
+                            placeholder="MISSAFX | DJ & Electronic Music Producer"
+                            style={{
+                              width: '100%',
+                              padding: '10px 12px',
+                              borderRadius: '8px',
+                              background: 'rgba(56, 189, 248, 0.08)',
+                              border: '1px solid rgba(56, 189, 248, 0.35)',
+                              color: '#FFFFFF',
+                              fontWeight: 700,
+                              fontSize: '0.84rem'
+                            }}
+                          />
+                          <span style={{ fontSize: '0.64rem', color: '#94a3b8', display: 'block', marginTop: '4px' }}>
+                            Texto oficial visible en la pestaña del navegador (Chrome, Safari, Edge) y al compartir el enlace.
+                          </span>
                         </div>
 
                         {/* Upload, Download & Reset Buttons */}
@@ -4579,6 +4605,50 @@ export default function EventAdminModal({ isOpen, onClose }) {
                               background: 'rgba(255, 255, 255, 0.05)',
                               border: '1px solid rgba(255, 255, 255, 0.14)',
                               color: '#e1306c',
+                              fontWeight: 700,
+                              fontSize: '0.86rem'
+                            }}
+                          />
+                        </div>
+
+                        <div>
+                          <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '6px' }}>
+                            ENLACE O CANAL DE YOUTUBE
+                          </label>
+                          <input
+                            type="text"
+                            value={generalConfig.youtubeUrl || ''}
+                            onChange={(e) => setGeneralConfig({ ...generalConfig, youtubeUrl: e.target.value })}
+                            placeholder="https://www.youtube.com/@missaelarath6364"
+                            style={{
+                              width: '100%',
+                              padding: '10px 12px',
+                              borderRadius: '8px',
+                              background: 'rgba(255, 255, 255, 0.05)',
+                              border: '1px solid rgba(255, 255, 255, 0.14)',
+                              color: '#ff4444',
+                              fontWeight: 700,
+                              fontSize: '0.86rem'
+                            }}
+                          />
+                        </div>
+
+                        <div>
+                          <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '6px' }}>
+                            ENLACE O PERFIL DE SOUNDCLOUD
+                          </label>
+                          <input
+                            type="text"
+                            value={generalConfig.soundcloudUrl || ''}
+                            onChange={(e) => setGeneralConfig({ ...generalConfig, soundcloudUrl: e.target.value })}
+                            placeholder="https://soundcloud.com/missael-arath"
+                            style={{
+                              width: '100%',
+                              padding: '10px 12px',
+                              borderRadius: '8px',
+                              background: 'rgba(255, 255, 255, 0.05)',
+                              border: '1px solid rgba(255, 255, 255, 0.14)',
+                              color: '#ff7700',
                               fontWeight: 700,
                               fontSize: '0.86rem'
                             }}

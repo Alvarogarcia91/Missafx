@@ -4,7 +4,8 @@ import {
   saveGeneralSettings,
   resetGeneralSettings,
   DEFAULT_GENERAL_SETTINGS,
-  applyFavicon
+  applyFavicon,
+  applyPageTitle
 } from '../utils/supabaseClient';
 
 export const SiteConfigContext = createContext();
@@ -23,9 +24,12 @@ export function SiteConfigProvider({ children }) {
   useEffect(() => {
     let isMounted = true;
 
-    // Apply cached favicon immediately
+    // Apply cached favicon and title immediately
     if (config.faviconUrl) {
       applyFavicon(config.faviconUrl);
+    }
+    if (config.tabTitle) {
+      applyPageTitle(config.tabTitle);
     }
 
     // Fetch freshest settings from cloud
@@ -34,6 +38,9 @@ export function SiteConfigProvider({ children }) {
         setConfig(cloudSettings);
         if (cloudSettings.faviconUrl) {
           applyFavicon(cloudSettings.faviconUrl);
+        }
+        if (cloudSettings.tabTitle) {
+          applyPageTitle(cloudSettings.tabTitle);
         }
         setLoading(false);
       }
@@ -44,6 +51,9 @@ export function SiteConfigProvider({ children }) {
         setConfig(e.detail);
         if (e.detail.faviconUrl) {
           applyFavicon(e.detail.faviconUrl);
+        }
+        if (e.detail.tabTitle) {
+          applyPageTitle(e.detail.tabTitle);
         }
       }
     };

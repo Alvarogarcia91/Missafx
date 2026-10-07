@@ -8,6 +8,8 @@ export default function Booking() {
   const { t } = useLanguage();
   const { config } = useSiteConfig();
   const bookingPhone = config.bookingPhone || '5214443570777';
+  const instagramUser = config.instagramUser || 'missaa.fx';
+  const displayPhone = bookingPhone.startsWith('+') ? bookingPhone : (bookingPhone.length === 10 ? `+52 ${bookingPhone}` : `+${bookingPhone}`);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -93,14 +95,14 @@ export default function Booking() {
                     {t.booking.whatsappOfficial}
                   </span>
                   <strong style={{ color: '#fff', fontSize: '1.1rem' }}>
-                    +52 1 444 357 0777
+                    {displayPhone}
                   </strong>
                 </div>
               </a>
 
               {/* Instagram DM Card */}
               <a
-                href="https://www.instagram.com/missaa.fx/"
+                href={`https://www.instagram.com/${instagramUser}/`}
                 target="_blank"
                 rel="noreferrer"
                 className="glass-panel"
@@ -132,7 +134,7 @@ export default function Booking() {
                     {t.booking.instagramDirect}
                   </span>
                   <strong style={{ color: '#fff', fontSize: '1.1rem' }}>
-                    @missaa.fx
+                    @{instagramUser}
                   </strong>
                 </div>
               </a>

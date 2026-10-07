@@ -409,7 +409,7 @@ export default function About() {
                   {t.about.riderQuestion}
                 </span>
                 <a
-                  href="https://wa.me/5214443570777?text=Hola%20Missa,%20quisiera%20consultar%20detalles%20t%C3%A9cnicos%20para%20un%20evento"
+                  href={`https://wa.me/${bookingPhone}?text=Hola%20Missa,%20quisiera%20consultar%20detalles%20t%C3%A9cnicos%20para%20un%20evento`}
                   target="_blank"
                   rel="noreferrer"
                   style={{

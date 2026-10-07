@@ -920,6 +920,7 @@ export async function resetCarouselPhotos() {
 export const DEFAULT_GENERAL_SETTINGS = {
   logoUrl: '/missafx-logo.png',
   faviconUrl: '/favicon.png',
+  tabTitle: 'MISSAFX | DJ & Electronic Music Producer',
   artistName1: 'MISSA',
   artistName2: 'FX',
   heroBadgeGenre: 'TECH HOUSE',
@@ -929,9 +930,20 @@ export const DEFAULT_GENERAL_SETTINGS = {
   bookingPhone: '5214443570777',
   kickChannel: '7missa',
   instagramUser: 'missaa.fx',
+  youtubeUrl: 'https://www.youtube.com/@missaelarath6364',
+  soundcloudUrl: 'https://soundcloud.com/missael-arath',
   aboutBio1: 'Con una identidad sonora potente y enfocada en la pista de baile, Missafx fusiona lo mejor del Tech House contemporáneo con líneas de bajo contundentes y percusiones dinámicas.',
   aboutBio2: 'Sus sets están diseñados para generar alta energía en clubs y escenarios, respaldados por una comunidad activa en plataformas de streaming como Kick, YouTube y SoundCloud.'
 };
+
+export function applyPageTitle(tabTitle) {
+  if (!tabTitle || typeof document === 'undefined') return;
+  try {
+    document.title = tabTitle;
+  } catch (e) {
+    console.warn('Could not apply document title to DOM:', e);
+  }
+}
 
 export function applyFavicon(faviconUrl) {
   if (!faviconUrl || typeof document === 'undefined') return;
@@ -995,9 +1007,12 @@ export async function saveGeneralSettings(newSettings) {
     localStorage.setItem('missafx_general_settings', JSON.stringify(merged));
   } catch (e) {}
 
-  // 2. Apply favicon immediately
+  // 2. Apply favicon and page title immediately
   if (merged.faviconUrl) {
     applyFavicon(merged.faviconUrl);
+  }
+  if (merged.tabTitle) {
+    applyPageTitle(merged.tabTitle);
   }
 
   // 3. Sync to Supabase config row

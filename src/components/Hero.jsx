@@ -18,6 +18,10 @@ export default function Hero() {
   const { config } = useSiteConfig();
   const bookingPhone = config.bookingPhone || '5214443570777';
   const whatsappUrl = `https://wa.me/${bookingPhone}?text=Hola%20Missa,%20me%20gustar%C3%ADa%20cotizar%20una%20fecha%20o%20evento`;
+  const instagramUser = config.instagramUser || 'missaa.fx';
+  const kickChannel = config.kickChannel || '7missa';
+  const youtubeUrl = config.youtubeUrl || 'https://www.youtube.com/@missaelarath6364';
+  const soundcloudUrl = config.soundcloudUrl || 'https://soundcloud.com/missael-arath';
 
   const [photos, setPhotos] = useState(DEFAULT_CAROUSEL_PHOTOS);
   const [isRandom, setIsRandom] = useState(false);
@@ -291,7 +295,7 @@ export default function Hero() {
               >
                 {/* Instagram */}
                 <a
-                  href="https://www.instagram.com/missaa.fx/"
+                  href={`https://www.instagram.com/${instagramUser}/`}
                   target="_blank"
                   rel="noreferrer"
                   className="glass-panel"
@@ -310,7 +314,7 @@ export default function Hero() {
                   <InstagramIcon size={22} color="gradient" />
                   <div>
                     <span style={{ fontSize: '0.70rem', color: 'var(--text-dim)', display: 'block' }}>Instagram</span>
-                    <span style={{ fontSize: '0.82rem', fontWeight: 700 }}>@missaa.fx</span>
+                    <span style={{ fontSize: '0.82rem', fontWeight: 700 }}>@{instagramUser}</span>
                   </div>
                 </a>
 
@@ -341,7 +345,7 @@ export default function Hero() {
 
                 {/* Kick */}
                 <a
-                  href="https://kick.com/7missa"
+                  href={`https://kick.com/${kickChannel}`}
                   target="_blank"
                   rel="noreferrer"
                   className="glass-panel"
@@ -360,13 +364,13 @@ export default function Hero() {
                   <KickIcon size={22} />
                   <div>
                     <span style={{ fontSize: '0.70rem', color: 'var(--text-dim)', display: 'block' }}>Kick Live</span>
-                    <span style={{ fontSize: '0.82rem', fontWeight: 700 }}>/7missa</span>
+                    <span style={{ fontSize: '0.82rem', fontWeight: 700 }}>/{kickChannel}</span>
                   </div>
                 </a>
 
                 {/* YouTube */}
                 <a
-                  href="https://www.youtube.com/@missaelarath6364"
+                  href={youtubeUrl}
                   target="_blank"
                   rel="noreferrer"
                   className="glass-panel"
@@ -391,7 +395,7 @@ export default function Hero() {
 
                 {/* SoundCloud */}
                 <a
-                  href="https://soundcloud.com/missael-arath"
+                  href={soundcloudUrl}
                   target="_blank"
                   rel="noreferrer"
                   className="glass-panel"
