@@ -3910,7 +3910,7 @@ export default function EventAdminModal({ isOpen, onClose }) {
                         {/* Preview Box with dark background */}
                         <div
                           style={{
-                            height: '90px',
+                            height: '96px',
                             borderRadius: '10px',
                             background: '#09090d',
                             border: '1px dashed rgba(255, 255, 255, 0.16)',
@@ -3931,10 +3931,35 @@ export default function EventAdminModal({ isOpen, onClose }) {
                               objectFit: 'contain'
                             }}
                           />
+                          <button
+                            type="button"
+                            onClick={() => downloadMediaFile(generalConfig.logoUrl || '/missafx-logo.png', 'missafx_logo')}
+                            style={{
+                              position: 'absolute',
+                              top: '6px',
+                              right: '6px',
+                              background: 'rgba(0, 0, 0, 0.75)',
+                              border: '1px solid rgba(255, 255, 255, 0.2)',
+                              borderRadius: '6px',
+                              padding: '3px 7px',
+                              color: '#38bdf8',
+                              fontSize: '0.62rem',
+                              fontWeight: 800,
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              backdropFilter: 'blur(4px)'
+                            }}
+                            title="Descargar este archivo de logo"
+                          >
+                            <Download size={11} />
+                            <span>BAJAR</span>
+                          </button>
                         </div>
 
-                        {/* Upload & Reset Buttons */}
-                        <div style={{ display: 'flex', gap: '8px' }}>
+                        {/* Upload, Download & Reset Buttons */}
+                        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                           <input
                             type="file"
                             id="logo-upload-input"
@@ -3946,6 +3971,7 @@ export default function EventAdminModal({ isOpen, onClose }) {
                             htmlFor="logo-upload-input"
                             style={{
                               flex: 1,
+                              minWidth: '120px',
                               padding: '9px 12px',
                               borderRadius: '8px',
                               background: 'rgba(255, 0, 60, 0.15)',
@@ -3963,6 +3989,28 @@ export default function EventAdminModal({ isOpen, onClose }) {
                             <Upload size={13} color="#FF003C" />
                             <span>{uploadingLogo ? 'SUBIENDO...' : 'CAMBIAR LOGO'}</span>
                           </label>
+
+                          <button
+                            type="button"
+                            onClick={() => downloadMediaFile(generalConfig.logoUrl || '/missafx-logo.png', 'missafx_logo')}
+                            style={{
+                              padding: '9px 12px',
+                              borderRadius: '8px',
+                              background: 'rgba(56, 189, 248, 0.12)',
+                              border: '1px solid rgba(56, 189, 248, 0.35)',
+                              color: '#38bdf8',
+                              fontWeight: 800,
+                              fontSize: '0.72rem',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '5px'
+                            }}
+                            title="Descargar archivo del logo actual a tu PC o celular"
+                          >
+                            <Download size={12} />
+                            <span>DESCARGAR</span>
+                          </button>
 
                           <button
                             type="button"
@@ -3986,9 +4034,29 @@ export default function EventAdminModal({ isOpen, onClose }) {
                             <span>DEFAULT</span>
                           </button>
                         </div>
-                        <span style={{ fontSize: '0.66rem', color: '#64748b' }}>
-                          Formato recomendado: PNG transparente o SVG
-                        </span>
+
+                        {/* Dimensions & Guidelines Specs Box */}
+                        <div
+                          style={{
+                            background: 'rgba(255, 255, 255, 0.02)',
+                            border: '1px solid rgba(255, 255, 255, 0.08)',
+                            borderRadius: '8px',
+                            padding: '10px 12px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '4px'
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.68rem', fontWeight: 800, color: '#f1f5f9' }}>
+                            <span>📐 MEDIDAS RECOMENDADAS:</span>
+                            <span style={{ color: '#FF003C', fontFamily: 'monospace', fontWeight: 900 }}>512 × 512 px</span>
+                          </div>
+                          <div style={{ fontSize: '0.65rem', color: '#94a3b8', lineHeight: 1.45 }}>
+                            • <strong>Proporción:</strong> Cuadrado (1:1 de 512×512 px) o Rectangular horizontal (600×150 px).<br />
+                            • <strong>Formato:</strong> PNG transparente (.png) o SVG vectorial (máx. 2 MB).<br />
+                            • <strong>Visualización:</strong> Se auto-escala a 42px de altura en la barra superior (Navbar) y pie de página sin perder nitidez.
+                          </div>
+                        </div>
                       </div>
 
                       {/* CARD B: FAVICON */}
@@ -4014,14 +4082,15 @@ export default function EventAdminModal({ isOpen, onClose }) {
                         {/* Browser Tab Mockup */}
                         <div
                           style={{
-                            height: '90px',
+                            height: '96px',
                             borderRadius: '10px',
                             background: '#0f172a',
                             border: '1px solid rgba(56, 189, 248, 0.25)',
                             display: 'flex',
                             flexDirection: 'column',
                             justifyContent: 'center',
-                            padding: '12px 16px'
+                            padding: '12px 16px',
+                            position: 'relative'
                           }}
                         >
                           <div
@@ -4033,7 +4102,7 @@ export default function EventAdminModal({ isOpen, onClose }) {
                               border: '1px solid rgba(255, 255, 255, 0.1)',
                               borderRadius: '6px',
                               padding: '8px 12px',
-                              maxWidth: '100%'
+                              maxWidth: '85%'
                             }}
                           >
                             <img
@@ -4050,10 +4119,36 @@ export default function EventAdminModal({ isOpen, onClose }) {
                               {generalConfig.artistName1 || 'MISSA'} {generalConfig.artistName2 || 'FX'} | OFFICIAL DJ
                             </span>
                           </div>
+
+                          <button
+                            type="button"
+                            onClick={() => downloadMediaFile(generalConfig.faviconUrl || '/favicon.png', 'missafx_favicon')}
+                            style={{
+                              position: 'absolute',
+                              top: '6px',
+                              right: '6px',
+                              background: 'rgba(0, 0, 0, 0.75)',
+                              border: '1px solid rgba(56, 189, 248, 0.35)',
+                              borderRadius: '6px',
+                              padding: '3px 7px',
+                              color: '#38bdf8',
+                              fontSize: '0.62rem',
+                              fontWeight: 800,
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              backdropFilter: 'blur(4px)'
+                            }}
+                            title="Descargar este archivo de favicon"
+                          >
+                            <Download size={11} />
+                            <span>BAJAR</span>
+                          </button>
                         </div>
 
-                        {/* Upload & Reset Buttons */}
-                        <div style={{ display: 'flex', gap: '8px' }}>
+                        {/* Upload, Download & Reset Buttons */}
+                        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                           <input
                             type="file"
                             id="favicon-upload-input"
@@ -4065,6 +4160,7 @@ export default function EventAdminModal({ isOpen, onClose }) {
                             htmlFor="favicon-upload-input"
                             style={{
                               flex: 1,
+                              minWidth: '120px',
                               padding: '9px 12px',
                               borderRadius: '8px',
                               background: 'rgba(56, 189, 248, 0.15)',
@@ -4082,6 +4178,28 @@ export default function EventAdminModal({ isOpen, onClose }) {
                             <Upload size={13} color="#38bdf8" />
                             <span>{uploadingFavicon ? 'SUBIENDO...' : 'CAMBIAR FAVICON'}</span>
                           </label>
+
+                          <button
+                            type="button"
+                            onClick={() => downloadMediaFile(generalConfig.faviconUrl || '/favicon.png', 'missafx_favicon')}
+                            style={{
+                              padding: '9px 12px',
+                              borderRadius: '8px',
+                              background: 'rgba(56, 189, 248, 0.12)',
+                              border: '1px solid rgba(56, 189, 248, 0.35)',
+                              color: '#38bdf8',
+                              fontWeight: 800,
+                              fontSize: '0.72rem',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '5px'
+                            }}
+                            title="Descargar archivo del favicon actual a tu PC o celular"
+                          >
+                            <Download size={12} />
+                            <span>DESCARGAR</span>
+                          </button>
 
                           <button
                             type="button"
@@ -4105,9 +4223,29 @@ export default function EventAdminModal({ isOpen, onClose }) {
                             <span>DEFAULT</span>
                           </button>
                         </div>
-                        <span style={{ fontSize: '0.66rem', color: '#64748b' }}>
-                          Se actualiza al instante en la pestaña del navegador
-                        </span>
+
+                        {/* Dimensions & Guidelines Specs Box */}
+                        <div
+                          style={{
+                            background: 'rgba(56, 189, 248, 0.03)',
+                            border: '1px solid rgba(56, 189, 248, 0.15)',
+                            borderRadius: '8px',
+                            padding: '10px 12px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '4px'
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.68rem', fontWeight: 800, color: '#f1f5f9' }}>
+                            <span>📐 MEDIDAS RECOMENDADAS:</span>
+                            <span style={{ color: '#38bdf8', fontFamily: 'monospace', fontWeight: 900 }}>512 × 512 px (o 64 × 64 px)</span>
+                          </div>
+                          <div style={{ fontSize: '0.65rem', color: '#94a3b8', lineHeight: 1.45 }}>
+                            • <strong>Proporción:</strong> Cuadrado perfecto (1:1). Mínimo 32×32 px, recomendado 512×512 px.<br />
+                            • <strong>Formato:</strong> PNG transparente (.png), Ícono de Windows (.ico) o SVG.<br />
+                            • <strong>Visualización:</strong> Se muestra a 16×16 / 32×32 px en la pestaña del navegador y a 192×192 px en accesos móviles de celulares.
+                          </div>
+                        </div>
                       </div>
                     </div>
 
