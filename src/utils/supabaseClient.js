@@ -395,8 +395,18 @@ export const DEFAULT_CAROUSEL_PHOTOS = [
   '/gallery/missa-09.jpg'
 ];
 
-export async function fetchCarouselPhotos() {
+export function getStoredCarouselRandom() {
+  try {
+    const val = localStorage.getItem('missafx_carousel_random');
+    if (val !== null) return val === 'true';
+  } catch (e) {}
+  return false;
+}
+
+export async function fetchCarouselData() {
   let cloudPhotos = [];
+  let isRandom = getStoredCarouselRandom();
+
   try {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/carousel?select=*&order=display_order.asc,created_at.asc`, {
       headers: defaultHeaders
@@ -404,29 +414,82 @@ export async function fetchCarouselPhotos() {
     if (res.ok) {
       const data = await res.json();
       if (Array.isArray(data) && data.length > 0) {
-        cloudPhotos = data.map(item => item.image_url).filter(Boolean);
+        const configRow = data.find(item => item.image_url && item.image_url.startsWith('__config:random_order='));
+        if (configRow) {
+          isRandom = configRow.image_url === '__config:random_order=true';
+          try {
+            localStorage.setItem('missafx_carousel_random', isRandom ? 'true' : 'false');
+          } catch (e) {}
+        }
+        cloudPhotos = data
+          .filter(item => item.image_url && !item.image_url.startsWith('__config:'))
+          .map(item => item.image_url);
       }
     }
   } catch (err) {
     console.warn('Supabase carousel fetch error, falling back:', err);
   }
 
-  if (cloudPhotos.length > 0) {
-    return cloudPhotos;
+  if (cloudPhotos.length === 0) {
+    // Check localStorage
+    try {
+      const saved = localStorage.getItem('missafx_carousel_photos');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          cloudPhotos = parsed;
+        }
+      }
+    } catch (e) {}
   }
 
-  // Check localStorage
+  if (cloudPhotos.length === 0) {
+    cloudPhotos = DEFAULT_CAROUSEL_PHOTOS;
+  }
+
+  return { photos: cloudPhotos, isRandom };
+}
+
+export async function fetchCarouselPhotos() {
+  const data = await fetchCarouselData();
+  return data.photos;
+}
+
+export async function fetchCarouselRandom() {
+  const data = await fetchCarouselData();
+  return data.isRandom;
+}
+
+export async function saveCarouselRandom(isRandom) {
+  const valStr = isRandom ? 'true' : 'false';
   try {
-    const saved = localStorage.getItem('missafx_carousel_photos');
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed;
-      }
-    }
+    localStorage.setItem('missafx_carousel_random', valStr);
   } catch (e) {}
 
-  return DEFAULT_CAROUSEL_PHOTOS;
+  try {
+    // Delete existing config row
+    await fetch(`${SUPABASE_URL}/rest/v1/carousel?image_url=like.__config:random_order*%25`, {
+      method: 'DELETE',
+      headers: defaultHeaders
+    });
+
+    // Insert new config row
+    await fetch(`${SUPABASE_URL}/rest/v1/carousel`, {
+      method: 'POST',
+      headers: {
+        ...defaultHeaders,
+        Prefer: 'return=representation'
+      },
+      body: JSON.stringify([{
+        image_url: `__config:random_order=${valStr}`,
+        display_order: -1
+      }])
+    });
+  } catch (err) {
+    console.warn('Error saving carousel random config to Supabase:', err);
+  }
+
+  return isRandom;
 }
 
 export async function saveCarouselPhotos(photosList) {
@@ -439,17 +502,25 @@ export async function saveCarouselPhotos(photosList) {
 
   // 2. Try to sync to Supabase if table exists
   try {
+    const isRandom = getStoredCarouselRandom();
+
     // Delete existing rows
     await fetch(`${SUPABASE_URL}/rest/v1/carousel?id=not.is.null`, {
       method: 'DELETE',
       headers: defaultHeaders
     });
 
-    // Insert new rows
+    // Insert photo rows
     const rows = cleanList.map((url, idx) => ({
       image_url: url,
       display_order: idx
     }));
+
+    // Retain random config row
+    rows.push({
+      image_url: `__config:random_order=${isRandom ? 'true' : 'false'}`,
+      display_order: -1
+    });
 
     await fetch(`${SUPABASE_URL}/rest/v1/carousel`, {
       method: 'POST',
@@ -469,6 +540,7 @@ export async function saveCarouselPhotos(photosList) {
 export async function resetCarouselPhotos() {
   try {
     localStorage.removeItem('missafx_carousel_photos');
+    localStorage.setItem('missafx_carousel_random', 'false');
   } catch (e) {}
 
   try {
@@ -476,7 +548,26 @@ export async function resetCarouselPhotos() {
       method: 'DELETE',
       headers: defaultHeaders
     });
+
+    const rows = DEFAULT_CAROUSEL_PHOTOS.map((url, idx) => ({
+      image_url: url,
+      display_order: idx
+    }));
+    rows.push({
+      image_url: '__config:random_order=false',
+      display_order: -1
+    });
+
+    await fetch(`${SUPABASE_URL}/rest/v1/carousel`, {
+      method: 'POST',
+      headers: {
+        ...defaultHeaders,
+        Prefer: 'return=representation'
+      },
+      body: JSON.stringify(rows)
+    });
   } catch (e) {}
 
   return DEFAULT_CAROUSEL_PHOTOS;
 }
+

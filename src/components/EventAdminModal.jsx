@@ -19,7 +19,8 @@ import {
   Image as ImageIcon,
   ArrowUp,
   ArrowDown,
-  RotateCcw
+  RotateCcw,
+  Shuffle
 } from 'lucide-react';
 import {
   fetchEvents,
@@ -36,7 +37,9 @@ import {
   getCleanTitle,
   isVideoMedia,
   fetchCarouselPhotos,
+  fetchCarouselData,
   saveCarouselPhotos,
+  saveCarouselRandom,
   resetCarouselPhotos,
   DEFAULT_CAROUSEL_PHOTOS
 } from '../utils/supabaseClient';
@@ -86,6 +89,7 @@ export default function EventAdminModal({ isOpen, onClose }) {
 
   // Carousel state
   const [carouselPhotos, setCarouselPhotos] = useState([]);
+  const [carouselIsRandom, setCarouselIsRandom] = useState(false);
   const [loadingCarousel, setLoadingCarousel] = useState(false);
   const [uploadingCarousel, setUploadingCarousel] = useState(false);
   const [carouselFile, setCarouselFile] = useState(null);
@@ -128,10 +132,13 @@ export default function EventAdminModal({ isOpen, onClose }) {
   const loadCarouselList = async () => {
     setLoadingCarousel(true);
     try {
-      const data = await fetchCarouselPhotos();
-      if (data) setCarouselPhotos(data);
+      const data = await fetchCarouselData();
+      if (data && Array.isArray(data.photos)) {
+        setCarouselPhotos(data.photos);
+        setCarouselIsRandom(Boolean(data.isRandom));
+      }
     } catch (e) {
-      console.warn('Error fetching carousel photos:', e);
+      console.warn('Error fetching carousel data:', e);
     } finally {
       setLoadingCarousel(false);
     }
@@ -406,11 +413,22 @@ export default function EventAdminModal({ isOpen, onClose }) {
     window.dispatchEvent(new CustomEvent('missafx-carousel-updated'));
   };
 
+  const handleToggleCarouselRandom = async (checked) => {
+    setCarouselIsRandom(checked);
+    try {
+      await saveCarouselRandom(checked);
+      window.dispatchEvent(new CustomEvent('missafx-carousel-updated'));
+    } catch (err) {
+      console.error('Error saving carousel random config:', err);
+    }
+  };
+
   const handleResetCarousel = async () => {
     if (!window.confirm('¿Restablecer el carrousel a las 9 fotos oficiales originales?')) return;
     try {
       const def = await resetCarouselPhotos();
       setCarouselPhotos(def);
+      setCarouselIsRandom(false);
       window.dispatchEvent(new CustomEvent('missafx-carousel-updated'));
     } catch (err) {
       alert('Error al restablecer: ' + err.message);
@@ -1752,6 +1770,114 @@ export default function EventAdminModal({ isOpen, onClose }) {
                       <RotateCcw size={13} />
                       <span>Restablecer Originales</span>
                     </button>
+                  </div>
+
+                  {/* Carousel Mode Config: Random Shuffle vs Sequential Order */}
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '14px 16px',
+                      marginBottom: '20px',
+                      background: carouselIsRandom
+                        ? 'linear-gradient(135deg, rgba(168, 85, 247, 0.12) 0%, rgba(255, 0, 60, 0.08) 100%)'
+                        : 'rgba(255, 255, 255, 0.04)',
+                      border: carouselIsRandom
+                        ? '1px solid rgba(168, 85, 247, 0.35)'
+                        : '1px solid rgba(255, 255, 255, 0.1)',
+                      borderRadius: '12px',
+                      transition: 'all 0.25s ease'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, marginRight: '16px' }}>
+                      <div
+                        style={{
+                          width: '38px',
+                          height: '38px',
+                          borderRadius: '10px',
+                          background: carouselIsRandom ? 'rgba(168, 85, 247, 0.2)' : 'rgba(255, 255, 255, 0.06)',
+                          color: carouselIsRandom ? '#c084fc' : '#94a3b8',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0
+                        }}
+                      >
+                        <Shuffle size={18} />
+                      </div>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
+                          <span style={{ fontSize: '0.88rem', fontWeight: 800, color: '#FFFFFF', letterSpacing: '0.02em' }}>
+                            ORDEN ALEATORIO (SHUFFLE)
+                          </span>
+                          <span
+                            style={{
+                              fontSize: '0.68rem',
+                              fontWeight: 800,
+                              padding: '2px 8px',
+                              borderRadius: '999px',
+                              background: carouselIsRandom ? 'rgba(168, 85, 247, 0.25)' : 'rgba(255, 255, 255, 0.08)',
+                              color: carouselIsRandom ? '#e9d5ff' : '#94a3b8',
+                              border: carouselIsRandom ? '1px solid rgba(168, 85, 247, 0.4)' : '1px solid rgba(255, 255, 255, 0.1)'
+                            }}
+                          >
+                            {carouselIsRandom ? 'ALEATORIO ON' : 'SECUENCIAL (#1, #2...)'}
+                          </span>
+                        </div>
+                        <div style={{ fontSize: '0.74rem', color: '#94a3b8', lineHeight: 1.4 }}>
+                          {carouselIsRandom
+                            ? 'Las fotos rotan de forma aleatoria (sin repetirse seguidas).'
+                            : 'Las fotos rotan en el orden estricto configurado abajo (#1, #2, #3...).'}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Toggle switch checkbox */}
+                    <label
+                      style={{
+                        position: 'relative',
+                        display: 'inline-block',
+                        width: '48px',
+                        height: '26px',
+                        cursor: 'pointer',
+                        flexShrink: 0
+                      }}
+                      title="Activar o desactivar orden aleatorio"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={carouselIsRandom}
+                        onChange={(e) => handleToggleCarouselRandom(e.target.checked)}
+                        style={{ opacity: 0, width: 0, height: 0, position: 'absolute' }}
+                      />
+                      <span
+                        style={{
+                          position: 'absolute',
+                          cursor: 'pointer',
+                          inset: 0,
+                          backgroundColor: carouselIsRandom ? '#9333ea' : 'rgba(255, 255, 255, 0.15)',
+                          transition: '0.25s',
+                          borderRadius: '26px',
+                          border: '1px solid ' + (carouselIsRandom ? 'rgba(168, 85, 247, 0.5)' : 'rgba(255, 255, 255, 0.2)')
+                        }}
+                      >
+                        <span
+                          style={{
+                            position: 'absolute',
+                            content: '""',
+                            height: '18px',
+                            width: '18px',
+                            left: carouselIsRandom ? '25px' : '3px',
+                            bottom: '3px',
+                            backgroundColor: '#FFFFFF',
+                            transition: '0.25s',
+                            borderRadius: '50%',
+                            boxShadow: '0 2px 4px rgba(0,0,0,0.3)'
+                          }}
+                        />
+                      </span>
+                    </label>
                   </div>
 
                   {/* Upload New Photo Form */}

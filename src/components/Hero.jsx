@@ -3,26 +3,30 @@ import { Flame } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { InstagramIcon, WhatsAppIcon, KickIcon, YouTubeIcon, SoundCloudIcon } from './SocialIcons';
 import { PhotoQueueManager } from '../utils/shuffleQueue';
-import { fetchCarouselPhotos, DEFAULT_CAROUSEL_PHOTOS } from '../utils/supabaseClient';
+import { fetchCarouselData, DEFAULT_CAROUSEL_PHOTOS } from '../utils/supabaseClient';
 
 export default function Hero() {
   const { t } = useLanguage();
   const whatsappUrl = "https://wa.me/5214443570777?text=Hola%20Missa,%20me%20gustar%C3%ADa%20cotizar%20una%20fecha%20o%20evento";
 
   const [photos, setPhotos] = useState(DEFAULT_CAROUSEL_PHOTOS);
+  const [isRandom, setIsRandom] = useState(false);
   const [photoIndex, setPhotoIndex] = useState(0);
   const [prevPhotoIndex, setPrevPhotoIndex] = useState(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [progressKey, setProgressKey] = useState(0);
 
   const queueManager = useRef(null);
+  const currentIdxRef = useRef(0);
+  currentIdxRef.current = photoIndex;
 
   const loadPhotos = async () => {
     try {
-      const data = await fetchCarouselPhotos();
-      if (Array.isArray(data) && data.length > 0) {
-        setPhotos(data);
-        queueManager.current = new PhotoQueueManager(data.length, 0);
+      const data = await fetchCarouselData();
+      if (data && Array.isArray(data.photos) && data.photos.length > 0) {
+        setPhotos(data.photos);
+        setIsRandom(Boolean(data.isRandom));
+        queueManager.current = new PhotoQueueManager(data.photos.length, 0);
       }
     } catch (e) {
       console.warn('Error loading carousel photos in Hero:', e);
@@ -58,13 +62,18 @@ export default function Hero() {
   useEffect(() => {
     if (photos.length <= 1) return;
     const timer = setInterval(() => {
-      if (queueManager.current) {
-        const nextIdx = queueManager.current.next();
+      if (isRandom) {
+        if (queueManager.current) {
+          const nextIdx = queueManager.current.next();
+          triggerHeroTransition(nextIdx);
+        }
+      } else {
+        const nextIdx = (currentIdxRef.current + 1) % photos.length;
         triggerHeroTransition(nextIdx);
       }
     }, 10000);
     return () => clearInterval(timer);
-  }, [photos, triggerHeroTransition]);
+  }, [photos, isRandom, triggerHeroTransition]);
 
   return (
     <section
