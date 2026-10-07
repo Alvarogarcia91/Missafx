@@ -656,13 +656,13 @@ export default function Hero() {
                       zIndex: 10,
                       background: 'rgba(0, 0, 0, 0.78)',
                       backdropFilter: 'blur(10px)',
-                      border: !userMuted ? '1px solid rgba(34, 197, 94, 0.45)' : '1px solid rgba(255, 255, 255, 0.22)',
+                      border: !userMuted ? '1px solid rgba(34, 197, 94, 0.45)' : '1px solid rgba(255, 0, 60, 0.45)',
                       borderRadius: '24px',
                       padding: '5px 12px',
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: '8px',
-                      boxShadow: !userMuted ? '0 4px 18px rgba(34, 197, 94, 0.25)' : '0 4px 15px rgba(0,0,0,0.5)',
+                      boxShadow: !userMuted ? '0 4px 18px rgba(34, 197, 94, 0.25)' : '0 4px 16px rgba(255, 0, 60, 0.25)',
                       transition: 'all 0.25s ease'
                     }}
                   >
@@ -683,7 +683,7 @@ export default function Hero() {
                       style={{
                         background: 'transparent',
                         border: 'none',
-                        color: !userMuted ? '#22c55e' : '#94a3b8',
+                        color: !userMuted ? '#22c55e' : '#FFFFFF',
                         fontSize: '0.74rem',
                         fontWeight: 800,
                         cursor: 'pointer',
@@ -692,7 +692,7 @@ export default function Hero() {
                         gap: '6px',
                         padding: 0
                       }}
-                      title={userMuted ? 'Toca para activar audio' : 'Toca para silenciar'}
+                      title={userMuted ? 'Toca para activar audio (UNMUTE)' : 'Toca para silenciar'}
                     >
                       {!userMuted ? (
                         <>
@@ -701,8 +701,8 @@ export default function Hero() {
                         </>
                       ) : (
                         <>
-                          <VolumeX size={15} color="#94a3b8" />
-                          <span style={{ color: '#94a3b8' }}>MUTE</span>
+                          <VolumeX size={15} color="#FF003C" />
+                          <span style={{ color: '#FFFFFF', fontWeight: 900, letterSpacing: '0.04em' }}>UNMUTE</span>
                         </>
                       )}
                     </button>

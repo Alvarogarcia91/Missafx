@@ -3315,7 +3315,7 @@ export default function EventAdminModal({ isOpen, onClose }) {
                                 }}
                               >
                                 <VolumeX size={15} />
-                                <span>🔇 SIN AUDIO (MUTE)</span>
+                                <span>🔇 SIN AUDIO</span>
                               </button>
 
                               <button
@@ -3695,7 +3695,7 @@ export default function EventAdminModal({ isOpen, onClose }) {
                                         title={hasAudio ? 'Clic para silenciar este video' : `Clic para activar audio al ${meta.volume || 50}%`}
                                       >
                                         {hasAudio ? <Volume2 size={11} /> : <VolumeX size={11} />}
-                                        <span>{hasAudio ? `AUDIO ${meta.volume || 50}%` : 'MUTE'}</span>
+                                        <span>{hasAudio ? `AUDIO ${meta.volume || 50}%` : 'SIN AUDIO'}</span>
                                       </button>
                                     )}
 
