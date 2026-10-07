@@ -12,6 +12,70 @@ const defaultHeaders = {
   'Content-Type': 'application/json'
 };
 
+const monthMap = {
+  ene: 0, enero: 0, jan: 0, january: 0,
+  feb: 1, febrero: 1, february: 1,
+  mar: 2, marzo: 2, march: 2,
+  abr: 3, abril: 3, apr: 3, april: 3,
+  may: 4, mayo: 4,
+  jun: 5, junio: 5, june: 5,
+  jul: 6, julio: 6, july: 6,
+  ago: 7, agosto: 7, aug: 7, august: 7,
+  sep: 8, sept: 8, septiembre: 8, september: 8,
+  oct: 9, octubre: 9, october: 9,
+  nov: 10, noviembre: 10, november: 10,
+  dic: 11, diciembre: 11, dec: 11, december: 11
+};
+
+export function parseEventDate(str) {
+  if (!str) return 9999999999999;
+  const s = String(str).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+  const direct = Date.parse(str);
+  if (!isNaN(direct) && str.includes('-') && str.length >= 8) {
+    return direct;
+  }
+
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth();
+
+  const yearMatch = s.match(/\b(202\d)\b/);
+  let year = yearMatch ? parseInt(yearMatch[1], 10) : currentYear;
+
+  let month = -1;
+  for (const [key, val] of Object.entries(monthMap)) {
+    const regex = new RegExp('\\b' + key, 'i');
+    if (regex.test(s)) {
+      month = val;
+      break;
+    }
+  }
+
+  const cleanStr = yearMatch ? s.replace(yearMatch[1], '') : s;
+  const dayMatch = cleanStr.match(/\b([0-2]?\d|3[01])\b/);
+  const day = dayMatch ? parseInt(dayMatch[1], 10) : 1;
+
+  if (month !== -1) {
+    if (!yearMatch && month < currentMonth - 1) {
+      year = currentYear + 1;
+    }
+    return new Date(year, month, day).getTime();
+  }
+
+  return 9999999999999;
+}
+
+export function sortEventsByDate(events) {
+  if (!Array.isArray(events)) return [];
+  return [...events].sort((a, b) => {
+    const timeA = parseEventDate(a?.date);
+    const timeB = parseEventDate(b?.date);
+    if (timeA !== timeB) return timeA - timeB;
+    return new Date(a?.created_at || 0) - new Date(b?.created_at || 0);
+  });
+}
+
 export async function fetchEvents() {
   try {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/events?select=*&order=created_at.desc`, {
@@ -22,7 +86,8 @@ export async function fetchEvents() {
       console.warn('Supabase fetchEvents error:', err);
       return null;
     }
-    return await res.json();
+    const data = await res.json();
+    return sortEventsByDate(data);
   } catch (err) {
     console.error('Error fetching events from Supabase:', err);
     return null;

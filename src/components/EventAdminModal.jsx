@@ -30,6 +30,7 @@ import {
 } from 'lucide-react';
 import {
   fetchEvents,
+  sortEventsByDate,
   uploadFlyerImage,
   createEventRecord,
   updateEventRecord,
@@ -124,7 +125,7 @@ export default function EventAdminModal({ isOpen, onClose }) {
     setLoadingList(true);
     try {
       const data = await fetchEvents();
-      if (data) setEventsList(data);
+      if (data) setEventsList(sortEventsByDate(data));
     } catch (e) {
       console.warn('Error fetching events for manager:', e);
     } finally {

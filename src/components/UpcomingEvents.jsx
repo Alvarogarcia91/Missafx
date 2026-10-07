@@ -3,6 +3,7 @@ import { Calendar, MapPin, Ticket, Maximize2, X, ExternalLink, Sparkles, Play, S
 import { useLanguage } from '../context/LanguageContext';
 import {
   fetchEvents,
+  sortEventsByDate,
   isVideoMedia,
   getEventStatus,
   getEventCoupon,
@@ -42,7 +43,7 @@ export default function UpcomingEvents({ onOpenAdmin, onEventsChange }) {
     setLoading(true);
     try {
       const data = await fetchEvents();
-      const list = Array.isArray(data) ? data : [];
+      const list = Array.isArray(data) ? sortEventsByDate(data) : [];
       setEvents(list);
       if (onEventsChange) onEventsChange(list.length);
     } catch (e) {
