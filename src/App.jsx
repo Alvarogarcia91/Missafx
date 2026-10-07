@@ -13,7 +13,7 @@ import CardCreator from './components/CardCreator.jsx';
 import UpcomingEvents from './components/UpcomingEvents.jsx';
 import LiveSets from './components/LiveSets.jsx';
 import EventAdminModal from './components/EventAdminModal.jsx';
-import { recordSiteVisit, recordWhatsAppClick } from './utils/supabaseClient';
+import { recordSiteVisit, recordWhatsAppClick, recordNexoraClick } from './utils/supabaseClient';
 
 export default function App() {
   const [adminModalOpen, setAdminModalOpen] = useState(false);
@@ -35,6 +35,9 @@ export default function App() {
           const href = anchor.href.toLowerCase();
           if (href.includes('wa.me') || href.includes('whatsapp.com')) {
             recordWhatsAppClick();
+          }
+          if (href.includes('itnexora.com') || href.includes('nexora')) {
+            recordNexoraClick();
           }
         }
       } catch (err) {

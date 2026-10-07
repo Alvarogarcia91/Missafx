@@ -1146,6 +1146,7 @@ export const DEFAULT_ANALYTICS = {
   todayVisits: 0,
   todayDate: '',
   whatsappClicks: 0,
+  nexoraClicks: 0,
   mobileVisits: 0,
   desktopVisits: 0,
   lastVisitAt: null,
@@ -1301,6 +1302,31 @@ export async function recordWhatsAppClick() {
     return await saveSiteAnalytics(updated);
   } catch (err) {
     console.warn('Error recording WhatsApp click:', err);
+  }
+}
+
+export async function recordNexoraClick() {
+  if (typeof window === 'undefined') return;
+
+  const now = Date.now();
+  const lastNexora = sessionStorage.getItem('missafx_last_nexora_click');
+  if (lastNexora && (now - parseInt(lastNexora, 10) < 2500)) {
+    return;
+  }
+  try {
+    sessionStorage.setItem('missafx_last_nexora_click', String(now));
+  } catch (e) {}
+
+  try {
+    const current = await fetchSiteAnalytics();
+    const updated = {
+      ...current,
+      nexoraClicks: (current.nexoraClicks || 0) + 1,
+      lastVisitAt: new Date().toISOString()
+    };
+    return await saveSiteAnalytics(updated);
+  } catch (err) {
+    console.warn('Error recording Nexora click:', err);
   }
 }
 

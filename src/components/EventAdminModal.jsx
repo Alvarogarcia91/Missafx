@@ -5384,6 +5384,30 @@ export default function EventAdminModal({ isOpen, onClose }) {
                             </div>
                             <span style={{ fontSize: '0.66rem', color: '#64748b' }}>Interés en booking</span>
                           </div>
+
+                          {/* Card 5: Nexora Clicks */}
+                          <div
+                            style={{
+                              background: 'rgba(255, 255, 255, 0.03)',
+                              border: '1px solid rgba(99, 102, 241, 0.25)',
+                              borderRadius: '12px',
+                              padding: '14px',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '6px'
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                              <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#94a3b8', letterSpacing: '0.04em' }}>
+                                CLICKS A NEXORA
+                              </span>
+                              <Globe size={15} color="#818cf8" />
+                            </div>
+                            <div style={{ fontSize: '1.65rem', fontWeight: 900, color: '#818cf8', lineHeight: 1 }}>
+                              {(analytics.nexoraClicks || 0).toLocaleString('es-MX')}
+                            </div>
+                            <span style={{ fontSize: '0.66rem', color: '#64748b' }}>itnexora.com (Footer)</span>
+                          </div>
                         </div>
 
                         {/* Device Breakdown & Last Activity Bar */}

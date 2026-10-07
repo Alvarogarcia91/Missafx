@@ -3,6 +3,7 @@ import { ArrowUp, Settings } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useSiteConfig } from '../context/SiteConfigContext';
 import { InstagramIcon, WhatsAppIcon, KickIcon, YouTubeIcon, SoundCloudIcon } from './SocialIcons';
+import { recordNexoraClick } from '../utils/supabaseClient';
 
 export default function Footer({ onOpenAdmin }) {
   const { t } = useLanguage();
@@ -142,6 +143,7 @@ export default function Footer({ onOpenAdmin }) {
               href="https://itnexora.com/"
               target="_blank"
               rel="noreferrer"
+              onClick={() => recordNexoraClick()}
               style={{
                 color: 'rgba(255, 255, 255, 0.45)',
                 textDecoration: 'none',
@@ -158,6 +160,7 @@ export default function Footer({ onOpenAdmin }) {
               href="https://itnexora.com/"
               target="_blank"
               rel="noreferrer"
+              onClick={() => recordNexoraClick()}
               style={{
                 color: 'rgba(255, 255, 255, 0.32)',
                 textDecoration: 'none',
