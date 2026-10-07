@@ -13,6 +13,7 @@ import CardCreator from './components/CardCreator.jsx';
 import UpcomingEvents from './components/UpcomingEvents.jsx';
 import LiveSets from './components/LiveSets.jsx';
 import EventAdminModal from './components/EventAdminModal.jsx';
+import { recordSiteVisit, recordWhatsAppClick } from './utils/supabaseClient';
 
 export default function App() {
   const [adminModalOpen, setAdminModalOpen] = useState(false);
@@ -22,6 +23,30 @@ export default function App() {
     if (window.location.hash === '#card-creator') return 'card-creator';
     return 'home';
   });
+
+  // Track site visit & WhatsApp booking conversions
+  useEffect(() => {
+    recordSiteVisit();
+
+    const handleGlobalClick = (e) => {
+      try {
+        const anchor = e.target?.closest?.('a');
+        if (anchor && anchor.href) {
+          const href = anchor.href.toLowerCase();
+          if (href.includes('wa.me') || href.includes('whatsapp.com')) {
+            recordWhatsAppClick();
+          }
+        }
+      } catch (err) {
+        // silent
+      }
+    };
+
+    document.addEventListener('click', handleGlobalClick, { capture: true });
+    return () => {
+      document.removeEventListener('click', handleGlobalClick, { capture: true });
+    };
+  }, []);
 
   useEffect(() => {
     const handleHashChange = () => {

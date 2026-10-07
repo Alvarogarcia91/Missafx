@@ -40,7 +40,12 @@ import {
   Move,
   Crosshair,
   Scissors,
-  Clock
+  Clock,
+  Activity,
+  Users,
+  Smartphone,
+  Monitor,
+  RefreshCw
 } from 'lucide-react';
 import {
   fetchEvents,
@@ -87,7 +92,10 @@ import {
   saveGeneralSettings,
   resetGeneralSettings,
   applyFavicon,
-  downloadMediaFile
+  downloadMediaFile,
+  DEFAULT_ANALYTICS,
+  fetchSiteAnalytics,
+  resetSiteAnalytics
 } from '../utils/supabaseClient';
 
 const REQUIRED_PIN = '2305';
@@ -177,14 +185,29 @@ export default function EventAdminModal({ isOpen, onClose }) {
   const [generalStatus, setGeneralStatus] = useState(''); // 'success' | 'error' | 'info' | ''
   const [generalStatusMsg, setGeneralStatusMsg] = useState('');
 
+  // Site analytics state (Internal visits and booking counter)
+  const [analytics, setAnalytics] = useState({ ...DEFAULT_ANALYTICS });
+  const [loadingAnalytics, setLoadingAnalytics] = useState(false);
+  const [resettingAnalytics, setResettingAnalytics] = useState(false);
+  const [analyticsStatusMsg, setAnalyticsStatusMsg] = useState('');
+
   useEffect(() => {
     if (isOpen && isAuthenticated) {
       loadManageList();
       loadSetsList();
       loadCarouselList();
       loadGeneralConfig();
+      loadAnalytics();
     }
   }, [isOpen, isAuthenticated]);
+
+  useEffect(() => {
+    const handleAnalyticsUpdate = (e) => {
+      if (e.detail) setAnalytics(e.detail);
+    };
+    window.addEventListener('missafx-analytics-updated', handleAnalyticsUpdate);
+    return () => window.removeEventListener('missafx-analytics-updated', handleAnalyticsUpdate);
+  }, []);
 
   const loadManageList = async () => {
     setLoadingList(true);
@@ -239,6 +262,40 @@ export default function EventAdminModal({ isOpen, onClose }) {
       console.warn('Error fetching general config in admin:', e);
     } finally {
       setLoadingGeneral(false);
+    }
+  };
+
+  const loadAnalytics = async () => {
+    setLoadingAnalytics(true);
+    try {
+      const data = await fetchSiteAnalytics();
+      if (data) {
+        setAnalytics(data);
+      }
+    } catch (e) {
+      console.warn('Error fetching analytics in admin:', e);
+    } finally {
+      setLoadingAnalytics(false);
+    }
+  };
+
+  const handleResetAnalytics = async () => {
+    const confirmed = window.confirm(
+      '¿Estás seguro de reiniciar todos los contadores de visitas a cero?\n\nEsta acción borrará el conteo acumulado de visitas y clicks a WhatsApp tanto en la nube como en el dispositivo.'
+    );
+    if (!confirmed) return;
+
+    setResettingAnalytics(true);
+    try {
+      const clean = await resetSiteAnalytics();
+      setAnalytics(clean);
+      setAnalyticsStatusMsg('¡Contadores reiniciados exitosamente a cero!');
+      setTimeout(() => setAnalyticsStatusMsg(''), 4000);
+    } catch (e) {
+      setAnalyticsStatusMsg('Error al reiniciar los contadores.');
+      setTimeout(() => setAnalyticsStatusMsg(''), 4000);
+    } finally {
+      setResettingAnalytics(false);
     }
   };
 
@@ -382,6 +439,7 @@ export default function EventAdminModal({ isOpen, onClose }) {
         loadSetsList();
         loadCarouselList();
         loadGeneralConfig();
+        loadAnalytics();
       }, 400);
     } else {
       setPinError(true);
@@ -4626,6 +4684,371 @@ export default function EventAdminModal({ isOpen, onClose }) {
                       <span>{generalStatusMsg}</span>
                     </div>
                   )}
+
+                  {/* ======================================================== */}
+                  {/* DASHBOARD DE ESTADÍSTICAS & VISITAS (INTERNO MISSAFX) */}
+                  {/* ======================================================== */}
+                  {(() => {
+                    const totalDev = (analytics.mobileVisits || 0) + (analytics.desktopVisits || 0);
+                    const mobPct = totalDev > 0 ? Math.round(((analytics.mobileVisits || 0) / totalDev) * 100) : 50;
+                    const deskPct = totalDev > 0 ? (100 - mobPct) : 50;
+                    const todayKey = new Date().toISOString().split('T')[0];
+                    const countToday = (analytics.todayDate === todayKey) ? (analytics.todayVisits || 0) : 0;
+
+                    const formatTimestamp = (iso) => {
+                      if (!iso) return 'Sin registros aún';
+                      try {
+                        const d = new Date(iso);
+                        if (isNaN(d.getTime())) return 'Sin registros';
+                        return d.toLocaleString('es-MX', {
+                          day: '2-digit',
+                          month: 'short',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          hour12: true
+                        });
+                      } catch (e) {
+                        return iso;
+                      }
+                    };
+
+                    return (
+                      <div
+                        style={{
+                          padding: '20px',
+                          background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.75) 0%, rgba(10, 10, 15, 0.95) 100%)',
+                          border: '1px solid rgba(0, 240, 255, 0.25)',
+                          borderRadius: '16px',
+                          marginBottom: '26px',
+                          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+                          position: 'relative',
+                          overflow: 'hidden'
+                        }}
+                      >
+                        {/* Ambient cyber glow */}
+                        <div
+                          style={{
+                            position: 'absolute',
+                            top: '-60px',
+                            right: '-60px',
+                            width: '180px',
+                            height: '180px',
+                            background: 'radial-gradient(circle, rgba(0, 240, 255, 0.12) 0%, transparent 70%)',
+                            pointerEvents: 'none'
+                          }}
+                        />
+
+                        {/* Header with Live indicator & Refresh / Reset buttons */}
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            flexWrap: 'wrap',
+                            gap: '12px',
+                            marginBottom: '18px',
+                            borderBottom: '1px solid rgba(255, 255, 255, 0.07)',
+                            paddingBottom: '14px'
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <div
+                              style={{
+                                width: '38px',
+                                height: '38px',
+                                borderRadius: '10px',
+                                background: 'rgba(0, 240, 255, 0.12)',
+                                border: '1px solid rgba(0, 240, 255, 0.3)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                              }}
+                            >
+                              <Activity size={20} color="#00F0FF" />
+                            </div>
+                            <div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <h3 style={{ fontSize: '1.02rem', fontWeight: 900, color: '#FFFFFF', letterSpacing: '0.03em', margin: 0 }}>
+                                  ESTADÍSTICAS & TRÁFICO DEL SITIO
+                                </h3>
+                                <span
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '5px',
+                                    padding: '2px 8px',
+                                    borderRadius: '20px',
+                                    background: 'rgba(34, 197, 94, 0.15)',
+                                    border: '1px solid rgba(34, 197, 94, 0.35)',
+                                    fontSize: '0.64rem',
+                                    fontWeight: 900,
+                                    color: '#22c55e',
+                                    letterSpacing: '0.05em'
+                                  }}
+                                >
+                                  <span
+                                    className="pulse-live"
+                                    style={{
+                                      width: '6px',
+                                      height: '6px',
+                                      borderRadius: '50%',
+                                      background: '#22c55e',
+                                      boxShadow: '0 0 8px #22c55e'
+                                    }}
+                                  />
+                                  EN VIVO
+                                </span>
+                              </div>
+                              <p style={{ fontSize: '0.74rem', color: '#94a3b8', margin: '3px 0 0 0' }}>
+                                Contador privado de visitantes, audiencia única y clics de cotización en WhatsApp.
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Actions */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <button
+                              type="button"
+                              onClick={loadAnalytics}
+                              disabled={loadingAnalytics}
+                              title="Actualizar métricas"
+                              style={{
+                                padding: '7px 12px',
+                                borderRadius: '8px',
+                                border: '1px solid rgba(0, 240, 255, 0.3)',
+                                background: 'rgba(0, 240, 255, 0.1)',
+                                color: '#00F0FF',
+                                fontSize: '0.74rem',
+                                fontWeight: 800,
+                                cursor: loadingAnalytics ? 'wait' : 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                transition: 'all 0.2s ease'
+                              }}
+                            >
+                              <RefreshCw size={13} className={loadingAnalytics ? 'spin-slow' : ''} />
+                              <span>{loadingAnalytics ? 'Actualizando...' : 'Actualizar'}</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={handleResetAnalytics}
+                              disabled={resettingAnalytics}
+                              title="Reiniciar contador a 0"
+                              style={{
+                                padding: '7px 10px',
+                                borderRadius: '8px',
+                                border: '1px solid rgba(239, 68, 68, 0.25)',
+                                background: 'rgba(239, 68, 68, 0.08)',
+                                color: '#ef4444',
+                                fontSize: '0.72rem',
+                                fontWeight: 700,
+                                cursor: resettingAnalytics ? 'wait' : 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '5px',
+                                transition: 'all 0.2s ease'
+                              }}
+                            >
+                              <Trash2 size={12} />
+                              <span>Reiniciar</span>
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Status banner for reset / feedback */}
+                        {analyticsStatusMsg && (
+                          <div
+                            style={{
+                              padding: '8px 12px',
+                              borderRadius: '8px',
+                              background: 'rgba(34, 197, 94, 0.15)',
+                              border: '1px solid rgba(34, 197, 94, 0.3)',
+                              color: '#22c55e',
+                              fontSize: '0.78rem',
+                              fontWeight: 700,
+                              marginBottom: '14px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px'
+                            }}
+                          >
+                            <CheckCircle size={14} />
+                            <span>{analyticsStatusMsg}</span>
+                          </div>
+                        )}
+
+                        {/* 4 Cards Grid */}
+                        <div
+                          style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
+                            gap: '12px',
+                            marginBottom: '18px'
+                          }}
+                        >
+                          {/* Card 1: Total Visits */}
+                          <div
+                            style={{
+                              background: 'rgba(255, 255, 255, 0.03)',
+                              border: '1px solid rgba(0, 240, 255, 0.2)',
+                              borderRadius: '12px',
+                              padding: '14px',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '6px'
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                              <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#94a3b8', letterSpacing: '0.04em' }}>
+                                VISITAS TOTALES
+                              </span>
+                              <Eye size={15} color="#00F0FF" />
+                            </div>
+                            <div style={{ fontSize: '1.65rem', fontWeight: 900, color: '#FFFFFF', lineHeight: 1 }}>
+                              {(analytics.totalVisits || 0).toLocaleString('es-MX')}
+                            </div>
+                            <span style={{ fontSize: '0.66rem', color: '#64748b' }}>Sesiones cargadas</span>
+                          </div>
+
+                          {/* Card 2: Unique Visitors */}
+                          <div
+                            style={{
+                              background: 'rgba(255, 255, 255, 0.03)',
+                              border: '1px solid rgba(168, 85, 247, 0.2)',
+                              borderRadius: '12px',
+                              padding: '14px',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '6px'
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                              <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#94a3b8', letterSpacing: '0.04em' }}>
+                                VISITANTES ÚNICOS
+                              </span>
+                              <Users size={15} color="#a855f7" />
+                            </div>
+                            <div style={{ fontSize: '1.65rem', fontWeight: 900, color: '#a855f7', lineHeight: 1 }}>
+                              {(analytics.uniqueVisitors || 0).toLocaleString('es-MX')}
+                            </div>
+                            <span style={{ fontSize: '0.66rem', color: '#64748b' }}>Dispositivos únicos</span>
+                          </div>
+
+                          {/* Card 3: Today's Visits */}
+                          <div
+                            style={{
+                              background: 'rgba(255, 255, 255, 0.03)',
+                              border: '1px solid rgba(255, 0, 60, 0.2)',
+                              borderRadius: '12px',
+                              padding: '14px',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '6px'
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                              <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#94a3b8', letterSpacing: '0.04em' }}>
+                                VISITAS HOY
+                              </span>
+                              <Calendar size={15} color="#FF003C" />
+                            </div>
+                            <div style={{ fontSize: '1.65rem', fontWeight: 900, color: '#FF003C', lineHeight: 1 }}>
+                              {countToday.toLocaleString('es-MX')}
+                            </div>
+                            <span style={{ fontSize: '0.66rem', color: '#64748b' }}>Tráfico del día</span>
+                          </div>
+
+                          {/* Card 4: WhatsApp Clicks */}
+                          <div
+                            style={{
+                              background: 'rgba(255, 255, 255, 0.03)',
+                              border: '1px solid rgba(37, 211, 102, 0.2)',
+                              borderRadius: '12px',
+                              padding: '14px',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '6px'
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                              <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#94a3b8', letterSpacing: '0.04em' }}>
+                                CLICKS A WHATSAPP
+                              </span>
+                              <MessageSquare size={15} color="#25D366" />
+                            </div>
+                            <div style={{ fontSize: '1.65rem', fontWeight: 900, color: '#25D366', lineHeight: 1 }}>
+                              {(analytics.whatsappClicks || 0).toLocaleString('es-MX')}
+                            </div>
+                            <span style={{ fontSize: '0.66rem', color: '#64748b' }}>Interés en booking</span>
+                          </div>
+                        </div>
+
+                        {/* Device Breakdown & Last Activity Bar */}
+                        <div
+                          style={{
+                            background: 'rgba(0, 0, 0, 0.35)',
+                            borderRadius: '10px',
+                            padding: '12px 14px',
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            gap: '12px',
+                            fontSize: '0.74rem'
+                          }}
+                        >
+                          {/* Device distribution */}
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', minWidth: '220px', flex: 1 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: '#94a3b8' }}>
+                              <span style={{ display: 'flex', alignItems: 'center', gap: '5px', fontWeight: 700 }}>
+                                <Smartphone size={13} color="#38bdf8" /> Móvil {mobPct}% ({analytics.mobileVisits || 0})
+                              </span>
+                              <span style={{ display: 'flex', alignItems: 'center', gap: '5px', fontWeight: 700 }}>
+                                <Monitor size={13} color="#e2e8f0" /> PC {deskPct}% ({analytics.desktopVisits || 0})
+                              </span>
+                            </div>
+                            {/* Progress bar */}
+                            <div
+                              style={{
+                                width: '100%',
+                                height: '6px',
+                                borderRadius: '4px',
+                                background: 'rgba(255, 255, 255, 0.1)',
+                                overflow: 'hidden',
+                                display: 'flex'
+                              }}
+                            >
+                              <div
+                                style={{
+                                  width: `${mobPct}%`,
+                                  height: '100%',
+                                  background: 'linear-gradient(90deg, #38bdf8, #00F0FF)',
+                                  transition: 'width 0.4s ease'
+                                }}
+                              />
+                              <div
+                                style={{
+                                  width: `${deskPct}%`,
+                                  height: '100%',
+                                  background: 'rgba(255, 255, 255, 0.3)',
+                                  transition: 'width 0.4s ease'
+                                }}
+                              />
+                            </div>
+                          </div>
+
+                          {/* Last visit timestamp */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#94a3b8' }}>
+                            <Clock size={13} color="#94a3b8" />
+                            <span>Última visita: <strong style={{ color: '#fff' }}>{formatTimestamp(analytics.lastVisitAt)}</strong></span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
 
                   {/* Intro Banner */}
                   <div

@@ -1135,4 +1135,184 @@ export async function downloadMediaFile(url, preferredName = '') {
   }
 }
 
+/**
+ * ----------------------------------------------------
+ * SITE TRAFFIC & BOOKING ANALYTICS (INTERNAL ADMIN ONLY)
+ * ----------------------------------------------------
+ */
+export const DEFAULT_ANALYTICS = {
+  totalVisits: 0,
+  uniqueVisitors: 0,
+  todayVisits: 0,
+  todayDate: '',
+  whatsappClicks: 0,
+  mobileVisits: 0,
+  desktopVisits: 0,
+  lastVisitAt: null
+};
+
+export async function fetchSiteAnalytics() {
+  let cloudAnalytics = null;
+
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/carousel?image_url=like.__config:analytics*%25&select=*&order=created_at.desc`, {
+      headers: defaultHeaders
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0 && data[0].image_url) {
+        const rawJson = data[0].image_url.replace('__config:analytics=', '');
+        cloudAnalytics = JSON.parse(rawJson);
+        try {
+          localStorage.setItem('missafx_site_analytics', JSON.stringify(cloudAnalytics));
+        } catch (e) {}
+      }
+    }
+  } catch (err) {
+    console.warn('Supabase analytics fetch failed:', err);
+  }
+
+  let localAnalytics = {};
+  try {
+    const saved = localStorage.getItem('missafx_site_analytics');
+    if (saved) localAnalytics = JSON.parse(saved);
+  } catch (e) {}
+
+  const merged = {
+    ...DEFAULT_ANALYTICS,
+    ...localAnalytics,
+    ...(cloudAnalytics || {})
+  };
+
+  return merged;
+}
+
+export async function saveSiteAnalytics(newAnalytics) {
+  const merged = {
+    ...DEFAULT_ANALYTICS,
+    ...newAnalytics
+  };
+
+  try {
+    localStorage.setItem('missafx_site_analytics', JSON.stringify(merged));
+  } catch (e) {}
+
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/carousel?image_url=like.__config:analytics*%25`, {
+      method: 'DELETE',
+      headers: defaultHeaders
+    });
+
+    await fetch(`${SUPABASE_URL}/rest/v1/carousel`, {
+      method: 'POST',
+      headers: {
+        ...defaultHeaders,
+        Prefer: 'return=representation'
+      },
+      body: JSON.stringify([{
+        image_url: `__config:analytics=${JSON.stringify(merged)}`,
+        display_order: -3
+      }])
+    });
+  } catch (err) {
+    console.warn('Error saving analytics to Supabase:', err);
+  }
+
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('missafx-analytics-updated', { detail: merged }));
+  }
+
+  return merged;
+}
+
+export async function recordSiteVisit() {
+  if (typeof window === 'undefined') return DEFAULT_ANALYTICS;
+
+  const now = Date.now();
+  const lastRecordedTime = sessionStorage.getItem('missafx_session_visit_at');
+  const fifteenMinutes = 15 * 60 * 1000;
+  const isExistingRecentSession = lastRecordedTime && (now - parseInt(lastRecordedTime, 10) < fifteenMinutes);
+
+  let visitorUuid = localStorage.getItem('missafx_visitor_uuid');
+  let isNewUnique = false;
+  if (!visitorUuid) {
+    visitorUuid = 'v_' + now + '_' + Math.random().toString(36).substring(2, 9);
+    try {
+      localStorage.setItem('missafx_visitor_uuid', visitorUuid);
+    } catch (e) {}
+    isNewUnique = true;
+  }
+
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent || '');
+  const todayStr = new Date().toISOString().split('T')[0];
+
+  if (isExistingRecentSession) {
+    return await fetchSiteAnalytics();
+  }
+
+  try {
+    sessionStorage.setItem('missafx_session_visit_at', String(now));
+  } catch (e) {}
+
+  try {
+    const current = await fetchSiteAnalytics();
+    const isSameDay = current.todayDate === todayStr;
+    const updatedTodayVisits = isSameDay ? (current.todayVisits || 0) + 1 : 1;
+
+    const updated = {
+      ...current,
+      totalVisits: (current.totalVisits || 0) + 1,
+      uniqueVisitors: isNewUnique ? (current.uniqueVisitors || 0) + 1 : Math.max(1, current.uniqueVisitors || 1),
+      todayVisits: updatedTodayVisits,
+      todayDate: todayStr,
+      mobileVisits: isMobile ? (current.mobileVisits || 0) + 1 : (current.mobileVisits || 0),
+      desktopVisits: !isMobile ? (current.desktopVisits || 0) + 1 : (current.desktopVisits || 0),
+      lastVisitAt: new Date().toISOString()
+    };
+
+    return await saveSiteAnalytics(updated);
+  } catch (err) {
+    console.warn('Error recording site visit:', err);
+    return DEFAULT_ANALYTICS;
+  }
+}
+
+export async function recordWhatsAppClick() {
+  if (typeof window === 'undefined') return;
+
+  const now = Date.now();
+  const lastWa = sessionStorage.getItem('missafx_last_wa_click');
+  if (lastWa && (now - parseInt(lastWa, 10) < 2500)) {
+    return;
+  }
+  try {
+    sessionStorage.setItem('missafx_last_wa_click', String(now));
+  } catch (e) {}
+
+  try {
+    const current = await fetchSiteAnalytics();
+    const updated = {
+      ...current,
+      whatsappClicks: (current.whatsappClicks || 0) + 1,
+      lastVisitAt: new Date().toISOString()
+    };
+    return await saveSiteAnalytics(updated);
+  } catch (err) {
+    console.warn('Error recording WhatsApp click:', err);
+  }
+}
+
+export async function resetSiteAnalytics() {
+  try {
+    localStorage.removeItem('missafx_site_analytics');
+    sessionStorage.removeItem('missafx_session_visit_at');
+  } catch (e) {}
+
+  return await saveSiteAnalytics({
+    ...DEFAULT_ANALYTICS,
+    todayDate: new Date().toISOString().split('T')[0]
+  });
+}
+
+
 

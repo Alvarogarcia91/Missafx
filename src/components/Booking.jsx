@@ -3,6 +3,7 @@ import { CheckCircle, Sparkles } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useSiteConfig } from '../context/SiteConfigContext';
 import { WhatsAppIcon, InstagramIcon } from './SocialIcons';
+import { recordWhatsAppClick } from '../utils/supabaseClient';
 
 export default function Booking() {
   const { t } = useLanguage();
@@ -24,6 +25,7 @@ export default function Booking() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    recordWhatsAppClick();
     const eventName = t.booking.eventOptions[formData.eventType] || formData.eventType;
     const msg = encodeURIComponent(
       `Hola Missa! Mi nombre es ${formData.name || 'un organizador'}. Quisiera cotizar una fecha para: ${eventName} en ${formData.location || 'mi ciudad'}${formData.date ? ' el día ' + formData.date : ''}. Mensaje: ${formData.message || 'Contacto directo'}`

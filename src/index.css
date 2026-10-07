@@ -490,3 +490,21 @@ body {
   }
 }
 
+@keyframes spinAnim {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spin-slow {
+  animation: spinAnim 0.9s linear infinite;
+}
+
+.pulse-live {
+  animation: pulseAnimation 2s infinite;
+}
+
+
