@@ -846,8 +846,10 @@ export function preloadCarouselMedia(urlList) {
     if (isVideoMedia(clean)) {
       try {
         const v = document.createElement('video');
-        v.preload = 'metadata';
+        v.preload = 'auto';
+        v.muted = true;
         v.src = clean;
+        v.load();
       } catch (e) {}
     } else {
       try {
@@ -1669,6 +1671,263 @@ export async function compressImageFile(file, options = {}) {
     img.src = objectUrl;
   });
 }
+
+/**
+ * Fetch file size via HEAD request
+ */
+export async function fetchMediaFileSize(url) {
+  if (!url || typeof window === 'undefined') return 0;
+  const clean = url.split('#')[0];
+  try {
+    const res = await fetch(clean, { method: 'HEAD' });
+    if (res.ok) {
+      const len = res.headers.get('content-length');
+      if (len) return parseInt(len, 10);
+    }
+  } catch (e) {}
+  return 0;
+}
+
+/**
+ * CLIENT-SIDE VIDEO COMPRESSION & OPTIMIZATION
+ * Re-encodes, scales, limits bitrate and optionally slices exact trimmed segment.
+ */
+export async function compressVideoMedia({
+  sourceUrl,
+  startTime = 0,
+  endTime = 0,
+  preset = 'balanced', // 'ultra' | 'balanced' | 'high'
+  trimExact = true,
+  onProgress = () => {}
+}) {
+  return new Promise((resolve, reject) => {
+    if (!sourceUrl || typeof window === 'undefined') {
+      return reject(new Error('URL o archivo de video no especificado'));
+    }
+
+    const isFile = sourceUrl instanceof Blob;
+    const mediaUrl = isFile ? URL.createObjectURL(sourceUrl) : sourceUrl.split('#')[0];
+
+    const video = document.createElement('video');
+    video.crossOrigin = 'anonymous';
+    video.playsInline = true;
+    video.preload = 'auto';
+    video.muted = false; // Audio is captured silently via Web Audio Destination
+
+    let isCleanedUp = false;
+    const cleanup = () => {
+      if (isCleanedUp) return;
+      isCleanedUp = true;
+      try {
+        video.pause();
+        video.removeAttribute('src');
+        video.load();
+        if (isFile) URL.revokeObjectURL(mediaUrl);
+      } catch (e) {}
+    };
+
+    onProgress({ percent: 5, status: 'Analizando archivo de video y pistas...' });
+
+    const timeoutTimer = setTimeout(() => {
+      cleanup();
+      reject(new Error('Tiempo de espera agotado al cargar el video para compresión'));
+    }, 45000);
+
+    video.onloadedmetadata = async () => {
+      clearTimeout(timeoutTimer);
+      try {
+        const fullDuration = video.duration || 10;
+        let segStart = Math.max(0, parseFloat(startTime) || 0);
+        let segEnd = (parseFloat(endTime) > 0 && parseFloat(endTime) <= fullDuration)
+          ? parseFloat(endTime)
+          : fullDuration;
+
+        if (!trimExact || segEnd <= segStart) {
+          segStart = 0;
+          segEnd = fullDuration;
+        }
+        const clipDuration = Math.max(0.5, segEnd - segStart);
+
+        // Quality presets
+        let maxWidth = 1920;
+        let maxHeight = 1080;
+        let targetBitrate = 2400000; // 2.4 Mbps (Balanced)
+        const fps = 30;
+
+        if (preset === 'ultra') {
+          maxWidth = 1280;
+          maxHeight = 720;
+          targetBitrate = 1200000; // 1.2 Mbps (Ultra light for mobile)
+        } else if (preset === 'high') {
+          maxWidth = 1920;
+          maxHeight = 1080;
+          targetBitrate = 4000000; // 4.0 Mbps (High fidelity)
+        }
+
+        // Maintain original aspect ratio within bounds
+        let w = video.videoWidth || 1280;
+        let h = video.videoHeight || 720;
+
+        if (w > maxWidth || h > maxHeight) {
+          if (w / h > maxWidth / maxHeight) {
+            h = Math.round((h * maxWidth) / w);
+            w = maxWidth;
+          } else {
+            w = Math.round((w * maxHeight) / h);
+            h = maxHeight;
+          }
+        }
+        // Even numbers required by video encoders
+        w = Math.round(w / 2) * 2;
+        h = Math.round(h / 2) * 2;
+
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d', { alpha: false });
+
+        // Set up silent Web Audio routing to capture audio tracks without speaker noise
+        let audioDest = null;
+        let audioCtx = null;
+        try {
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          if (AudioContextClass) {
+            audioCtx = new AudioContextClass();
+            const source = audioCtx.createMediaElementSource(video);
+            audioDest = audioCtx.createMediaStreamDestination();
+            source.connect(audioDest);
+          }
+        } catch (audioErr) {
+          console.warn('AudioContext routing warning (video may be silent):', audioErr);
+        }
+
+        const stream = canvas.captureStream(fps);
+        if (audioDest && audioDest.stream.getAudioTracks().length > 0) {
+          stream.addTrack(audioDest.stream.getAudioTracks()[0]);
+        }
+
+        // Determine best supported container format
+        const mimeCandidates = [
+          'video/mp4;codecs=avc1.42E01E,mp4a.40.2',
+          'video/mp4;codecs=avc1',
+          'video/mp4',
+          'video/webm;codecs=vp9,opus',
+          'video/webm;codecs=vp8,opus',
+          'video/webm'
+        ];
+        const selectedMime = mimeCandidates.find(t => MediaRecorder.isTypeSupported(t)) || '';
+        const ext = selectedMime.includes('mp4') ? 'mp4' : 'webm';
+
+        const recorder = new MediaRecorder(stream, {
+          mimeType: selectedMime || undefined,
+          videoBitsPerSecond: targetBitrate
+        });
+
+        const chunks = [];
+        recorder.ondataavailable = (e) => {
+          if (e.data && e.data.size > 0) chunks.push(e.data);
+        };
+
+        let isRecordingStopped = false;
+        let animId = null;
+
+        recorder.onstop = async () => {
+          isRecordingStopped = true;
+          if (animId) cancelAnimationFrame(animId);
+          if (audioCtx && audioCtx.state !== 'closed') {
+            try { audioCtx.close(); } catch (e) {}
+          }
+          cleanup();
+
+          const blob = new Blob(chunks, { type: selectedMime || 'video/mp4' });
+          const newFileName = `compressed_video_${Date.now()}.${ext}`;
+          const compressedFile = new File([blob], newFileName, {
+            type: selectedMime || 'video/mp4',
+            lastModified: Date.now()
+          });
+
+          let originalSize = isFile ? sourceUrl.size : 0;
+          if (!originalSize) {
+            try {
+              const head = await fetch(sourceUrl.split('#')[0], { method: 'HEAD' });
+              originalSize = parseInt(head.headers.get('content-length') || '0', 10);
+            } catch (e) {}
+          }
+
+          const savingsPct = originalSize > 0
+            ? Math.max(0, Math.round(((originalSize - compressedFile.size) / originalSize) * 100))
+            : 0;
+
+          onProgress({ percent: 100, status: '¡Compresión completada con éxito!' });
+
+          resolve({
+            file: compressedFile,
+            blob,
+            originalSize,
+            compressedSize: compressedFile.size,
+            savingsPct,
+            duration: clipDuration,
+            previewUrl: URL.createObjectURL(compressedFile)
+          });
+        };
+
+        onProgress({ percent: 10, status: 'Posicionando inicio de segmento...' });
+        video.currentTime = segStart;
+
+        const onSeeked = () => {
+          video.removeEventListener('seeked', onSeeked);
+
+          onProgress({ percent: 15, status: `Procesando compresión (${Math.round(clipDuration)}s a ${fps}fps)...` });
+          recorder.start(250);
+
+          const renderFrame = () => {
+            if (isRecordingStopped) return;
+            if (video.currentTime >= segEnd || video.ended) {
+              isRecordingStopped = true;
+              video.pause();
+              try { recorder.stop(); } catch (e) {}
+              return;
+            }
+
+            ctx.drawImage(video, 0, 0, w, h);
+
+            const elapsed = Math.max(0, video.currentTime - segStart);
+            const progress = Math.min(98, Math.round(15 + (elapsed / clipDuration) * 83));
+            onProgress({
+              percent: progress,
+              currentSec: Math.round(elapsed * 10) / 10,
+              totalSec: Math.round(clipDuration * 10) / 10,
+              status: `Comprimiendo video: ${Math.round(elapsed)}s / ${Math.round(clipDuration)}s (${progress}%)`
+            });
+
+            animId = requestAnimationFrame(renderFrame);
+          };
+
+          video.play().then(() => {
+            animId = requestAnimationFrame(renderFrame);
+          }).catch(err => {
+            cleanup();
+            reject(new Error('No se pudo iniciar reproducción para transcodificación: ' + err.message));
+          });
+        };
+
+        video.addEventListener('seeked', onSeeked);
+      } catch (err) {
+        cleanup();
+        reject(err);
+      }
+    };
+
+    video.onerror = () => {
+      clearTimeout(timeoutTimer);
+      cleanup();
+      reject(new Error('Error al cargar archivo de video para compresión'));
+    };
+
+    video.src = mediaUrl;
+  });
+}
+
 
 
 

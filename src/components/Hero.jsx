@@ -99,6 +99,16 @@ export default function Hero() {
 
   useEffect(() => {
     if (photos.length <= 1) return;
+
+    // Dynamic interval: photos get 10s, videos get their full clip duration (up to 35s)
+    let slideDuration = 10000;
+    if (isCurrentVideo) {
+      const s = currentMeta.startTime || 0;
+      const e = currentMeta.endTime || 0;
+      const clipDuration = (e > s) ? (e - s) : 15;
+      slideDuration = Math.max(12000, Math.min(35000, Math.round(clipDuration * 1000) + 1500));
+    }
+
     const timer = setInterval(() => {
       if (isRandom) {
         if (queueManager.current) {
@@ -109,9 +119,9 @@ export default function Hero() {
         const nextIdx = (currentIdxRef.current + 1) % photos.length;
         triggerHeroTransition(nextIdx);
       }
-    }, 10000);
+    }, slideDuration);
     return () => clearInterval(timer);
-  }, [photos, isRandom, triggerHeroTransition, progressKey]);
+  }, [photos, isRandom, triggerHeroTransition, progressKey, isCurrentVideo, currentMeta.startTime, currentMeta.endTime]);
 
   useEffect(() => {
     setUserMuted(true);
@@ -180,14 +190,25 @@ export default function Hero() {
         video.muted = true;
       }
 
-      // Seek to custom start time
+      // Seek to custom start time waiting for metadata readiness
       const startTime = currentMeta.startTime || 0;
       const endTime = currentMeta.endTime || 0;
 
-      if (startTime > 0) {
-        try {
-          video.currentTime = startTime;
-        } catch (e) {}
+      const applyStartTime = () => {
+        if (startTime > 0 && video) {
+          try {
+            if (Math.abs(video.currentTime - startTime) > 0.4) {
+              video.currentTime = startTime;
+            }
+          } catch (e) {}
+        }
+      };
+
+      if (video.readyState >= 1) {
+        applyStartTime();
+      } else {
+        video.addEventListener('loadedmetadata', applyStartTime, { once: true });
+        video.addEventListener('canplay', applyStartTime, { once: true });
       }
 
       const playPromise = video.play();
@@ -201,19 +222,28 @@ export default function Hero() {
 
       const handleTimeUpdate = () => {
         if (endTime > 0 && video.currentTime >= endTime) {
-          video.pause();
-          video.currentTime = endTime;
+          // Seamless loop back to startTime instead of pausing/freezing
+          try {
+            video.currentTime = startTime || 0;
+            video.play().catch(() => {});
+          } catch (e) {}
         }
       };
 
       const handleEnded = () => {
-        video.pause();
+        // Seamless loop back to startTime
+        try {
+          video.currentTime = startTime || 0;
+          video.play().catch(() => {});
+        } catch (e) {}
       };
 
       video.addEventListener('timeupdate', handleTimeUpdate);
       video.addEventListener('ended', handleEnded);
 
       return () => {
+        video.removeEventListener('loadedmetadata', applyStartTime);
+        video.removeEventListener('canplay', applyStartTime);
         video.removeEventListener('timeupdate', handleTimeUpdate);
         video.removeEventListener('ended', handleEnded);
         video.pause();
@@ -670,7 +700,9 @@ export default function Hero() {
                     playsInline
                     preload="auto"
                     muted={!hasAudioConfig || userMuted}
+                    loop={!currentMeta.endTime || currentMeta.endTime <= 0}
                     onCanPlay={() => setIsMediaLoading(false)}
+                    onPlaying={() => setIsMediaLoading(false)}
                     onLoadedData={() => setIsMediaLoading(false)}
                     onWaiting={() => setIsMediaLoading(true)}
                     onError={() => setIsMediaLoading(false)}

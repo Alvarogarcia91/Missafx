@@ -103,7 +103,9 @@ import {
   resetSetClicks,
   formatFileSize,
   getFileSizeAdvice,
-  compressImageFile
+  compressImageFile,
+  fetchMediaFileSize,
+  compressVideoMedia
 } from '../utils/supabaseClient';
 
 const REQUIRED_PIN = '2305';
@@ -210,6 +212,28 @@ export default function EventAdminModal({ isOpen, onClose }) {
   // Set specific stats modal state
   const [selectedSetStats, setSelectedSetStats] = useState(null);
   const [resettingSetId, setResettingSetId] = useState(null);
+
+  // Video Compression & Optimization state
+  const [compressVideoTarget, setCompressVideoTarget] = useState(null); // { idx, url, cleanUrl, meta, originalSize }
+  const [compressVideoPreset, setCompressVideoPreset] = useState('ultra'); // 'ultra' | 'balanced' | 'high'
+  const [compressVideoTrim, setCompressVideoTrim] = useState(true);
+  const [isCompressingVideo, setIsCompressingVideo] = useState(false);
+  const [compressVideoProgress, setCompressVideoProgress] = useState({ percent: 0, status: '' });
+  const [compressVideoResult, setCompressVideoResult] = useState(null);
+  const [videoFileSizes, setVideoFileSizes] = useState({});
+
+  useEffect(() => {
+    if (!carouselPhotos || carouselPhotos.length === 0) return;
+    carouselPhotos.forEach(async (item) => {
+      const meta = parseCarouselItemMeta(item);
+      if (isVideoMedia(meta.cleanUrl) && !videoFileSizes[meta.cleanUrl]) {
+        const size = await fetchMediaFileSize(meta.cleanUrl);
+        if (size > 0) {
+          setVideoFileSizes(prev => ({ ...prev, [meta.cleanUrl]: size }));
+        }
+      }
+    });
+  }, [carouselPhotos]);
 
   useEffect(() => {
     if (isOpen && isAuthenticated) {
@@ -765,6 +789,131 @@ export default function EventAdminModal({ isOpen, onClose }) {
       alert('Error al comprimir foto: ' + err.message);
     } finally {
       setIsCompressingCarousel(false);
+    }
+  };
+
+  const handleCompressCarouselVideo = async (e) => {
+    if (e) e.stopPropagation();
+    if (!carouselFile || !isCarouselVideo) return;
+    setIsCompressingVideo(true);
+    setCompressVideoProgress({ percent: 5, status: 'Iniciando compresión de video local...' });
+    try {
+      const res = await compressVideoMedia({
+        sourceUrl: carouselFile,
+        startTime: carouselStartTime || 0,
+        endTime: carouselEndTime || 0,
+        preset: 'ultra',
+        trimExact: carouselStartTime > 0 || carouselEndTime > 0,
+        onProgress: (p) => setCompressVideoProgress(p)
+      });
+      if (carouselPreview && carouselPreview.startsWith('blob:')) {
+        URL.revokeObjectURL(carouselPreview);
+      }
+      setCarouselFile(res.file);
+      setCarouselPreview(res.previewUrl);
+      if (carouselStartTime > 0 || carouselEndTime > 0) {
+        setCarouselStartTime(0);
+        setCarouselEndTime(res.duration);
+        setCarouselVideoDuration(res.duration);
+      }
+      setCarouselCompressedInfo(`¡Video optimizado! De ${formatFileSize(res.originalSize)} a ${formatFileSize(res.compressedSize)} (-${res.savingsPct}%)`);
+    } catch (err) {
+      alert('Error al comprimir video: ' + err.message);
+    } finally {
+      setIsCompressingVideo(false);
+      setCompressVideoProgress({ percent: 0, status: '' });
+    }
+  };
+
+  const handleOpenCompressVideo = async (idx) => {
+    const rawUrl = carouselPhotos[idx];
+    if (!rawUrl) return;
+    const meta = parseCarouselItemMeta(rawUrl);
+    let size = videoFileSizes[meta.cleanUrl] || 0;
+    if (!size) {
+      size = await fetchMediaFileSize(meta.cleanUrl);
+      if (size > 0) {
+        setVideoFileSizes(prev => ({ ...prev, [meta.cleanUrl]: size }));
+      }
+    }
+    setCompressVideoTarget({
+      idx,
+      url: rawUrl,
+      cleanUrl: meta.cleanUrl,
+      meta,
+      originalSize: size
+    });
+    setCompressVideoPreset('ultra'); // Default to ultra light for maximum speed
+    setCompressVideoTrim(meta.startTime > 0 || meta.endTime > 0);
+    setCompressVideoResult(null);
+    setCompressVideoProgress({ percent: 0, status: '' });
+  };
+
+  const handleExecuteCompressVideo = async () => {
+    if (!compressVideoTarget) return;
+    setIsCompressingVideo(true);
+    setCompressVideoResult(null);
+
+    const target = compressVideoTarget;
+    try {
+      const res = await compressVideoMedia({
+        sourceUrl: target.cleanUrl,
+        startTime: target.meta.startTime || 0,
+        endTime: target.meta.endTime || 0,
+        preset: compressVideoPreset,
+        trimExact: compressVideoTrim,
+        onProgress: (prog) => {
+          setCompressVideoProgress(prog);
+        }
+      });
+
+      setCompressVideoProgress({ percent: 99, status: 'Subiendo video optimizado a Supabase...' });
+
+      // Upload to Supabase Storage
+      const newCdnUrl = await uploadMediaFile(res.file);
+
+      // If we trimmed exact, the new video's start is 0 and its end is its full duration
+      let newStart = 0;
+      let newEnd = 0;
+      if (!compressVideoTrim) {
+        newStart = target.meta.startTime || 0;
+        newEnd = target.meta.endTime || 0;
+      }
+
+      const updatedUrl = buildCarouselItemMetaUrl(newCdnUrl, {
+        hasAudio: target.meta.hasAudio,
+        volume: target.meta.volume,
+        isHidden: target.meta.isHidden,
+        fit: target.meta.fit,
+        pos: target.meta.pos,
+        startTime: newStart,
+        endTime: newEnd
+      });
+
+      const updatedList = [...carouselPhotos];
+      updatedList[target.idx] = updatedUrl;
+      await saveCarouselPhotos(updatedList);
+      setCarouselPhotos(updatedList);
+
+      setVideoFileSizes(prev => ({
+        ...prev,
+        [newCdnUrl]: res.compressedSize
+      }));
+
+      setCompressVideoResult({
+        originalSize: res.originalSize || target.originalSize,
+        compressedSize: res.compressedSize,
+        savingsPct: res.savingsPct,
+        previewUrl: res.previewUrl,
+        newUrl: updatedUrl
+      });
+
+      window.dispatchEvent(new CustomEvent('missafx-carousel-updated'));
+    } catch (err) {
+      console.error(err);
+      alert('Error durante la compresión del video: ' + err.message);
+    } finally {
+      setIsCompressingVideo(false);
     }
   };
 
@@ -3995,6 +4144,51 @@ export default function EventAdminModal({ isOpen, onClose }) {
                               </span>
                             </button>
                           )}
+
+                          {isCarouselVideo && (
+                            <button
+                              type="button"
+                              onClick={handleCompressCarouselVideo}
+                              disabled={isCompressingVideo || carouselFile.size < 1.5 * 1024 * 1024}
+                              style={{
+                                padding: '9px 14px',
+                                borderRadius: '8px',
+                                border: 'none',
+                                background:
+                                  carouselFile.size < 1.5 * 1024 * 1024
+                                    ? 'rgba(255, 255, 255, 0.05)'
+                                    : 'linear-gradient(135deg, #FF003C, #FF6B00)',
+                                color:
+                                  carouselFile.size < 1.5 * 1024 * 1024
+                                    ? '#94a3b8'
+                                    : '#FFFFFF',
+                                fontWeight: 800,
+                                fontSize: '0.78rem',
+                                cursor:
+                                  isCompressingVideo || carouselFile.size < 1.5 * 1024 * 1024
+                                    ? 'default'
+                                    : 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '6px',
+                                transition: 'all 0.2s ease',
+                                boxShadow:
+                                  carouselFile.size >= 1.5 * 1024 * 1024
+                                    ? '0 4px 14px rgba(255, 0, 60, 0.35)'
+                                    : 'none'
+                              }}
+                            >
+                              <Zap size={14} />
+                              <span>
+                                {isCompressingVideo
+                                  ? `Comprimiendo video (${compressVideoProgress.percent}%)...`
+                                  : carouselFile.size < 1.5 * 1024 * 1024
+                                  ? 'Video ya optimizado (< 1.5 MB)'
+                                  : '⚡ Comprimir Video a 720p Ligero'}
+                              </span>
+                            </button>
+                          )}
                         </div>
                       );
                     })()}
@@ -4751,6 +4945,23 @@ export default function EventAdminModal({ isOpen, onClose }) {
                                       </span>
                                     )}
 
+                                    {isVid && videoFileSizes[meta.cleanUrl] && (
+                                      <span
+                                        style={{
+                                          fontSize: '0.64rem',
+                                          fontWeight: 800,
+                                          color: videoFileSizes[meta.cleanUrl] > 6 * 1024 * 1024 ? '#ef4444' : (videoFileSizes[meta.cleanUrl] > 3 * 1024 * 1024 ? '#f59e0b' : '#22c55e'),
+                                          background: 'rgba(0, 0, 0, 0.4)',
+                                          padding: '1px 6px',
+                                          borderRadius: '4px',
+                                          border: `1px solid ${videoFileSizes[meta.cleanUrl] > 6 * 1024 * 1024 ? '#ef4444' : (videoFileSizes[meta.cleanUrl] > 3 * 1024 * 1024 ? '#f59e0b' : '#22c55e')}40`
+                                        }}
+                                        title="Peso del video en almacenamiento"
+                                      >
+                                        ⚖️ {formatFileSize(videoFileSizes[meta.cleanUrl])}
+                                      </span>
+                                    )}
+
                                     {isVid && (meta.startTime > 0 || meta.endTime > 0) && (
                                       <span
                                         style={{
@@ -4848,6 +5059,33 @@ export default function EventAdminModal({ isOpen, onClose }) {
 
                                 {/* Reorder, Framing, Visibility Toggle, and Delete Actions */}
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                  {/* Video Compression button */}
+                                  {isVid && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleOpenCompressVideo(idx)}
+                                      style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '4px',
+                                        padding: '5px 8px',
+                                        borderRadius: '6px',
+                                        fontSize: '0.72rem',
+                                        fontWeight: 800,
+                                        cursor: 'pointer',
+                                        background: 'rgba(255, 0, 60, 0.16)',
+                                        border: '1px solid rgba(255, 0, 60, 0.5)',
+                                        color: '#FF003C',
+                                        transition: 'all 0.2s ease',
+                                        boxShadow: '0 0 10px rgba(255, 0, 60, 0.2)'
+                                      }}
+                                      title="Comprimir y optimizar este video (elegir calidad y reducir peso)"
+                                    >
+                                      <Zap size={13} color="#FF003C" />
+                                      <span>COMPRIMIR</span>
+                                    </button>
+                                  )}
+
                                   {/* Framing edit button */}
                                   <button
                                     type="button"
@@ -7040,6 +7278,395 @@ export default function EventAdminModal({ isOpen, onClose }) {
           )}
         </div>
       </div>
+
+      {/* VIDEO COMPRESSION & OPTIMIZATION MODAL OVERLAY */}
+      {compressVideoTarget && (() => {
+        const target = compressVideoTarget;
+        const currentSizeMB = target.originalSize ? (target.originalSize / (1024 * 1024)).toFixed(2) : null;
+        const hasTrimPoints = (target.meta.startTime > 0 || target.meta.endTime > 0);
+        const clipDuration = hasTrimPoints && target.meta.endTime > target.meta.startTime
+          ? (target.meta.endTime - target.meta.startTime).toFixed(1)
+          : null;
+
+        return (
+          <div
+            style={{
+              position: 'fixed',
+              inset: 0,
+              backgroundColor: 'rgba(0, 0, 0, 0.88)',
+              backdropFilter: 'blur(8px)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 9999999,
+              padding: '16px'
+            }}
+            onClick={() => {
+              if (!isCompressingVideo) {
+                setCompressVideoTarget(null);
+                setCompressVideoResult(null);
+              }
+            }}
+          >
+            <div
+              style={{
+                background: '#0d0e14',
+                border: '1px solid rgba(255, 0, 60, 0.4)',
+                borderRadius: '16px',
+                width: '100%',
+                maxWidth: '520px',
+                maxHeight: '92vh',
+                overflowY: 'auto',
+                padding: '24px',
+                boxShadow: '0 25px 60px rgba(0, 0, 0, 0.9), 0 0 35px rgba(255, 0, 60, 0.2)',
+                position: 'relative'
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: '16px',
+                  borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                  paddingBottom: '12px'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Zap size={20} color="#FF003C" />
+                  <div>
+                    <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 900, color: '#FFFFFF', letterSpacing: '0.03em' }}>
+                      OPTIMIZAR Y COMPRIMIR VIDEO
+                    </h4>
+                    <p style={{ margin: 0, fontSize: '0.72rem', color: '#94a3b8' }}>
+                      Reduce el peso y recorta físicamente el video para carga instantánea
+                    </p>
+                  </div>
+                </div>
+                {!isCompressingVideo && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCompressVideoTarget(null);
+                      setCompressVideoResult(null);
+                    }}
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.08)',
+                      border: 'none',
+                      color: '#94a3b8',
+                      borderRadius: '50%',
+                      width: '30px',
+                      height: '30px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <X size={16} />
+                  </button>
+                )}
+              </div>
+
+              {/* Video Preview & Specs */}
+              <div
+                style={{
+                  display: 'flex',
+                  gap: '14px',
+                  background: 'rgba(255, 255, 255, 0.03)',
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  borderRadius: '12px',
+                  padding: '12px',
+                  marginBottom: '18px',
+                  alignItems: 'center'
+                }}
+              >
+                <div
+                  style={{
+                    width: '100px',
+                    height: '70px',
+                    borderRadius: '8px',
+                    overflow: 'hidden',
+                    background: '#000',
+                    flexShrink: 0
+                  }}
+                >
+                  <video
+                    src={compressVideoResult ? compressVideoResult.previewUrl : target.cleanUrl}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    muted
+                    playsInline
+                    autoPlay
+                    loop
+                  />
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '4px' }}>
+                    Estado del video actual:
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center' }}>
+                    <span
+                      style={{
+                        fontSize: '0.72rem',
+                        fontWeight: 800,
+                        padding: '2px 8px',
+                        borderRadius: '4px',
+                        background: currentSizeMB && parseFloat(currentSizeMB) > 3.0 ? 'rgba(239, 68, 68, 0.2)' : 'rgba(34, 197, 94, 0.2)',
+                        color: currentSizeMB && parseFloat(currentSizeMB) > 3.0 ? '#ef4444' : '#22c55e',
+                        border: `1px solid ${currentSizeMB && parseFloat(currentSizeMB) > 3.0 ? 'rgba(239, 68, 68, 0.4)' : 'rgba(34, 197, 94, 0.4)'}`
+                      }}
+                    >
+                      ⚖️ {currentSizeMB ? `${currentSizeMB} MB` : 'Calculando peso...'}
+                    </span>
+                    {hasTrimPoints && clipDuration && (
+                      <span
+                        style={{
+                          fontSize: '0.72rem',
+                          fontWeight: 700,
+                          padding: '2px 8px',
+                          borderRadius: '4px',
+                          background: 'rgba(255, 0, 60, 0.15)',
+                          color: '#FF003C',
+                          border: '1px solid rgba(255, 0, 60, 0.3)'
+                        }}
+                      >
+                        ✂️ Segmento: {target.meta.startTime}s - {target.meta.endTime}s ({clipDuration}s)
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Compression Result Banner */}
+              {compressVideoResult && (
+                <div
+                  style={{
+                    padding: '14px',
+                    borderRadius: '12px',
+                    background: 'rgba(34, 197, 94, 0.12)',
+                    border: '1px solid rgba(34, 197, 94, 0.4)',
+                    marginBottom: '18px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '6px'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#22c55e', fontWeight: 800, fontSize: '0.88rem' }}>
+                    <CheckCircle size={18} />
+                    <span>¡Video Optimizado y Subido con Éxito!</span>
+                  </div>
+                  <div style={{ fontSize: '0.76rem', color: '#e2e8f0', lineHeight: 1.4 }}>
+                    Original: <strong>{formatFileSize(compressVideoResult.originalSize)}</strong> ➔ Nuevo: <strong style={{ color: '#22c55e' }}>{formatFileSize(compressVideoResult.compressedSize)}</strong>
+                    {' '}(<strong style={{ color: '#22c55e' }}>-{compressVideoResult.savingsPct}% de peso</strong>)
+                  </div>
+                  <div style={{ fontSize: '0.70rem', color: '#94a3b8' }}>
+                    El carrusel ya se actualizó automáticamente con esta versión ultraligera para carga instantánea.
+                  </div>
+                </div>
+              )}
+
+              {!compressVideoResult && (
+                <>
+                  {/* Resolution / Bitrate Presets */}
+                  <div style={{ marginBottom: '18px' }}>
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 800, color: '#e2e8f0', marginBottom: '8px' }}>
+                      NIVEL DE COMPRESIÓN / CALIDAD
+                    </label>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {[
+                        {
+                          id: 'ultra',
+                          title: '🚀 Ultra Ligero (720p HD @ 1.2 Mbps)',
+                          desc: 'Recomendado para celulares y datos móviles. Ahorra hasta un 85% de peso (~1.2 - 2.5 MB).'
+                        },
+                        {
+                          id: 'balanced',
+                          title: '⚡ Equilibrado (1080p @ 2.4 Mbps)',
+                          desc: 'Excelente resolución full HD y tamaño moderado (~2.8 - 4.5 MB).'
+                        },
+                        {
+                          id: 'high',
+                          title: '💎 Máxima Calidad (1080p @ 4.0 Mbps)',
+                          desc: 'Nitidez óptima para pantallas grandes de escritorio (~4.5 - 7 MB).'
+                        }
+                      ].map((opt) => (
+                        <label
+                          key={opt.id}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'flex-start',
+                            gap: '10px',
+                            padding: '10px 12px',
+                            borderRadius: '8px',
+                            background: compressVideoPreset === opt.id ? 'rgba(255, 0, 60, 0.12)' : 'rgba(255, 255, 255, 0.03)',
+                            border: compressVideoPreset === opt.id ? '1px solid rgba(255, 0, 60, 0.5)' : '1px solid rgba(255, 255, 255, 0.08)',
+                            cursor: isCompressingVideo ? 'not-allowed' : 'pointer'
+                          }}
+                        >
+                          <input
+                            type="radio"
+                            name="compressVideoPreset"
+                            value={opt.id}
+                            checked={compressVideoPreset === opt.id}
+                            onChange={() => setCompressVideoPreset(opt.id)}
+                            disabled={isCompressingVideo}
+                            style={{ marginTop: '2px', accentColor: '#FF003C' }}
+                          />
+                          <div>
+                            <div style={{ fontSize: '0.8rem', fontWeight: 800, color: compressVideoPreset === opt.id ? '#FFFFFF' : '#cbd5e1' }}>
+                              {opt.title}
+                            </div>
+                            <div style={{ fontSize: '0.68rem', color: '#94a3b8', marginTop: '2px' }}>
+                              {opt.desc}
+                            </div>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Trimming physical slice option */}
+                  {hasTrimPoints && (
+                    <div
+                      style={{
+                        marginBottom: '18px',
+                        padding: '12px',
+                        borderRadius: '10px',
+                        background: 'rgba(255, 0, 60, 0.05)',
+                        border: '1px solid rgba(255, 0, 60, 0.2)'
+                      }}
+                    >
+                      <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: isCompressingVideo ? 'not-allowed' : 'pointer' }}>
+                        <input
+                          type="checkbox"
+                          checked={compressVideoTrim}
+                          onChange={(e) => setCompressVideoTrim(e.target.checked)}
+                          disabled={isCompressingVideo}
+                          style={{ marginTop: '3px', accentColor: '#FF003C' }}
+                        />
+                        <div>
+                          <div style={{ fontSize: '0.78rem', fontWeight: 800, color: '#FFFFFF' }}>
+                            ✂️ Recortar físicamente a solo el fragmento activo ({target.meta.startTime}s - {target.meta.endTime}s)
+                          </div>
+                          <div style={{ fontSize: '0.68rem', color: '#94a3b8', marginTop: '3px', lineHeight: 1.35 }}>
+                            Corta y desecha el resto del video pesado. El nuevo video empezará en el segundo 0 con el fragmento exacto, eliminando cualquier demora de buffer en teléfonos móviles.
+                          </div>
+                        </div>
+                      </label>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* Real-time Transcoding Progress */}
+              {isCompressingVideo && (
+                <div style={{ marginBottom: '18px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.74rem', color: '#cbd5e1', marginBottom: '6px' }}>
+                    <span>{compressVideoProgress.status || 'Comprimiendo video en tu navegador...'}</span>
+                    <span style={{ fontWeight: 800, color: '#FF003C' }}>{compressVideoProgress.percent}%</span>
+                  </div>
+                  <div
+                    style={{
+                      width: '100%',
+                      height: '8px',
+                      borderRadius: '4px',
+                      background: 'rgba(255, 255, 255, 0.08)',
+                      overflow: 'hidden'
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: `${compressVideoProgress.percent}%`,
+                        height: '100%',
+                        background: 'linear-gradient(90deg, #FF003C, #FF6B00)',
+                        transition: 'width 0.2s ease'
+                      }}
+                    />
+                  </div>
+                  <div style={{ fontSize: '0.66rem', color: '#64748b', marginTop: '6px', textAlign: 'center' }}>
+                    Por favor espera, la transcodificación se realiza de manera segura y en silencio.
+                  </div>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '14px' }}>
+                {!compressVideoResult ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setCompressVideoTarget(null)}
+                      disabled={isCompressingVideo}
+                      style={{
+                        padding: '10px 16px',
+                        borderRadius: '8px',
+                        border: '1px solid rgba(255, 255, 255, 0.15)',
+                        background: 'transparent',
+                        color: '#94a3b8',
+                        fontSize: '0.78rem',
+                        fontWeight: 700,
+                        cursor: isCompressingVideo ? 'not-allowed' : 'pointer'
+                      }}
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleExecuteCompressVideo}
+                      disabled={isCompressingVideo}
+                      style={{
+                        padding: '10px 20px',
+                        borderRadius: '8px',
+                        border: 'none',
+                        background: 'linear-gradient(135deg, #FF003C, #FF6B00)',
+                        color: '#FFFFFF',
+                        fontSize: '0.82rem',
+                        fontWeight: 800,
+                        cursor: isCompressingVideo ? 'wait' : 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        boxShadow: '0 4px 18px rgba(255, 0, 60, 0.45)'
+                      }}
+                    >
+                      <Zap size={15} />
+                      <span>{isCompressingVideo ? 'Comprimiendo...' : '⚡ Iniciar Compresión Ahora'}</span>
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCompressVideoTarget(null);
+                      setCompressVideoResult(null);
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      borderRadius: '8px',
+                      border: 'none',
+                      background: '#22c55e',
+                      color: '#000000',
+                      fontSize: '0.82rem',
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px'
+                    }}
+                  >
+                    <Check size={16} />
+                    <span>Cerrar y Ver Carrusel</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
