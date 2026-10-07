@@ -798,7 +798,7 @@ export default function Hero() {
                   </div>
                 )}
 
-                {/* If current slide is not a video but a video was recently active, show discreet button to bring that video back */}
+                {/* If current slide is not a video but a video was recently active, show discreet icon button to bring that video back */}
                 {!isCurrentVideo && lastVideoIndex !== null && (
                   <button
                     type="button"
@@ -808,25 +808,31 @@ export default function Hero() {
                       top: '16px',
                       right: '16px',
                       zIndex: 10,
+                      width: '32px',
+                      height: '32px',
                       background: 'rgba(0, 0, 0, 0.78)',
                       backdropFilter: 'blur(10px)',
-                      border: '1px solid rgba(56, 189, 248, 0.45)',
-                      borderRadius: '20px',
-                      padding: '5px 12px',
+                      border: '1px solid rgba(255, 255, 255, 0.25)',
+                      borderRadius: '50%',
                       color: '#38bdf8',
-                      fontSize: '0.72rem',
-                      fontWeight: 800,
                       cursor: 'pointer',
-                      display: 'inline-flex',
+                      display: 'flex',
                       alignItems: 'center',
-                      gap: '6px',
+                      justifyContent: 'center',
                       boxShadow: '0 4px 16px rgba(0, 0, 0, 0.55)',
-                      transition: 'all 0.25s ease'
+                      transition: 'all 0.2s ease'
                     }}
-                    title="Volver a ver el video anterior en el carrousel"
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = 'rgba(56, 189, 248, 0.6)';
+                      e.currentTarget.style.transform = 'scale(1.08)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.25)';
+                      e.currentTarget.style.transform = 'scale(1)';
+                    }}
+                    title="Volver a ver el video"
                   >
-                    <RotateCcw size={13} color="#38bdf8" />
-                    <span>VOLVER AL VIDEO</span>
+                    <RotateCcw size={14} color="#38bdf8" />
                   </button>
                 )}
 
