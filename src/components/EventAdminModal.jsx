@@ -3051,18 +3051,52 @@ export default function EventAdminModal({ isOpen, onClose }) {
                               </div>
                             </div>
 
-                            {/* Sliders for Start and End */}
+                            {/* Sliders for Start and End with Minute & Second inputs */}
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                              {/* Start Slider */}
+                              {/* Start Slider & Inputs */}
                               <div style={{ background: 'rgba(255,255,255,0.02)', padding: '10px 12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '6px' }}>
                                   <span style={{ fontSize: '0.70rem', fontWeight: 800, color: '#e2e8f0', display: 'flex', alignItems: 'center', gap: '4px' }}>
                                     <Clock size={12} color="#38bdf8" />
-                                    <span>INICIO DEL CLIP:</span>
+                                    <span>INICIO (DESDE):</span>
                                   </span>
-                                  <span style={{ fontSize: '0.74rem', fontWeight: 900, color: '#38bdf8', fontFamily: 'monospace' }}>
-                                    {formatVideoTime(carouselStartTime)}
-                                  </span>
+
+                                  {/* Direct Minute : Second Numeric Inputs */}
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '3px', background: 'rgba(0,0,0,0.45)', borderRadius: '6px', border: '1px solid rgba(56, 189, 248, 0.4)', padding: '2px 6px' }}>
+                                    <input
+                                      type="number"
+                                      min="0"
+                                      max={Math.floor((carouselVideoDuration || 3600) / 60)}
+                                      value={Math.floor(carouselStartTime / 60)}
+                                      onChange={(e) => {
+                                        const m = Math.max(0, parseInt(e.target.value, 10) || 0);
+                                        const s = carouselStartTime % 60;
+                                        const total = Math.min(m * 60 + s, Math.max(0, (carouselEndTime || carouselVideoDuration) - 0.5));
+                                        setCarouselStartTime(total);
+                                        if (uploaderVideoRef.current) uploaderVideoRef.current.currentTime = total;
+                                      }}
+                                      style={{ width: '28px', background: 'transparent', border: 'none', color: '#38bdf8', fontSize: '0.74rem', fontWeight: 900, textAlign: 'center', outline: 'none', fontFamily: 'monospace' }}
+                                      title="Minuto de inicio"
+                                    />
+                                    <span style={{ color: '#64748b', fontSize: '0.66rem', fontWeight: 800 }}>m</span>
+                                    <span style={{ color: '#94a3b8' }}>:</span>
+                                    <input
+                                      type="number"
+                                      min="0"
+                                      max="59"
+                                      value={Math.floor(carouselStartTime % 60)}
+                                      onChange={(e) => {
+                                        const m = Math.floor(carouselStartTime / 60);
+                                        const s = Math.max(0, Math.min(59, parseInt(e.target.value, 10) || 0));
+                                        const total = Math.min(m * 60 + s, Math.max(0, (carouselEndTime || carouselVideoDuration) - 0.5));
+                                        setCarouselStartTime(total);
+                                        if (uploaderVideoRef.current) uploaderVideoRef.current.currentTime = total;
+                                      }}
+                                      style={{ width: '28px', background: 'transparent', border: 'none', color: '#38bdf8', fontSize: '0.74rem', fontWeight: 900, textAlign: 'center', outline: 'none', fontFamily: 'monospace' }}
+                                      title="Segundo de inicio"
+                                    />
+                                    <span style={{ color: '#64748b', fontSize: '0.66rem', fontWeight: 800 }}>s</span>
+                                  </div>
                                 </div>
                                 <input
                                   type="range"
@@ -3081,16 +3115,50 @@ export default function EventAdminModal({ isOpen, onClose }) {
                                 />
                               </div>
 
-                              {/* End Slider */}
+                              {/* End Slider & Inputs */}
                               <div style={{ background: 'rgba(255,255,255,0.02)', padding: '10px 12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '6px' }}>
                                   <span style={{ fontSize: '0.70rem', fontWeight: 800, color: '#e2e8f0', display: 'flex', alignItems: 'center', gap: '4px' }}>
                                     <Clock size={12} color="#ec4899" />
-                                    <span>FIN DEL CLIP:</span>
+                                    <span>FIN (HASTA):</span>
                                   </span>
-                                  <span style={{ fontSize: '0.74rem', fontWeight: 900, color: '#ec4899', fontFamily: 'monospace' }}>
-                                    {formatVideoTime(carouselEndTime || carouselVideoDuration)}
-                                  </span>
+
+                                  {/* Direct Minute : Second Numeric Inputs */}
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '3px', background: 'rgba(0,0,0,0.45)', borderRadius: '6px', border: '1px solid rgba(236, 72, 153, 0.4)', padding: '2px 6px' }}>
+                                    <input
+                                      type="number"
+                                      min="0"
+                                      max={Math.floor((carouselVideoDuration || 3600) / 60)}
+                                      value={Math.floor((carouselEndTime || carouselVideoDuration) / 60)}
+                                      onChange={(e) => {
+                                        const m = Math.max(0, parseInt(e.target.value, 10) || 0);
+                                        const s = (carouselEndTime || carouselVideoDuration) % 60;
+                                        const total = Math.min(carouselVideoDuration || 3600, Math.max(carouselStartTime + 0.5, m * 60 + s));
+                                        setCarouselEndTime(total);
+                                        if (uploaderVideoRef.current) uploaderVideoRef.current.currentTime = total;
+                                      }}
+                                      style={{ width: '28px', background: 'transparent', border: 'none', color: '#ec4899', fontSize: '0.74rem', fontWeight: 900, textAlign: 'center', outline: 'none', fontFamily: 'monospace' }}
+                                      title="Minuto de fin"
+                                    />
+                                    <span style={{ color: '#64748b', fontSize: '0.66rem', fontWeight: 800 }}>m</span>
+                                    <span style={{ color: '#94a3b8' }}>:</span>
+                                    <input
+                                      type="number"
+                                      min="0"
+                                      max="59"
+                                      value={Math.floor((carouselEndTime || carouselVideoDuration) % 60)}
+                                      onChange={(e) => {
+                                        const m = Math.floor((carouselEndTime || carouselVideoDuration) / 60);
+                                        const s = Math.max(0, Math.min(59, parseInt(e.target.value, 10) || 0));
+                                        const total = Math.min(carouselVideoDuration || 3600, Math.max(carouselStartTime + 0.5, m * 60 + s));
+                                        setCarouselEndTime(total);
+                                        if (uploaderVideoRef.current) uploaderVideoRef.current.currentTime = total;
+                                      }}
+                                      style={{ width: '28px', background: 'transparent', border: 'none', color: '#ec4899', fontSize: '0.74rem', fontWeight: 900, textAlign: 'center', outline: 'none', fontFamily: 'monospace' }}
+                                      title="Segundo de fin"
+                                    />
+                                    <span style={{ color: '#64748b', fontSize: '0.66rem', fontWeight: 800 }}>s</span>
+                                  </div>
                                 </div>
                                 <input
                                   type="range"
@@ -4046,11 +4114,43 @@ export default function EventAdminModal({ isOpen, onClose }) {
                                           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                                             {/* Start slider */}
                                             <div style={{ background: 'rgba(255,255,255,0.02)', padding: '6px 8px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.06)' }}>
-                                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px', flexWrap: 'wrap', gap: '4px' }}>
                                                 <span style={{ fontSize: '0.64rem', color: '#94a3b8', fontWeight: 700 }}>DESDE:</span>
-                                                <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#38bdf8', fontFamily: 'monospace' }}>
-                                                  {formatVideoTime(framingEditStartTime)}
-                                                </span>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '2px', background: 'rgba(0,0,0,0.45)', borderRadius: '4px', border: '1px solid rgba(56, 189, 248, 0.4)', padding: '1px 4px' }}>
+                                                  <input
+                                                    type="number"
+                                                    min="0"
+                                                    max={Math.floor((framingEditDuration || 3600) / 60)}
+                                                    value={Math.floor(framingEditStartTime / 60)}
+                                                    onChange={(e) => {
+                                                      const m = Math.max(0, parseInt(e.target.value, 10) || 0);
+                                                      const s = framingEditStartTime % 60;
+                                                      const total = Math.min(m * 60 + s, Math.max(0, (framingEditEndTime || framingEditDuration) - 0.5));
+                                                      setFramingEditStartTime(total);
+                                                      if (framingVideoRef.current) framingVideoRef.current.currentTime = total;
+                                                    }}
+                                                    style={{ width: '24px', background: 'transparent', border: 'none', color: '#38bdf8', fontSize: '0.68rem', fontWeight: 900, textAlign: 'center', outline: 'none', fontFamily: 'monospace' }}
+                                                    title="Minuto de inicio"
+                                                  />
+                                                  <span style={{ color: '#64748b', fontSize: '0.60rem', fontWeight: 800 }}>m</span>
+                                                  <span style={{ color: '#94a3b8' }}>:</span>
+                                                  <input
+                                                    type="number"
+                                                    min="0"
+                                                    max="59"
+                                                    value={Math.floor(framingEditStartTime % 60)}
+                                                    onChange={(e) => {
+                                                      const m = Math.floor(framingEditStartTime / 60);
+                                                      const s = Math.max(0, Math.min(59, parseInt(e.target.value, 10) || 0));
+                                                      const total = Math.min(m * 60 + s, Math.max(0, (framingEditEndTime || framingEditDuration) - 0.5));
+                                                      setFramingEditStartTime(total);
+                                                      if (framingVideoRef.current) framingVideoRef.current.currentTime = total;
+                                                    }}
+                                                    style={{ width: '24px', background: 'transparent', border: 'none', color: '#38bdf8', fontSize: '0.68rem', fontWeight: 900, textAlign: 'center', outline: 'none', fontFamily: 'monospace' }}
+                                                    title="Segundo de inicio"
+                                                  />
+                                                  <span style={{ color: '#64748b', fontSize: '0.60rem', fontWeight: 800 }}>s</span>
+                                                </div>
                                               </div>
                                               <input
                                                 type="range"
@@ -4071,11 +4171,43 @@ export default function EventAdminModal({ isOpen, onClose }) {
 
                                             {/* End slider */}
                                             <div style={{ background: 'rgba(255,255,255,0.02)', padding: '6px 8px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.06)' }}>
-                                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px', flexWrap: 'wrap', gap: '4px' }}>
                                                 <span style={{ fontSize: '0.64rem', color: '#94a3b8', fontWeight: 700 }}>HASTA:</span>
-                                                <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#ec4899', fontFamily: 'monospace' }}>
-                                                  {formatVideoTime(framingEditEndTime || framingEditDuration)}
-                                                </span>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '2px', background: 'rgba(0,0,0,0.45)', borderRadius: '4px', border: '1px solid rgba(236, 72, 153, 0.4)', padding: '1px 4px' }}>
+                                                  <input
+                                                    type="number"
+                                                    min="0"
+                                                    max={Math.floor((framingEditDuration || 3600) / 60)}
+                                                    value={Math.floor((framingEditEndTime || framingEditDuration) / 60)}
+                                                    onChange={(e) => {
+                                                      const m = Math.max(0, parseInt(e.target.value, 10) || 0);
+                                                      const s = (framingEditEndTime || framingEditDuration) % 60;
+                                                      const total = Math.min(framingEditDuration || 3600, Math.max(framingEditStartTime + 0.5, m * 60 + s));
+                                                      setFramingEditEndTime(total);
+                                                      if (framingVideoRef.current) framingVideoRef.current.currentTime = total;
+                                                    }}
+                                                    style={{ width: '24px', background: 'transparent', border: 'none', color: '#ec4899', fontSize: '0.68rem', fontWeight: 900, textAlign: 'center', outline: 'none', fontFamily: 'monospace' }}
+                                                    title="Minuto de fin"
+                                                  />
+                                                  <span style={{ color: '#64748b', fontSize: '0.60rem', fontWeight: 800 }}>m</span>
+                                                  <span style={{ color: '#94a3b8' }}>:</span>
+                                                  <input
+                                                    type="number"
+                                                    min="0"
+                                                    max="59"
+                                                    value={Math.floor((framingEditEndTime || framingEditDuration) % 60)}
+                                                    onChange={(e) => {
+                                                      const m = Math.floor((framingEditEndTime || framingEditDuration) / 60);
+                                                      const s = Math.max(0, Math.min(59, parseInt(e.target.value, 10) || 0));
+                                                      const total = Math.min(framingEditDuration || 3600, Math.max(framingEditStartTime + 0.5, m * 60 + s));
+                                                      setFramingEditEndTime(total);
+                                                      if (framingVideoRef.current) framingVideoRef.current.currentTime = total;
+                                                    }}
+                                                    style={{ width: '24px', background: 'transparent', border: 'none', color: '#ec4899', fontSize: '0.68rem', fontWeight: 900, textAlign: 'center', outline: 'none', fontFamily: 'monospace' }}
+                                                    title="Segundo de fin"
+                                                  />
+                                                  <span style={{ color: '#64748b', fontSize: '0.60rem', fontWeight: 800 }}>s</span>
+                                                </div>
                                               </div>
                                               <input
                                                 type="range"
