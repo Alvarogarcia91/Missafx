@@ -1,10 +1,14 @@
 import React, { useState } from 'react';
 import { CheckCircle, Sparkles } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { useSiteConfig } from '../context/SiteConfigContext';
 import { WhatsAppIcon, InstagramIcon } from './SocialIcons';
 
 export default function Booking() {
   const { t } = useLanguage();
+  const { config } = useSiteConfig();
+  const bookingPhone = config.bookingPhone || '5214443570777';
+
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -22,11 +26,11 @@ export default function Booking() {
     const msg = encodeURIComponent(
       `Hola Missa! Mi nombre es ${formData.name || 'un organizador'}. Quisiera cotizar una fecha para: ${eventName} en ${formData.location || 'mi ciudad'}${formData.date ? ' el día ' + formData.date : ''}. Mensaje: ${formData.message || 'Contacto directo'}`
     );
-    window.open(`https://wa.me/5214443570777?text=${msg}`, '_blank');
+    window.open(`https://wa.me/${bookingPhone}?text=${msg}`, '_blank');
     setSubmitted(true);
   };
 
-  const directWhatsappUrl = "https://wa.me/5214443570777?text=Hola%20Missa,%20me%20gustar%C3%ADa%20cotizar%20una%20fecha%20o%20evento";
+  const directWhatsappUrl = `https://wa.me/${bookingPhone}?text=Hola%20Missa,%20me%20gustar%C3%ADa%20cotizar%20una%20fecha%20o%20evento`;
 
   return (
     <section id="contact" style={{ padding: '90px 0', position: 'relative' }}>

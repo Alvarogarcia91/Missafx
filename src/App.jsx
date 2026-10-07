@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { LanguageProvider } from './context/LanguageContext';
+import { SiteConfigProvider } from './context/SiteConfigContext';
 import Navbar from './components/Navbar.jsx';
 import Hero from './components/Hero.jsx';
 import SocialHub from './components/SocialHub.jsx';
@@ -59,37 +60,39 @@ export default function App() {
 
   return (
     <LanguageProvider>
-      <div className="app-wrapper">
-        {view === 'story-creator' ? (
-          <StoryCreator onBack={backToHome} />
-        ) : view === 'card-creator' ? (
-          <CardCreator onBack={backToHome} />
-        ) : (
-          <>
-            <Navbar hasEvents={hasEvents} />
-            <main>
-              <Hero />
-              <UpcomingEvents
-                onOpenAdmin={() => setAdminModalOpen(true)}
-                onEventsChange={(count) => setHasEvents(count > 0)}
+      <SiteConfigProvider>
+        <div className="app-wrapper">
+          {view === 'story-creator' ? (
+            <StoryCreator onBack={backToHome} />
+          ) : view === 'card-creator' ? (
+            <CardCreator onBack={backToHome} />
+          ) : (
+            <>
+              <Navbar hasEvents={hasEvents} />
+              <main>
+                <Hero />
+                <UpcomingEvents
+                  onOpenAdmin={() => setAdminModalOpen(true)}
+                  onEventsChange={(count) => setHasEvents(count > 0)}
+                />
+                <SocialHub />
+                <LiveSets />
+                <About />
+                <Booking />
+                <DjTools
+                  onOpenStoryCreator={openStoryCreator}
+                  onOpenCardCreator={openCardCreator}
+                />
+              </main>
+              <Footer onOpenAdmin={() => setAdminModalOpen(true)} />
+              <EventAdminModal
+                isOpen={adminModalOpen}
+                onClose={() => setAdminModalOpen(false)}
               />
-              <SocialHub />
-              <LiveSets />
-              <About />
-              <Booking />
-              <DjTools
-                onOpenStoryCreator={openStoryCreator}
-                onOpenCardCreator={openCardCreator}
-              />
-            </main>
-            <Footer onOpenAdmin={() => setAdminModalOpen(true)} />
-            <EventAdminModal
-              isOpen={adminModalOpen}
-              onClose={() => setAdminModalOpen(false)}
-            />
-          </>
-        )}
-      </div>
+            </>
+          )}
+        </div>
+      </SiteConfigProvider>
     </LanguageProvider>
   );
 }

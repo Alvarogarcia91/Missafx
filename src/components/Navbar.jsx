@@ -1,12 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { Menu, X } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { useSiteConfig } from '../context/SiteConfigContext';
 import { WhatsAppIcon } from './SocialIcons';
 
 export default function Navbar({ hasEvents }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { lang, setLang, t } = useLanguage();
+  const { config } = useSiteConfig();
+
+  const logoSrc = config.logoUrl || '/missafx-logo.png';
+  const brandName = `${config.artistName1 || 'MISSA'}${config.artistName2 || 'FX'}`;
+  const bookingPhone = config.bookingPhone || '5214443570777';
 
   useEffect(() => {
     const handleScroll = () => {
@@ -43,8 +49,8 @@ export default function Navbar({ hasEvents }) {
           }}
         >
           <img
-            src="/missafx-logo.png"
-            alt="MISSAFX"
+            src={logoSrc}
+            alt={brandName}
             style={{
               height: '34px',
               width: 'auto',
@@ -256,7 +262,7 @@ export default function Navbar({ hasEvents }) {
             {t.nav.contact}
           </a>
           <a
-            href="https://wa.me/5214443570777?text=Hola%20Missa,%20me%20gustar%C3%ADa%20cotizar%20una%20fecha%20o%20evento"
+            href={`https://wa.me/${bookingPhone}?text=Hola%20Missa,%20me%20gustar%C3%ADa%20cotizar%20una%20fecha%20o%20evento`}
             target="_blank"
             rel="noreferrer"
             onClick={() => setMobileMenuOpen(false)}

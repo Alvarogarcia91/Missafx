@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Flame, Volume2, VolumeX } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { useSiteConfig } from '../context/SiteConfigContext';
 import { InstagramIcon, WhatsAppIcon, KickIcon, YouTubeIcon, SoundCloudIcon } from './SocialIcons';
 import { PhotoQueueManager } from '../utils/shuffleQueue';
 import {
@@ -14,7 +15,9 @@ import {
 
 export default function Hero() {
   const { t } = useLanguage();
-  const whatsappUrl = "https://wa.me/5214443570777?text=Hola%20Missa,%20me%20gustar%C3%ADa%20cotizar%20una%20fecha%20o%20evento";
+  const { config } = useSiteConfig();
+  const bookingPhone = config.bookingPhone || '5214443570777';
+  const whatsappUrl = `https://wa.me/${bookingPhone}?text=Hola%20Missa,%20me%20gustar%C3%ADa%20cotizar%20una%20fecha%20o%20evento`;
 
   const [photos, setPhotos] = useState(DEFAULT_CAROUSEL_PHOTOS);
   const [isRandom, setIsRandom] = useState(false);
@@ -181,7 +184,7 @@ export default function Hero() {
                   letterSpacing: '0.08em'
                 }}
               >
-                <Flame size={14} color="#FF003C" /> {t.hero.badgeGenre}
+                <Flame size={14} color="#FF003C" /> {config.heroBadgeGenre || t.hero.badgeGenre}
               </div>
               <div className="badge">
                 {t.hero.badgePresskit}
@@ -218,14 +221,14 @@ export default function Hero() {
                   textShadow: '0 0 45px rgba(255, 0, 60, 0.45)'
                 }}
               >
-                {t.hero.artist1}
+                {config.artistName1 || t.hero.artist1}
               </span>
               <span
                 style={{
                   color: '#FFFFFF'
                 }}
               >
-                {t.hero.artist2}
+                {config.artistName2 !== undefined ? config.artistName2 : t.hero.artist2}
               </span>
             </h1>
 
@@ -238,7 +241,7 @@ export default function Hero() {
                 lineHeight: 1.7
               }}
             >
-              {t.hero.desc}
+              {config.heroDescription || t.hero.desc}
             </p>
 
             {/* Main Action Button: WhatsApp Direct Booking */}

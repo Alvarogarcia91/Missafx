@@ -333,10 +333,10 @@ export function getCleanTitle(title) {
 export async function uploadFlyerImage(file) {
   const rawExt = file.name ? file.name.split('.').pop().toLowerCase() : '';
   const isVideo = ['mp4', 'webm', 'mov'].includes(rawExt) || (file.type && file.type.startsWith('video/'));
-  const validExts = ['jpg', 'jpeg', 'png', 'webp', 'mp4', 'webm', 'mov'];
+  const validExts = ['jpg', 'jpeg', 'png', 'webp', 'svg', 'ico', 'mp4', 'webm', 'mov'];
   const ext = validExts.includes(rawExt) ? rawExt : (isVideo ? 'mp4' : 'jpg');
   
-  const fileName = `flyer_${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${ext}`;
+  const fileName = `asset_${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${ext}`;
   const uploadUrl = `${SUPABASE_URL}/storage/v1/object/flyers/${fileName}`;
 
   let contentType = file.type;
@@ -344,6 +344,10 @@ export async function uploadFlyerImage(file) {
     if (ext === 'mp4') contentType = 'video/mp4';
     else if (ext === 'webm') contentType = 'video/webm';
     else if (ext === 'mov') contentType = 'video/quicktime';
+    else if (ext === 'svg') contentType = 'image/svg+xml';
+    else if (ext === 'ico') contentType = 'image/x-icon';
+    else if (ext === 'png') contentType = 'image/png';
+    else if (ext === 'webp') contentType = 'image/webp';
     else contentType = 'image/jpeg';
   }
 
@@ -365,6 +369,8 @@ export async function uploadFlyerImage(file) {
   // Returns public CDN URL
   return `${SUPABASE_URL}/storage/v1/object/public/flyers/${fileName}`;
 }
+
+export const uploadMediaFile = uploadFlyerImage;
 
 export async function createEventRecord({ title, date, venue, imageUrl, ticketUrl, statusBadge = 'none', couponCode = '' }) {
   let finalTicketUrl = ticketUrl || 'https://wa.me/5214443570777';
@@ -799,10 +805,8 @@ export async function saveCarouselPhotos(photosList) {
 
   // 2. Try to sync to Supabase if table exists
   try {
-    const isRandom = getStoredCarouselRandom();
-
-    // Delete existing rows
-    await fetch(`${SUPABASE_URL}/rest/v1/carousel?id=not.is.null`, {
+    // Only delete media rows, preserving all __config rows (random_order, general_settings, etc.)
+    await fetch(`${SUPABASE_URL}/rest/v1/carousel?image_url=not.like.__config:%25`, {
       method: 'DELETE',
       headers: defaultHeaders
     });
@@ -812,12 +816,6 @@ export async function saveCarouselPhotos(photosList) {
       image_url: url,
       display_order: idx
     }));
-
-    // Retain random config row
-    rows.push({
-      image_url: `__config:random_order=${isRandom ? 'true' : 'false'}`,
-      display_order: -1
-    });
 
     await fetch(`${SUPABASE_URL}/rest/v1/carousel`, {
       method: 'POST',
@@ -841,7 +839,8 @@ export async function resetCarouselPhotos() {
   } catch (e) {}
 
   try {
-    await fetch(`${SUPABASE_URL}/rest/v1/carousel?id=not.is.null`, {
+    // Only delete media rows, preserving config rows
+    await fetch(`${SUPABASE_URL}/rest/v1/carousel?image_url=not.like.__config:%25`, {
       method: 'DELETE',
       headers: defaultHeaders
     });
@@ -850,10 +849,6 @@ export async function resetCarouselPhotos() {
       image_url: url,
       display_order: idx
     }));
-    rows.push({
-      image_url: '__config:random_order=false',
-      display_order: -1
-    });
 
     await fetch(`${SUPABASE_URL}/rest/v1/carousel`, {
       method: 'POST',
@@ -867,4 +862,177 @@ export async function resetCarouselPhotos() {
 
   return DEFAULT_CAROUSEL_PHOTOS;
 }
+
+/**
+ * ----------------------------------------------------
+ * GENERAL SITE BRANDING & TEXTS CONFIGURATION
+ * ----------------------------------------------------
+ */
+export const DEFAULT_GENERAL_SETTINGS = {
+  logoUrl: '/missafx-logo.png',
+  faviconUrl: '/favicon.png',
+  artistName1: 'MISSA',
+  artistName2: 'FX',
+  heroBadgeGenre: 'TECH HOUSE',
+  heroDescription: 'DJ & Productor de música electrónica y Tech House. Sets en vivo con mezclas contundentes, transmisiones interactivas y booking directo.',
+  locationBase: 'SAN LUIS POTOSÍ, MÉXICO',
+  footerTagline: 'OFFICIAL DJ & PRODUCER EXPERIENCE',
+  bookingPhone: '5214443570777',
+  kickChannel: '7missa',
+  instagramUser: 'missaa.fx',
+  aboutBio1: 'Con una identidad sonora potente y enfocada en la pista de baile, Missafx fusiona lo mejor del Tech House contemporáneo con líneas de bajo contundentes y percusiones dinámicas.',
+  aboutBio2: 'Sus sets están diseñados para generar alta energía en clubs y escenarios, respaldados por una comunidad activa en plataformas de streaming como Kick, YouTube y SoundCloud.'
+};
+
+export function applyFavicon(faviconUrl) {
+  if (!faviconUrl || typeof document === 'undefined') return;
+  try {
+    let link = document.querySelector("link[rel*='icon']");
+    if (!link) {
+      link = document.createElement('link');
+      link.rel = 'icon';
+      document.head.appendChild(link);
+    }
+    link.href = faviconUrl;
+  } catch (e) {
+    console.warn('Could not apply favicon to DOM:', e);
+  }
+}
+
+export async function fetchGeneralSettings() {
+  let cloudSettings = null;
+
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/carousel?image_url=like.__config:general_settings*%25&select=*`, {
+      headers: defaultHeaders
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0 && data[0].image_url) {
+        const rawJson = data[0].image_url.replace('__config:general_settings=', '');
+        cloudSettings = JSON.parse(rawJson);
+        try {
+          localStorage.setItem('missafx_general_settings', JSON.stringify(cloudSettings));
+        } catch (e) {}
+      }
+    }
+  } catch (err) {
+    console.warn('Supabase general settings fetch failed:', err);
+  }
+
+  let localSettings = {};
+  try {
+    const saved = localStorage.getItem('missafx_general_settings');
+    if (saved) localSettings = JSON.parse(saved);
+  } catch (e) {}
+
+  const merged = {
+    ...DEFAULT_GENERAL_SETTINGS,
+    ...localSettings,
+    ...(cloudSettings || {})
+  };
+
+  return merged;
+}
+
+export async function saveGeneralSettings(newSettings) {
+  const merged = {
+    ...DEFAULT_GENERAL_SETTINGS,
+    ...newSettings
+  };
+
+  // 1. Save to local storage
+  try {
+    localStorage.setItem('missafx_general_settings', JSON.stringify(merged));
+  } catch (e) {}
+
+  // 2. Apply favicon immediately
+  if (merged.faviconUrl) {
+    applyFavicon(merged.faviconUrl);
+  }
+
+  // 3. Sync to Supabase config row
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/carousel?image_url=like.__config:general_settings*%25`, {
+      method: 'DELETE',
+      headers: defaultHeaders
+    });
+
+    await fetch(`${SUPABASE_URL}/rest/v1/carousel`, {
+      method: 'POST',
+      headers: {
+        ...defaultHeaders,
+        Prefer: 'return=representation'
+      },
+      body: JSON.stringify([{
+        image_url: `__config:general_settings=${JSON.stringify(merged)}`,
+        display_order: -2
+      }])
+    });
+  } catch (err) {
+    console.warn('Error saving general settings to Supabase:', err);
+  }
+
+  // 4. Notify live components
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('missafx-config-updated', { detail: merged }));
+  }
+
+  return merged;
+}
+
+export async function resetGeneralSettings() {
+  try {
+    localStorage.removeItem('missafx_general_settings');
+  } catch (e) {}
+
+  return await saveGeneralSettings(DEFAULT_GENERAL_SETTINGS);
+}
+
+/**
+ * Download helper for photos and videos to local device (PC / Mobile)
+ */
+export async function downloadMediaFile(url, preferredName = '') {
+  if (!url) return;
+  const cleanUrl = url.split('#')[0];
+  const isVid = isVideoMedia(cleanUrl);
+  const defaultExt = isVid ? '.mp4' : '.jpg';
+  
+  const extMatch = cleanUrl.match(/\.([a-zA-Z0-9]+)(?:\?|$)/i);
+  const ext = extMatch ? `.${extMatch[1]}` : defaultExt;
+
+  let baseName = preferredName;
+  if (!baseName) {
+    const rawName = cleanUrl.split('/').pop().split('?')[0];
+    baseName = rawName || `missafx_${isVid ? 'video' : 'foto'}_${Date.now()}`;
+  }
+  if (!baseName.includes('.')) {
+    baseName = `${baseName}${ext}`;
+  }
+
+  try {
+    const res = await fetch(cleanUrl);
+    if (!res.ok) throw new Error('Fetch failed');
+    const blob = await res.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = blobUrl;
+    link.download = baseName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 3000);
+  } catch (err) {
+    console.warn('Direct blob download error, triggering fallback:', err);
+    const link = document.createElement('a');
+    link.href = cleanUrl;
+    link.download = baseName;
+    link.target = '_blank';
+    link.rel = 'noreferrer';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+}
+
 

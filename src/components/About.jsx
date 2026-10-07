@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Sliders, Headphones } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { useSiteConfig } from '../context/SiteConfigContext';
 import { WhatsAppIcon } from './SocialIcons';
 import { PhotoQueueManager } from '../utils/shuffleQueue';
 import {
@@ -14,7 +15,9 @@ import {
 
 export default function About() {
   const { t } = useLanguage();
-  const whatsappUrl = "https://wa.me/5214443570777?text=Hola%20Missa,%20me%20gustar%C3%ADa%20solicitar%20el%20Press%20Kit%20completo%20y%20Rider";
+  const { config } = useSiteConfig();
+  const bookingPhone = config.bookingPhone || '5214443570777';
+  const whatsappUrl = `https://wa.me/${bookingPhone}?text=Hola%20Missa,%20me%20gustar%C3%ADa%20solicitar%20el%20Press%20Kit%20completo%20y%20Rider`;
 
   const [photos, setPhotos] = useState(DEFAULT_CAROUSEL_PHOTOS);
   const [isRandom, setIsRandom] = useState(false);
@@ -105,15 +108,15 @@ export default function About() {
           <div>
             <div className="section-header" style={{ textAlign: 'left', marginBottom: '26px' }}>
               <span className="section-tag">{t.about.tag}</span>
-              <h2>{t.about.title}</h2>
+              <h2>{config.artistName1 ? `${config.artistName1}${config.artistName2 || ''} / BIO & TRAYECTORIA` : t.about.title}</h2>
             </div>
 
             <p style={{ color: 'var(--text-muted)', fontSize: '1.05rem', marginBottom: '18px', lineHeight: 1.8 }}>
-              {t.about.bio1}
+              {config.aboutBio1 || t.about.bio1}
             </p>
 
             <p style={{ color: 'var(--text-muted)', fontSize: '1.05rem', marginBottom: '32px', lineHeight: 1.8 }}>
-              {t.about.bio2}
+              {config.aboutBio2 || t.about.bio2}
             </p>
 
             {/* Highlights Grid */}

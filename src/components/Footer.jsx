@@ -1,10 +1,17 @@
 import React from 'react';
 import { ArrowUp, Settings } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { useSiteConfig } from '../context/SiteConfigContext';
 import { InstagramIcon, WhatsAppIcon, KickIcon, YouTubeIcon, SoundCloudIcon } from './SocialIcons';
 
 export default function Footer({ onOpenAdmin }) {
   const { t } = useLanguage();
+  const { config } = useSiteConfig();
+
+  const logoSrc = config.logoUrl || '/missafx-logo.png';
+  const brandName = `${config.artistName1 || 'MISSA'}${config.artistName2 || 'FX'}`;
+  const tagline = config.footerTagline || t.footer.tagline;
+  const bookingPhone = config.bookingPhone || '5214443570777';
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -33,12 +40,12 @@ export default function Footer({ onOpenAdmin }) {
           {/* Brand Logo */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
             <img
-              src="/missafx-logo.png"
-              alt="MISSAFX"
-              style={{ height: '32px', width: 'auto', display: 'block' }}
+              src={logoSrc}
+              alt={brandName}
+              style={{ height: '32px', width: 'auto', display: 'block', objectFit: 'contain' }}
             />
             <span style={{ fontSize: '0.85rem', color: 'var(--text-dim)', borderLeft: '1px solid var(--border-glass)', paddingLeft: '14px' }}>
-              {t.footer.tagline}
+              {tagline}
             </span>
           </div>
 
@@ -46,7 +53,7 @@ export default function Footer({ onOpenAdmin }) {
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
             {[
               { name: 'Instagram', url: 'https://www.instagram.com/missaa.fx/', color: '#E1306C', icon: InstagramIcon },
-              { name: 'WhatsApp', url: 'https://wa.me/5214443570777', color: '#25D366', icon: WhatsAppIcon },
+              { name: 'WhatsApp', url: `https://wa.me/${bookingPhone}`, color: '#25D366', icon: WhatsAppIcon },
               { name: 'Kick', url: 'https://kick.com/7missa', color: '#53FC18', icon: KickIcon },
               { name: 'YouTube', url: 'https://www.youtube.com/@missaelarath6364', color: '#FF0000', icon: YouTubeIcon },
               { name: 'SoundCloud', url: 'https://soundcloud.com/missael-arath', color: '#FF5500', icon: SoundCloudIcon }

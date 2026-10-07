@@ -34,12 +34,15 @@ import {
   Maximize2,
   Crop,
   SlidersHorizontal,
-  Check
+  Check,
+  Settings,
+  Download
 } from 'lucide-react';
 import {
   fetchEvents,
   sortEventsByDate,
   uploadFlyerImage,
+  uploadMediaFile,
   createEventRecord,
   updateEventRecord,
   deleteEventRecord,
@@ -71,7 +74,13 @@ import {
   getCarouselItemHidden,
   buildCarouselItemMetaUrl,
   buildCarouselItemUrl,
-  getCleanCarouselUrl
+  getCleanCarouselUrl,
+  DEFAULT_GENERAL_SETTINGS,
+  fetchGeneralSettings,
+  saveGeneralSettings,
+  resetGeneralSettings,
+  applyFavicon,
+  downloadMediaFile
 } from '../utils/supabaseClient';
 
 const REQUIRED_PIN = '2305';
@@ -138,11 +147,21 @@ export default function EventAdminModal({ isOpen, onClose }) {
   const [framingEditFit, setFramingEditFit] = useState('cover');
   const [framingEditPos, setFramingEditPos] = useState('center');
 
+  // General branding & texts configuration state
+  const [generalConfig, setGeneralConfig] = useState({ ...DEFAULT_GENERAL_SETTINGS });
+  const [loadingGeneral, setLoadingGeneral] = useState(false);
+  const [savingGeneral, setSavingGeneral] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [uploadingFavicon, setUploadingFavicon] = useState(false);
+  const [generalStatus, setGeneralStatus] = useState(''); // 'success' | 'error' | 'info' | ''
+  const [generalStatusMsg, setGeneralStatusMsg] = useState('');
+
   useEffect(() => {
     if (isOpen && isAuthenticated) {
       loadManageList();
       loadSetsList();
       loadCarouselList();
+      loadGeneralConfig();
     }
   }, [isOpen, isAuthenticated]);
 
@@ -188,6 +207,133 @@ export default function EventAdminModal({ isOpen, onClose }) {
     }
   };
 
+  const loadGeneralConfig = async () => {
+    setLoadingGeneral(true);
+    try {
+      const data = await fetchGeneralSettings();
+      if (data) {
+        setGeneralConfig(data);
+      }
+    } catch (e) {
+      console.warn('Error fetching general config in admin:', e);
+    } finally {
+      setLoadingGeneral(false);
+    }
+  };
+
+  const handleLogoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingLogo(true);
+    setGeneralStatus('');
+    setGeneralStatusMsg('');
+    try {
+      const cdnUrl = await uploadMediaFile(file);
+      const updated = { ...generalConfig, logoUrl: cdnUrl };
+      setGeneralConfig(updated);
+      await saveGeneralSettings(updated);
+      setGeneralStatus('success');
+      setGeneralStatusMsg('¡Nuevo logo subido y actualizado en vivo en la página!');
+    } catch (err) {
+      setGeneralStatus('error');
+      setGeneralStatusMsg(`Error al subir logo: ${err.message}`);
+    } finally {
+      setUploadingLogo(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleResetLogo = async () => {
+    const updated = { ...generalConfig, logoUrl: DEFAULT_GENERAL_SETTINGS.logoUrl };
+    setGeneralConfig(updated);
+    try {
+      await saveGeneralSettings(updated);
+      setGeneralStatus('success');
+      setGeneralStatusMsg('Logo restaurado al original de fábrica.');
+    } catch (e) {
+      setGeneralStatus('error');
+      setGeneralStatusMsg('Error al guardar reseteo de logo');
+    }
+  };
+
+  const handleFaviconUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingFavicon(true);
+    setGeneralStatus('');
+    setGeneralStatusMsg('');
+    try {
+      const cdnUrl = await uploadMediaFile(file);
+      const updated = { ...generalConfig, faviconUrl: cdnUrl };
+      setGeneralConfig(updated);
+      applyFavicon(cdnUrl);
+      await saveGeneralSettings(updated);
+      setGeneralStatus('success');
+      setGeneralStatusMsg('¡Nuevo favicon subido y aplicado en la pestaña del navegador!');
+    } catch (err) {
+      setGeneralStatus('error');
+      setGeneralStatusMsg(`Error al subir favicon: ${err.message}`);
+    } finally {
+      setUploadingFavicon(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleResetFavicon = async () => {
+    const updated = { ...generalConfig, faviconUrl: DEFAULT_GENERAL_SETTINGS.faviconUrl };
+    setGeneralConfig(updated);
+    applyFavicon(DEFAULT_GENERAL_SETTINGS.faviconUrl);
+    try {
+      await saveGeneralSettings(updated);
+      setGeneralStatus('success');
+      setGeneralStatusMsg('Favicon restaurado al original de fábrica.');
+    } catch (e) {
+      setGeneralStatus('error');
+      setGeneralStatusMsg('Error al guardar reseteo de favicon');
+    }
+  };
+
+  const handleSaveGeneralConfig = async (e) => {
+    if (e) e.preventDefault();
+    setSavingGeneral(true);
+    setGeneralStatus('');
+    setGeneralStatusMsg('');
+    try {
+      await saveGeneralSettings(generalConfig);
+      setGeneralStatus('success');
+      setGeneralStatusMsg('¡Configuración general y textos guardados exitosamente!');
+      setTimeout(() => {
+        setGeneralStatus('');
+        setGeneralStatusMsg('');
+      }, 5000);
+    } catch (err) {
+      setGeneralStatus('error');
+      setGeneralStatusMsg(`Error al guardar configuración: ${err.message}`);
+    } finally {
+      setSavingGeneral(false);
+    }
+  };
+
+  const handleResetAllGeneral = async () => {
+    if (!window.confirm('¿Seguro que deseas restablecer TODOS los textos, logo y favicon a los valores originales de Missafx?')) {
+      return;
+    }
+    setSavingGeneral(true);
+    setGeneralStatus('');
+    setGeneralStatusMsg('');
+    try {
+      const reset = await resetGeneralSettings();
+      setGeneralConfig(reset);
+      setGeneralStatus('success');
+      setGeneralStatusMsg('¡Todos los textos, logo y favicon han vuelto a los valores de fábrica!');
+    } catch (err) {
+      setGeneralStatus('error');
+      setGeneralStatusMsg(`Error al restaurar: ${err.message}`);
+    } finally {
+      setSavingGeneral(false);
+    }
+  };
+
   const handleKeypadPress = (digit) => {
     if (pin.length < 4) {
       const newPin = pin + digit;
@@ -214,6 +360,7 @@ export default function EventAdminModal({ isOpen, onClose }) {
         loadManageList();
         loadSetsList();
         loadCarouselList();
+        loadGeneralConfig();
       }, 400);
     } else {
       setPinError(true);
@@ -867,11 +1014,11 @@ export default function EventAdminModal({ isOpen, onClose }) {
           ) : (
             /* Authenticated Manager View */
             <div>
-              {/* TOP LEVEL MODULE SELECTOR (3 MODULES) */}
+              {/* TOP LEVEL MODULE SELECTOR (4 MODULES) */}
               <div
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: 'repeat(3, 1fr)',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))',
                   gap: '8px',
                   marginBottom: '20px',
                   paddingBottom: '16px',
@@ -881,13 +1028,13 @@ export default function EventAdminModal({ isOpen, onClose }) {
                 <button
                   onClick={() => setAdminSection('events')}
                   style={{
-                    padding: '12px 8px',
+                    padding: '12px 6px',
                     borderRadius: '10px',
                     border: adminSection === 'events' ? '1px solid rgba(255, 0, 60, 0.6)' : '1px solid rgba(255, 255, 255, 0.08)',
                     background: adminSection === 'events' ? 'rgba(255, 0, 60, 0.16)' : 'rgba(255, 255, 255, 0.03)',
                     color: adminSection === 'events' ? '#FFFFFF' : 'var(--text-muted, #94a3b8)',
                     fontWeight: 800,
-                    fontSize: '0.80rem',
+                    fontSize: '0.76rem',
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
@@ -904,13 +1051,13 @@ export default function EventAdminModal({ isOpen, onClose }) {
                 <button
                   onClick={() => setAdminSection('sets')}
                   style={{
-                    padding: '12px 8px',
+                    padding: '12px 6px',
                     borderRadius: '10px',
                     border: adminSection === 'sets' ? '1px solid rgba(255, 0, 60, 0.6)' : '1px solid rgba(255, 255, 255, 0.08)',
                     background: adminSection === 'sets' ? 'rgba(255, 0, 60, 0.16)' : 'rgba(255, 255, 255, 0.03)',
                     color: adminSection === 'sets' ? '#FFFFFF' : 'var(--text-muted, #94a3b8)',
                     fontWeight: 800,
-                    fontSize: '0.80rem',
+                    fontSize: '0.76rem',
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
@@ -927,13 +1074,13 @@ export default function EventAdminModal({ isOpen, onClose }) {
                 <button
                   onClick={() => setAdminSection('carousel')}
                   style={{
-                    padding: '12px 8px',
+                    padding: '12px 6px',
                     borderRadius: '10px',
                     border: adminSection === 'carousel' ? '1px solid rgba(255, 0, 60, 0.6)' : '1px solid rgba(255, 255, 255, 0.08)',
                     background: adminSection === 'carousel' ? 'rgba(255, 0, 60, 0.16)' : 'rgba(255, 255, 255, 0.03)',
                     color: adminSection === 'carousel' ? '#FFFFFF' : 'var(--text-muted, #94a3b8)',
                     fontWeight: 800,
-                    fontSize: '0.80rem',
+                    fontSize: '0.76rem',
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
@@ -944,7 +1091,30 @@ export default function EventAdminModal({ isOpen, onClose }) {
                   }}
                 >
                   <ImageIcon size={15} color={adminSection === 'carousel' ? '#FF003C' : '#94a3b8'} />
-                  <span>CARROUSEL ({carouselPhotos.length})</span>
+                  <span>MEDIAS ({carouselPhotos.length})</span>
+                </button>
+
+                <button
+                  onClick={() => setAdminSection('general')}
+                  style={{
+                    padding: '12px 6px',
+                    borderRadius: '10px',
+                    border: adminSection === 'general' ? '1px solid rgba(255, 0, 60, 0.6)' : '1px solid rgba(255, 255, 255, 0.08)',
+                    background: adminSection === 'general' ? 'rgba(255, 0, 60, 0.16)' : 'rgba(255, 255, 255, 0.03)',
+                    color: adminSection === 'general' ? '#FFFFFF' : 'var(--text-muted, #94a3b8)',
+                    fontWeight: 800,
+                    fontSize: '0.76rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                    transition: 'all 0.2s ease',
+                    boxShadow: adminSection === 'general' ? '0 0 15px rgba(255, 0, 60, 0.2)' : 'none'
+                  }}
+                >
+                  <Settings size={15} color={adminSection === 'general' ? '#FF003C' : '#94a3b8'} />
+                  <span>GENERAL</span>
                 </button>
               </div>
 
@@ -3070,6 +3240,30 @@ export default function EventAdminModal({ isOpen, onClose }) {
                                     )}
                                   </button>
 
+                                  {/* Download button */}
+                                  <button
+                                    type="button"
+                                    onClick={() => downloadMediaFile(meta.cleanUrl, isVid ? `missafx_video_${idx + 1}` : `missafx_foto_${idx + 1}`)}
+                                    style={{
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '4px',
+                                      padding: '5px 8px',
+                                      borderRadius: '6px',
+                                      fontSize: '0.72rem',
+                                      fontWeight: 800,
+                                      cursor: 'pointer',
+                                      background: 'rgba(56, 189, 248, 0.12)',
+                                      border: '1px solid rgba(56, 189, 248, 0.35)',
+                                      color: '#38bdf8',
+                                      transition: 'all 0.2s ease'
+                                    }}
+                                    title="Descargar este archivo a tu PC o celular"
+                                  >
+                                    <Download size={13} />
+                                    <span>BAJAR</span>
+                                  </button>
+
                                   <button
                                     onClick={() => handleMoveCarouselPhoto(idx, -1)}
                                     disabled={idx === 0}
@@ -3324,6 +3518,28 @@ export default function EventAdminModal({ isOpen, onClose }) {
                                       <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
                                         <button
                                           type="button"
+                                          onClick={() => downloadMediaFile(meta.cleanUrl, isVid ? `missafx_video_${idx + 1}` : `missafx_foto_${idx + 1}`)}
+                                          style={{
+                                            padding: '8px 12px',
+                                            borderRadius: '6px',
+                                            border: '1px solid rgba(56, 189, 248, 0.4)',
+                                            background: 'rgba(56, 189, 248, 0.15)',
+                                            color: '#38bdf8',
+                                            fontWeight: 800,
+                                            fontSize: '0.74rem',
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            gap: '6px'
+                                          }}
+                                          title="Descargar este archivo a tu dispositivo"
+                                        >
+                                          <Download size={14} />
+                                          <span>DESCARGAR</span>
+                                        </button>
+                                        <button
+                                          type="button"
                                           onClick={() => handleSaveFramingEdit(idx)}
                                           style={{
                                             flex: 1,
@@ -3371,6 +3587,709 @@ export default function EventAdminModal({ isOpen, onClose }) {
                       </div>
                     )}
                   </div>
+                </div>
+              )}
+
+              {/* ======================================================== */}
+              {/* SECTION 4: CONFIGURACIÓN GENERAL (LOGO, FAVICON, TEXTOS) */}
+              {/* ======================================================== */}
+              {adminSection === 'general' && (
+                <div>
+                  {/* Status Banner */}
+                  {generalStatusMsg && (
+                    <div
+                      style={{
+                        padding: '12px 16px',
+                        borderRadius: '10px',
+                        marginBottom: '20px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        fontSize: '0.84rem',
+                        fontWeight: 700,
+                        background:
+                          generalStatus === 'success'
+                            ? 'rgba(34, 197, 94, 0.15)'
+                            : generalStatus === 'error'
+                            ? 'rgba(239, 68, 68, 0.15)'
+                            : 'rgba(56, 189, 248, 0.15)',
+                        border:
+                          generalStatus === 'success'
+                            ? '1px solid rgba(34, 197, 94, 0.35)'
+                            : generalStatus === 'error'
+                            ? '1px solid rgba(239, 68, 68, 0.35)'
+                            : '1px solid rgba(56, 189, 248, 0.35)',
+                        color:
+                          generalStatus === 'success'
+                            ? '#22c55e'
+                            : generalStatus === 'error'
+                            ? '#ef4444'
+                            : '#38bdf8'
+                      }}
+                    >
+                      {generalStatus === 'success' ? (
+                        <CheckCircle size={18} />
+                      ) : (
+                        <AlertCircle size={18} />
+                      )}
+                      <span>{generalStatusMsg}</span>
+                    </div>
+                  )}
+
+                  {/* Intro Banner */}
+                  <div
+                    style={{
+                      padding: '16px',
+                      background: 'linear-gradient(135deg, rgba(255, 0, 60, 0.08) 0%, rgba(0, 0, 0, 0.4) 100%)',
+                      border: '1px solid rgba(255, 0, 60, 0.25)',
+                      borderRadius: '12px',
+                      marginBottom: '22px'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                      <Settings size={18} color="#FF003C" />
+                      <h3 style={{ fontSize: '0.98rem', fontWeight: 900, color: '#FFFFFF', letterSpacing: '0.04em' }}>
+                        CONFIGURACIÓN GENERAL & BRANDING
+                      </h3>
+                    </div>
+                    <p style={{ fontSize: '0.78rem', color: '#94a3b8', lineHeight: 1.5, margin: 0 }}>
+                      Cambia el <strong style={{ color: '#fff' }}>Logo</strong> (Navbar & Footer), el <strong style={{ color: '#fff' }}>Favicon</strong> de la pestaña del navegador, el número de <strong style={{ color: '#25D366' }}>WhatsApp de Booking</strong> y todos los textos y biografías oficiales de la página.
+                    </p>
+                  </div>
+
+                  <form onSubmit={handleSaveGeneralConfig} style={{ display: 'flex', flexDirection: 'column', gap: '22px' }}>
+                    {/* ROW 1: BRANDING (LOGO & FAVICON) */}
+                    <div
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                        gap: '16px'
+                      }}
+                    >
+                      {/* CARD A: LOGO */}
+                      <div
+                        style={{
+                          background: 'rgba(255, 255, 255, 0.03)',
+                          border: '1px solid rgba(255, 255, 255, 0.08)',
+                          borderRadius: '12px',
+                          padding: '16px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '14px'
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#FFFFFF', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <ImageIcon size={14} color="#FF003C" />
+                            LOGO PRINCIPAL
+                          </span>
+                          <span style={{ fontSize: '0.68rem', color: '#94a3b8' }}>Navbar y Footer</span>
+                        </div>
+
+                        {/* Preview Box with dark background */}
+                        <div
+                          style={{
+                            height: '90px',
+                            borderRadius: '10px',
+                            background: '#09090d',
+                            border: '1px dashed rgba(255, 255, 255, 0.16)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            padding: '12px',
+                            position: 'relative',
+                            overflow: 'hidden'
+                          }}
+                        >
+                          <img
+                            src={generalConfig.logoUrl || '/missafx-logo.png'}
+                            alt="Logo preview"
+                            style={{
+                              maxHeight: '100%',
+                              maxWidth: '100%',
+                              objectFit: 'contain'
+                            }}
+                          />
+                        </div>
+
+                        {/* Upload & Reset Buttons */}
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <input
+                            type="file"
+                            id="logo-upload-input"
+                            accept="image/png,image/svg+xml,image/webp,image/jpeg"
+                            onChange={handleLogoUpload}
+                            style={{ display: 'none' }}
+                          />
+                          <label
+                            htmlFor="logo-upload-input"
+                            style={{
+                              flex: 1,
+                              padding: '9px 12px',
+                              borderRadius: '8px',
+                              background: 'rgba(255, 0, 60, 0.15)',
+                              border: '1px solid rgba(255, 0, 60, 0.35)',
+                              color: '#FFFFFF',
+                              fontWeight: 800,
+                              fontSize: '0.74rem',
+                              cursor: uploadingLogo ? 'wait' : 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '6px'
+                            }}
+                          >
+                            <Upload size={13} color="#FF003C" />
+                            <span>{uploadingLogo ? 'SUBIENDO...' : 'CAMBIAR LOGO'}</span>
+                          </label>
+
+                          <button
+                            type="button"
+                            onClick={handleResetLogo}
+                            style={{
+                              padding: '9px 12px',
+                              borderRadius: '8px',
+                              background: 'rgba(255, 255, 255, 0.05)',
+                              border: '1px solid rgba(255, 255, 255, 0.12)',
+                              color: '#94a3b8',
+                              fontWeight: 700,
+                              fontSize: '0.72rem',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '5px'
+                            }}
+                            title="Restaurar logo de fábrica"
+                          >
+                            <RotateCcw size={12} />
+                            <span>DEFAULT</span>
+                          </button>
+                        </div>
+                        <span style={{ fontSize: '0.66rem', color: '#64748b' }}>
+                          Formato recomendado: PNG transparente o SVG
+                        </span>
+                      </div>
+
+                      {/* CARD B: FAVICON */}
+                      <div
+                        style={{
+                          background: 'rgba(255, 255, 255, 0.03)',
+                          border: '1px solid rgba(255, 255, 255, 0.08)',
+                          borderRadius: '12px',
+                          padding: '16px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '14px'
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#FFFFFF', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <Globe size={14} color="#38bdf8" />
+                            FAVICON DEL NAVEGADOR
+                          </span>
+                          <span style={{ fontSize: '0.68rem', color: '#94a3b8' }}>Ícono de pestaña</span>
+                        </div>
+
+                        {/* Browser Tab Mockup */}
+                        <div
+                          style={{
+                            height: '90px',
+                            borderRadius: '10px',
+                            background: '#0f172a',
+                            border: '1px solid rgba(56, 189, 248, 0.25)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            justifyContent: 'center',
+                            padding: '12px 16px'
+                          }}
+                        >
+                          <div
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '8px',
+                              background: '#1e293b',
+                              border: '1px solid rgba(255, 255, 255, 0.1)',
+                              borderRadius: '6px',
+                              padding: '8px 12px',
+                              maxWidth: '100%'
+                            }}
+                          >
+                            <img
+                              src={generalConfig.faviconUrl || '/favicon.png'}
+                              alt="Favicon preview"
+                              style={{
+                                width: '20px',
+                                height: '20px',
+                                objectFit: 'contain',
+                                borderRadius: '3px'
+                              }}
+                            />
+                            <span style={{ fontSize: '0.76rem', fontWeight: 700, color: '#f1f5f9', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              {generalConfig.artistName1 || 'MISSA'} {generalConfig.artistName2 || 'FX'} | OFFICIAL DJ
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Upload & Reset Buttons */}
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <input
+                            type="file"
+                            id="favicon-upload-input"
+                            accept="image/png,image/x-icon,image/svg+xml,image/webp,image/jpeg"
+                            onChange={handleFaviconUpload}
+                            style={{ display: 'none' }}
+                          />
+                          <label
+                            htmlFor="favicon-upload-input"
+                            style={{
+                              flex: 1,
+                              padding: '9px 12px',
+                              borderRadius: '8px',
+                              background: 'rgba(56, 189, 248, 0.15)',
+                              border: '1px solid rgba(56, 189, 248, 0.35)',
+                              color: '#38bdf8',
+                              fontWeight: 800,
+                              fontSize: '0.74rem',
+                              cursor: uploadingFavicon ? 'wait' : 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '6px'
+                            }}
+                          >
+                            <Upload size={13} color="#38bdf8" />
+                            <span>{uploadingFavicon ? 'SUBIENDO...' : 'CAMBIAR FAVICON'}</span>
+                          </label>
+
+                          <button
+                            type="button"
+                            onClick={handleResetFavicon}
+                            style={{
+                              padding: '9px 12px',
+                              borderRadius: '8px',
+                              background: 'rgba(255, 255, 255, 0.05)',
+                              border: '1px solid rgba(255, 255, 255, 0.12)',
+                              color: '#94a3b8',
+                              fontWeight: 700,
+                              fontSize: '0.72rem',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '5px'
+                            }}
+                            title="Restaurar favicon de fábrica"
+                          >
+                            <RotateCcw size={12} />
+                            <span>DEFAULT</span>
+                          </button>
+                        </div>
+                        <span style={{ fontSize: '0.66rem', color: '#64748b' }}>
+                          Se actualiza al instante en la pestaña del navegador
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* CARD C: NOMBRE & BRANDING HERO */}
+                    <div
+                      style={{
+                        background: 'rgba(255, 255, 255, 0.03)',
+                        border: '1px solid rgba(255, 255, 255, 0.08)',
+                        borderRadius: '12px',
+                        padding: '18px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '14px'
+                      }}
+                    >
+                      <span style={{ fontSize: '0.80rem', fontWeight: 800, color: '#FFFFFF', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <Sparkles size={14} color="#FF003C" />
+                        IDENTIDAD DEL ARTISTA & HERO
+                      </span>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px' }}>
+                        <div>
+                          <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '6px' }}>
+                            NOMBRE PARTE 1 (COLOR ROJO)
+                          </label>
+                          <input
+                            type="text"
+                            value={generalConfig.artistName1 || ''}
+                            onChange={(e) => setGeneralConfig({ ...generalConfig, artistName1: e.target.value })}
+                            placeholder="MISSA"
+                            style={{
+                              width: '100%',
+                              padding: '10px 12px',
+                              borderRadius: '8px',
+                              background: 'rgba(255, 255, 255, 0.05)',
+                              border: '1px solid rgba(255, 255, 255, 0.14)',
+                              color: '#FF003C',
+                              fontWeight: 800,
+                              fontSize: '0.86rem'
+                            }}
+                          />
+                        </div>
+
+                        <div>
+                          <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '6px' }}>
+                            NOMBRE PARTE 2 (COLOR BLANCO)
+                          </label>
+                          <input
+                            type="text"
+                            value={generalConfig.artistName2 || ''}
+                            onChange={(e) => setGeneralConfig({ ...generalConfig, artistName2: e.target.value })}
+                            placeholder="FX"
+                            style={{
+                              width: '100%',
+                              padding: '10px 12px',
+                              borderRadius: '8px',
+                              background: 'rgba(255, 255, 255, 0.05)',
+                              border: '1px solid rgba(255, 255, 255, 0.14)',
+                              color: '#FFFFFF',
+                              fontWeight: 800,
+                              fontSize: '0.86rem'
+                            }}
+                          />
+                        </div>
+
+                        <div>
+                          <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '6px' }}>
+                            BADGE DE GÉNERO
+                          </label>
+                          <input
+                            type="text"
+                            value={generalConfig.heroBadgeGenre || ''}
+                            onChange={(e) => setGeneralConfig({ ...generalConfig, heroBadgeGenre: e.target.value })}
+                            placeholder="TECH HOUSE"
+                            style={{
+                              width: '100%',
+                              padding: '10px 12px',
+                              borderRadius: '8px',
+                              background: 'rgba(255, 255, 255, 0.05)',
+                              border: '1px solid rgba(255, 255, 255, 0.14)',
+                              color: '#FFFFFF',
+                              fontWeight: 700,
+                              fontSize: '0.86rem'
+                            }}
+                          />
+                        </div>
+
+                        <div>
+                          <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '6px' }}>
+                            CIUDAD / BASE
+                          </label>
+                          <input
+                            type="text"
+                            value={generalConfig.locationBase || ''}
+                            onChange={(e) => setGeneralConfig({ ...generalConfig, locationBase: e.target.value })}
+                            placeholder="SAN LUIS POTOSÍ, MÉXICO"
+                            style={{
+                              width: '100%',
+                              padding: '10px 12px',
+                              borderRadius: '8px',
+                              background: 'rgba(255, 255, 255, 0.05)',
+                              border: '1px solid rgba(255, 255, 255, 0.14)',
+                              color: '#FFFFFF',
+                              fontWeight: 700,
+                              fontSize: '0.86rem'
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* WHATSAPP BOOKING PHONE */}
+                      <div
+                        style={{
+                          marginTop: '4px',
+                          padding: '12px 14px',
+                          background: 'rgba(37, 211, 102, 0.08)',
+                          border: '1px solid rgba(37, 211, 102, 0.25)',
+                          borderRadius: '10px'
+                        }}
+                      >
+                        <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 800, color: '#25D366', marginBottom: '6px' }}>
+                          TELÉFONO WHATSAPP DE BOOKING (GLOBAL DE LA PÁGINA)
+                        </label>
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                          <input
+                            type="text"
+                            value={generalConfig.bookingPhone || ''}
+                            onChange={(e) => setGeneralConfig({ ...generalConfig, bookingPhone: e.target.value })}
+                            placeholder="5214443570777"
+                            style={{
+                              flex: 1,
+                              padding: '10px 12px',
+                              borderRadius: '8px',
+                              background: 'rgba(0, 0, 0, 0.4)',
+                              border: '1px solid rgba(37, 211, 102, 0.4)',
+                              color: '#25D366',
+                              fontWeight: 800,
+                              fontSize: '0.90rem'
+                            }}
+                          />
+                          <a
+                            href={`https://wa.me/${generalConfig.bookingPhone || '5214443570777'}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            style={{
+                              padding: '10px 14px',
+                              borderRadius: '8px',
+                              background: '#25D366',
+                              color: '#000',
+                              fontWeight: 800,
+                              fontSize: '0.76rem',
+                              textDecoration: 'none',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px'
+                            }}
+                          >
+                            <Phone size={13} />
+                            PROBAR
+                          </a>
+                        </div>
+                        <span style={{ fontSize: '0.68rem', color: '#94a3b8', display: 'block', marginTop: '6px' }}>
+                          Ingresa el número con clave de país (ej. 5214443570777 o 4443570777). Todos los botones de contacto de la web apuntan a este número.
+                        </span>
+                      </div>
+
+                      {/* HERO DESCRIPTION */}
+                      <div>
+                        <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '6px' }}>
+                          DESCRIPCIÓN PRINCIPAL (HERO)
+                        </label>
+                        <textarea
+                          rows={3}
+                          value={generalConfig.heroDescription || ''}
+                          onChange={(e) => setGeneralConfig({ ...generalConfig, heroDescription: e.target.value })}
+                          placeholder="DJ & Productor de música electrónica..."
+                          style={{
+                            width: '100%',
+                            padding: '10px 12px',
+                            borderRadius: '8px',
+                            background: 'rgba(255, 255, 255, 0.05)',
+                            border: '1px solid rgba(255, 255, 255, 0.14)',
+                            color: '#FFFFFF',
+                            fontSize: '0.84rem',
+                            lineHeight: 1.5,
+                            resize: 'vertical'
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* CARD D: BIOGRAFÍA (ABOUT) */}
+                    <div
+                      style={{
+                        background: 'rgba(255, 255, 255, 0.03)',
+                        border: '1px solid rgba(255, 255, 255, 0.08)',
+                        borderRadius: '12px',
+                        padding: '18px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '14px'
+                      }}
+                    >
+                      <span style={{ fontSize: '0.80rem', fontWeight: 800, color: '#FFFFFF', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <UserCheck size={14} color="#FF003C" />
+                        BIOGRAFÍA DEL ARTISTA (SECCIÓN ABOUT)
+                      </span>
+
+                      <div>
+                        <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '6px' }}>
+                          PÁRRAFO 1 DE BIOGRAFÍA
+                        </label>
+                        <textarea
+                          rows={3}
+                          value={generalConfig.aboutBio1 || ''}
+                          onChange={(e) => setGeneralConfig({ ...generalConfig, aboutBio1: e.target.value })}
+                          placeholder="Con una identidad sonora potente y enfocada en la pista de baile..."
+                          style={{
+                            width: '100%',
+                            padding: '10px 12px',
+                            borderRadius: '8px',
+                            background: 'rgba(255, 255, 255, 0.05)',
+                            border: '1px solid rgba(255, 255, 255, 0.14)',
+                            color: '#FFFFFF',
+                            fontSize: '0.84rem',
+                            lineHeight: 1.5,
+                            resize: 'vertical'
+                          }}
+                        />
+                      </div>
+
+                      <div>
+                        <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '6px' }}>
+                          PÁRRAFO 2 DE BIOGRAFÍA
+                        </label>
+                        <textarea
+                          rows={3}
+                          value={generalConfig.aboutBio2 || ''}
+                          onChange={(e) => setGeneralConfig({ ...generalConfig, aboutBio2: e.target.value })}
+                          placeholder="Sus sets están diseñados para generar alta energía en clubs y escenarios..."
+                          style={{
+                            width: '100%',
+                            padding: '10px 12px',
+                            borderRadius: '8px',
+                            background: 'rgba(255, 255, 255, 0.05)',
+                            border: '1px solid rgba(255, 255, 255, 0.14)',
+                            color: '#FFFFFF',
+                            fontSize: '0.84rem',
+                            lineHeight: 1.5,
+                            resize: 'vertical'
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* CARD E: FOOTER & REDES */}
+                    <div
+                      style={{
+                        background: 'rgba(255, 255, 255, 0.03)',
+                        border: '1px solid rgba(255, 255, 255, 0.08)',
+                        borderRadius: '12px',
+                        padding: '18px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '14px'
+                      }}
+                    >
+                      <span style={{ fontSize: '0.80rem', fontWeight: 800, color: '#FFFFFF', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <Globe size={14} color="#FF003C" />
+                        FOOTER & REDES SOCIALES
+                      </span>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px' }}>
+                        <div>
+                          <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '6px' }}>
+                            SLOGAN / TAGLINE DEL FOOTER
+                          </label>
+                          <input
+                            type="text"
+                            value={generalConfig.footerTagline || ''}
+                            onChange={(e) => setGeneralConfig({ ...generalConfig, footerTagline: e.target.value })}
+                            placeholder="OFFICIAL DJ & PRODUCER EXPERIENCE"
+                            style={{
+                              width: '100%',
+                              padding: '10px 12px',
+                              borderRadius: '8px',
+                              background: 'rgba(255, 255, 255, 0.05)',
+                              border: '1px solid rgba(255, 255, 255, 0.14)',
+                              color: '#FFFFFF',
+                              fontWeight: 700,
+                              fontSize: '0.86rem'
+                            }}
+                          />
+                        </div>
+
+                        <div>
+                          <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '6px' }}>
+                            CANAL DE KICK
+                          </label>
+                          <input
+                            type="text"
+                            value={generalConfig.kickChannel || ''}
+                            onChange={(e) => setGeneralConfig({ ...generalConfig, kickChannel: e.target.value })}
+                            placeholder="7missa"
+                            style={{
+                              width: '100%',
+                              padding: '10px 12px',
+                              borderRadius: '8px',
+                              background: 'rgba(255, 255, 255, 0.05)',
+                              border: '1px solid rgba(255, 255, 255, 0.14)',
+                              color: '#53fc18',
+                              fontWeight: 700,
+                              fontSize: '0.86rem'
+                            }}
+                          />
+                        </div>
+
+                        <div>
+                          <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '6px' }}>
+                            USUARIO DE INSTAGRAM
+                          </label>
+                          <input
+                            type="text"
+                            value={generalConfig.instagramUser || ''}
+                            onChange={(e) => setGeneralConfig({ ...generalConfig, instagramUser: e.target.value })}
+                            placeholder="missaa.fx"
+                            style={{
+                              width: '100%',
+                              padding: '10px 12px',
+                              borderRadius: '8px',
+                              background: 'rgba(255, 255, 255, 0.05)',
+                              border: '1px solid rgba(255, 255, 255, 0.14)',
+                              color: '#e1306c',
+                              fontWeight: 700,
+                              fontSize: '0.86rem'
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* ACTION SUBMIT BAR */}
+                    <div
+                      style={{
+                        display: 'flex',
+                        gap: '12px',
+                        flexWrap: 'wrap',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        paddingTop: '16px',
+                        borderTop: '1px solid rgba(255, 255, 255, 0.08)'
+                      }}
+                    >
+                      <button
+                        type="submit"
+                        disabled={savingGeneral}
+                        style={{
+                          flex: 1,
+                          minWidth: '220px',
+                          padding: '14px 24px',
+                          borderRadius: '10px',
+                          border: 'none',
+                          background: '#FF003C',
+                          color: '#FFFFFF',
+                          fontWeight: 900,
+                          fontSize: '0.88rem',
+                          cursor: savingGeneral ? 'wait' : 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '8px',
+                          boxShadow: '0 0 25px rgba(255, 0, 60, 0.45)',
+                          transition: 'all 0.2s ease'
+                        }}
+                      >
+                        <Check size={16} />
+                        <span>{savingGeneral ? 'GUARDANDO EN SUPABASE...' : 'GUARDAR CONFIGURACIÓN GENERAL 🔥'}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={handleResetAllGeneral}
+                        disabled={savingGeneral}
+                        style={{
+                          padding: '14px 18px',
+                          borderRadius: '10px',
+                          border: '1px solid rgba(255, 255, 255, 0.15)',
+                          background: 'rgba(255, 255, 255, 0.04)',
+                          color: '#94a3b8',
+                          fontWeight: 700,
+                          fontSize: '0.82rem',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px'
+                        }}
+                        title="Restablecer todos los textos y logos de fábrica"
+                      >
+                        <RotateCcw size={14} />
+                        <span>RESTABLECER DE FÁBRICA</span>
+                      </button>
+                    </div>
+                  </form>
                 </div>
               )}
             </div>
