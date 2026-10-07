@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Flame, Volume2, VolumeX, RotateCcw, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useSiteConfig } from '../context/SiteConfigContext';
@@ -36,6 +36,7 @@ export default function Hero() {
   const [heroVolume, setHeroVolume] = useState(50);
   const [lastVideoIndex, setLastVideoIndex] = useState(null);
   const [isVideoBuffering, setIsVideoBuffering] = useState(false);
+  const [readyVideoUrls, setReadyVideoUrls] = useState(() => new Set());
 
   const videoRef = useRef(null);
   const queueManager = useRef(null);
@@ -51,13 +52,56 @@ export default function Hero() {
   const prevMeta = prevItem ? parseCarouselItemMeta(prevItem) : null;
   const isPrevVideo = prevMeta ? isVideoMedia(prevMeta.cleanUrl) : false;
 
+  const markVideoReady = useCallback((url) => {
+    if (!url) return;
+    const clean = url.split('#')[0];
+    setReadyVideoUrls((prev) => {
+      if (prev.has(clean)) return prev;
+      const next = new Set(prev);
+      next.add(clean);
+      return next;
+    });
+  }, []);
+
+  const videoItems = useMemo(() => {
+    if (!photos || photos.length === 0) return [];
+    return photos
+      .map((p, idx) => ({ ...parseCarouselItemMeta(p), raw: p, originalIndex: idx }))
+      .filter((item) => isVideoMedia(item.cleanUrl));
+  }, [photos]);
+
+  // Photos are always eligible immediately; videos only after background warm-up completes
+  const eligibleIndices = useMemo(() => {
+    if (!photos || photos.length === 0) return [0];
+    const indices = [];
+    photos.forEach((p, idx) => {
+      const meta = parseCarouselItemMeta(p);
+      if (!isVideoMedia(meta.cleanUrl) || readyVideoUrls.has(meta.cleanUrl)) {
+        indices.push(idx);
+      }
+    });
+    return indices.length > 0 ? indices : photos.map((_, i) => i);
+  }, [photos, readyVideoUrls]);
+
   const loadPhotos = async () => {
     try {
       const data = await fetchCarouselData();
       if (data && Array.isArray(data.photos) && data.photos.length > 0) {
         setPhotos(data.photos);
         setIsRandom(Boolean(data.isRandom));
-        queueManager.current = new PhotoQueueManager(data.photos.length, 0);
+
+        // Start on first photo so page loads instantly without unbuffered video delays
+        const firstPhotoIdx = data.photos.findIndex((p) => !isVideoMedia(parseCarouselItemMeta(p).cleanUrl));
+        const initialIdx = firstPhotoIdx !== -1 ? firstPhotoIdx : 0;
+        setPhotoIndex((curr) => {
+          const currItem = data.photos[curr];
+          if (!currItem || (isVideoMedia(parseCarouselItemMeta(currItem).cleanUrl) && !readyVideoUrls.has(parseCarouselItemMeta(currItem).cleanUrl))) {
+            return initialIdx;
+          }
+          return curr;
+        });
+
+        preloadCarouselMedia(data.photos);
       }
     } catch (e) {
       console.warn('Error loading carousel photos in Hero:', e);
@@ -73,8 +117,27 @@ export default function Hero() {
   }, []);
 
   if (!queueManager.current) {
-    queueManager.current = new PhotoQueueManager(photos.length, 0);
+    queueManager.current = new PhotoQueueManager(eligibleIndices, photoIndex);
   }
+
+  // Seamlessly integrate newly warmed-up videos into active random queue
+  useEffect(() => {
+    if (queueManager.current) {
+      queueManager.current.updateItems(eligibleIndices);
+    }
+  }, [eligibleIndices]);
+
+  // If carousel is on an unbuffered video, jump immediately to the first photo
+  useEffect(() => {
+    if (!photos || photos.length === 0) return;
+    const currentItemMeta = parseCarouselItemMeta(photos[photoIndex] || '');
+    if (isVideoMedia(currentItemMeta.cleanUrl) && !readyVideoUrls.has(currentItemMeta.cleanUrl)) {
+      const firstPhotoIdx = photos.findIndex((p) => !isVideoMedia(parseCarouselItemMeta(p).cleanUrl));
+      if (firstPhotoIdx !== -1 && firstPhotoIdx !== photoIndex) {
+        setPhotoIndex(firstPhotoIdx);
+      }
+    }
+  }, [photos, photoIndex, readyVideoUrls]);
 
   const triggerHeroTransition = useCallback((nextIdx) => {
     // Crucial: immediately silence and pause any active audio/video before changing slide
@@ -100,10 +163,10 @@ export default function Hero() {
     });
   }, []);
 
+  // Dynamic Carousel Interval: advances strictly through eligible (photos + warmed videos)
   useEffect(() => {
-    if (photos.length <= 1) return;
+    if (eligibleIndices.length <= 1) return;
 
-    // Dynamic interval: photos get 10s, videos get their full clip duration (up to 35s)
     let slideDuration = 10000;
     if (isCurrentVideo) {
       const s = currentMeta.startTime || 0;
@@ -115,16 +178,21 @@ export default function Hero() {
     const timer = setInterval(() => {
       if (isRandom) {
         if (queueManager.current) {
-          const nextIdx = queueManager.current.next();
+          let nextIdx = queueManager.current.next();
+          if (!eligibleIndices.includes(nextIdx)) {
+            const pool = eligibleIndices.filter((i) => i !== photoIndex);
+            nextIdx = pool.length > 0 ? pool[Math.floor(Math.random() * pool.length)] : eligibleIndices[0];
+          }
           triggerHeroTransition(nextIdx);
         }
       } else {
-        const nextIdx = (currentIdxRef.current + 1) % photos.length;
-        triggerHeroTransition(nextIdx);
+        const currentPos = eligibleIndices.indexOf(photoIndex);
+        const nextPos = currentPos !== -1 ? (currentPos + 1) % eligibleIndices.length : 0;
+        triggerHeroTransition(eligibleIndices[nextPos]);
       }
     }, slideDuration);
     return () => clearInterval(timer);
-  }, [photos, isRandom, triggerHeroTransition, progressKey, isCurrentVideo, currentMeta.startTime, currentMeta.endTime]);
+  }, [photos, eligibleIndices, isRandom, triggerHeroTransition, progressKey, isCurrentVideo, currentMeta.startTime, currentMeta.endTime, photoIndex]);
 
   useEffect(() => {
     setUserMuted(true);
@@ -147,6 +215,54 @@ export default function Hero() {
     preloadCarouselMedia([next1, next2]);
   }, [photos, photoIndex]);
 
+  // Progressive video warm-up: actively preloads all playlist videos in the background
+  useEffect(() => {
+    if (videoItems.length === 0) return;
+
+    const loaders = [];
+    videoItems.forEach((item) => {
+      if (readyVideoUrls.has(item.cleanUrl)) return;
+      try {
+        const v = document.createElement('video');
+        v.preload = 'auto';
+        v.muted = true;
+        v.playsInline = true;
+        v.crossOrigin = 'anonymous';
+        v.src = item.cleanUrl;
+
+        const handleReady = () => markVideoReady(item.cleanUrl);
+
+        v.addEventListener('canplaythrough', handleReady, { once: true });
+        v.addEventListener('canplay', () => {
+          if (v.readyState >= 3) handleReady();
+        });
+        v.addEventListener('loadeddata', () => {
+          if (v.readyState >= 3) handleReady();
+        });
+        v.addEventListener('progress', () => {
+          if (v.readyState >= 3) {
+            handleReady();
+          } else if (v.buffered && v.buffered.length > 0) {
+            const end = v.buffered.end(v.buffered.length - 1);
+            const dur = v.duration || 0;
+            if (end >= 4 || (dur > 0 && end >= dur * 0.35)) {
+              handleReady();
+            }
+          }
+        });
+        v.load();
+        loaders.push(v);
+      } catch (e) {}
+    });
+
+    return () => {
+      loaders.forEach((v) => {
+        v.src = '';
+        v.load();
+      });
+    };
+  }, [videoItems, readyVideoUrls, markVideoReady]);
+
   const handleReplayVideo = (e) => {
     if (e) e.stopPropagation();
     if (videoRef.current) {
@@ -161,22 +277,30 @@ export default function Hero() {
   const handleReturnToVideo = (e) => {
     if (e) e.stopPropagation();
     if (lastVideoIndex !== null && lastVideoIndex >= 0 && lastVideoIndex < photos.length) {
-      triggerHeroTransition(lastVideoIndex);
+      if (eligibleIndices.includes(lastVideoIndex)) {
+        triggerHeroTransition(lastVideoIndex);
+      }
     }
   };
 
   const handlePrevSlide = (e) => {
     if (e) e.stopPropagation();
-    if (photos.length <= 1) return;
-    const nextIdx = (photoIndex - 1 + photos.length) % photos.length;
-    triggerHeroTransition(nextIdx);
+    if (eligibleIndices.length <= 1) return;
+    const currentPos = eligibleIndices.indexOf(photoIndex);
+    const prevPos = currentPos !== -1
+      ? (currentPos - 1 + eligibleIndices.length) % eligibleIndices.length
+      : eligibleIndices.length - 1;
+    triggerHeroTransition(eligibleIndices[prevPos]);
   };
 
   const handleNextSlide = (e) => {
     if (e) e.stopPropagation();
-    if (photos.length <= 1) return;
-    const nextIdx = (photoIndex + 1) % photos.length;
-    triggerHeroTransition(nextIdx);
+    if (eligibleIndices.length <= 1) return;
+    const currentPos = eligibleIndices.indexOf(photoIndex);
+    const nextPos = currentPos !== -1
+      ? (currentPos + 1) % eligibleIndices.length
+      : 0;
+    triggerHeroTransition(eligibleIndices[nextPos]);
   };
 
   useEffect(() => {
@@ -904,8 +1028,8 @@ export default function Hero() {
                   </div>
                 )}
 
-                {/* If current slide is not a video but a video was recently active, show discreet icon button to bring that video back */}
-                {!isCurrentVideo && lastVideoIndex !== null && (
+                {/* If current slide is not a video but a video was recently active and is ready, show discreet icon button to bring that video back */}
+                {!isCurrentVideo && lastVideoIndex !== null && eligibleIndices.includes(lastVideoIndex) && (
                   <button
                     type="button"
                     onClick={handleReturnToVideo}
@@ -982,7 +1106,7 @@ export default function Hero() {
                 />
 
                 {/* Carousel Navigation Arrows (Chiquitas) */}
-                {photos.length > 1 && (
+                {eligibleIndices.length > 1 && (
                   <>
                     <button
                       type="button"
@@ -1065,11 +1189,16 @@ export default function Hero() {
                 )}
               </div>
 
-              {/* 10-Second countdown bar */}
+              {/* Countdown progress bar matching active slide duration */}
               <div style={{ width: '100%', height: '3px', background: 'rgba(255, 255, 255, 0.08)' }}>
                 <div
                   key={`hero-progress-${photoIndex}-${progressKey}`}
                   className="carousel-countdown-bar running"
+                  style={{
+                    animationDuration: isCurrentVideo
+                      ? `${Math.max(12000, Math.min(35000, Math.round(((currentMeta.endTime > currentMeta.startTime ? currentMeta.endTime - currentMeta.startTime : 15)) * 1000) + 1500))}ms`
+                      : '10000ms'
+                  }}
                 />
               </div>
             </div>
@@ -1105,6 +1234,50 @@ export default function Hero() {
             </a>
           </div>
         </div>
+      </div>
+
+      {/* Background Video Warm-Up Engine: buffers videos so they enter rotation 100% fluid */}
+      <div
+        style={{
+          position: 'absolute',
+          width: '1px',
+          height: '1px',
+          opacity: 0,
+          pointerEvents: 'none',
+          overflow: 'hidden',
+          zIndex: -1
+        }}
+        aria-hidden="true"
+      >
+        {videoItems.map((item) => (
+          <video
+            key={`preloader-dom-${item.cleanUrl}`}
+            src={item.cleanUrl}
+            preload="auto"
+            muted
+            playsInline
+            crossOrigin="anonymous"
+            onCanPlayThrough={() => markVideoReady(item.cleanUrl)}
+            onCanPlay={(e) => {
+              if (e.currentTarget.readyState >= 3) markVideoReady(item.cleanUrl);
+            }}
+            onLoadedData={(e) => {
+              if (e.currentTarget.readyState >= 3) markVideoReady(item.cleanUrl);
+            }}
+            onProgress={(e) => {
+              const v = e.currentTarget;
+              if (v.readyState >= 3) {
+                markVideoReady(item.cleanUrl);
+              } else if (v.buffered && v.buffered.length > 0) {
+                const end = v.buffered.end(v.buffered.length - 1);
+                const dur = v.duration || 0;
+                if (end >= 4 || (dur > 0 && end >= dur * 0.35)) {
+                  markVideoReady(item.cleanUrl);
+                }
+              }
+            }}
+          />
+        ))}
       </div>
     </section>
   );

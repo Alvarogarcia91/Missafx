@@ -848,6 +848,8 @@ export function preloadCarouselMedia(urlList) {
         const v = document.createElement('video');
         v.preload = 'auto';
         v.muted = true;
+        v.playsInline = true;
+        v.crossOrigin = 'anonymous';
         v.src = clean;
         v.load();
       } catch (e) {}

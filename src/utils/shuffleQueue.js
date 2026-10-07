@@ -14,8 +14,11 @@ export function fisherYatesShuffle(array) {
  * Creates the initial queue excluding the starting photo so every other photo
  * is shown exactly once before any cycle completes.
  */
-export function createInitialQueue(total, initialIndex) {
-  const remaining = Array.from({ length: total }, (_, i) => i).filter(idx => idx !== initialIndex);
+export function createInitialQueue(itemsOrTotal, initialIndex) {
+  const items = Array.isArray(itemsOrTotal)
+    ? [...itemsOrTotal]
+    : Array.from({ length: itemsOrTotal }, (_, i) => i);
+  const remaining = items.filter(idx => idx !== initialIndex);
   return fisherYatesShuffle(remaining);
 }
 
@@ -23,11 +26,13 @@ export function createInitialQueue(total, initialIndex) {
  * Creates the next randomized cycle of all photos, ensuring that the first 2 slots
  * do not match the photos played at the end of the previous cycle.
  */
-export function createNextQueue(total, recentHistory = []) {
-  const allIndices = Array.from({ length: total }, (_, i) => i);
+export function createNextQueue(itemsOrTotal, recentHistory = []) {
+  const allIndices = Array.isArray(itemsOrTotal)
+    ? [...itemsOrTotal]
+    : Array.from({ length: itemsOrTotal }, (_, i) => i);
   const shuffled = fisherYatesShuffle(allIndices);
 
-  if (total <= 2) return shuffled;
+  if (allIndices.length <= 2) return shuffled;
 
   const last1 = recentHistory.length > 0 ? recentHistory[recentHistory.length - 1] : -1;
   const last2 = recentHistory.length > 1 ? recentHistory[recentHistory.length - 2] : -1;
@@ -62,15 +67,28 @@ export function createNextQueue(total, recentHistory = []) {
  * the order is re-randomized upon cycle completion, and no photo can repeat within 2 turns.
  */
 export class PhotoQueueManager {
-  constructor(totalPhotos, initialIndex = 0) {
-    this.total = totalPhotos;
+  constructor(itemsOrTotal, initialIndex = 0) {
+    this.itemsOrTotal = itemsOrTotal;
     this.history = [initialIndex];
-    this.queue = createInitialQueue(totalPhotos, initialIndex);
+    this.queue = createInitialQueue(itemsOrTotal, initialIndex);
+  }
+
+  updateItems(newItemsOrTotal) {
+    this.itemsOrTotal = newItemsOrTotal;
+    const allowed = Array.isArray(newItemsOrTotal) ? new Set(newItemsOrTotal) : null;
+    if (allowed) {
+      this.queue = this.queue.filter(item => allowed.has(item));
+      if (this.queue.length === 0) {
+        this.queue = createNextQueue(this.itemsOrTotal, this.history);
+      }
+    } else {
+      this.queue = createNextQueue(this.itemsOrTotal, this.history);
+    }
   }
 
   next() {
     if (this.queue.length === 0) {
-      this.queue = createNextQueue(this.total, this.history);
+      this.queue = createNextQueue(this.itemsOrTotal, this.history);
     }
     const nextIdx = this.queue.shift();
     this.history.push(nextIdx);
