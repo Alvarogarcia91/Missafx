@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Flame, Volume2, VolumeX } from 'lucide-react';
+import { Flame, Volume2, VolumeX, RotateCcw } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useSiteConfig } from '../context/SiteConfigContext';
 import { InstagramIcon, WhatsAppIcon, KickIcon, YouTubeIcon, SoundCloudIcon } from './SocialIcons';
@@ -31,6 +31,7 @@ export default function Hero() {
   const [progressKey, setProgressKey] = useState(0);
   const [userMuted, setUserMuted] = useState(true); // Default to muted so video never sounds automatically
   const [heroVolume, setHeroVolume] = useState(50);
+  const [lastVideoIndex, setLastVideoIndex] = useState(null);
 
   const videoRef = useRef(null);
   const queueManager = useRef(null);
@@ -72,6 +73,15 @@ export default function Hero() {
   }
 
   const triggerHeroTransition = useCallback((nextIdx) => {
+    // Crucial: immediately silence and pause any active audio/video before changing slide
+    setUserMuted(true);
+    if (videoRef.current) {
+      try {
+        videoRef.current.muted = true;
+        videoRef.current.pause();
+      } catch (e) {}
+    }
+
     setPhotoIndex((currentIdx) => {
       if (nextIdx === currentIdx) return currentIdx;
       setPrevPhotoIndex(currentIdx);
@@ -99,7 +109,7 @@ export default function Hero() {
       }
     }, 10000);
     return () => clearInterval(timer);
-  }, [photos, isRandom, triggerHeroTransition]);
+  }, [photos, isRandom, triggerHeroTransition, progressKey]);
 
   useEffect(() => {
     setUserMuted(true);
@@ -107,6 +117,30 @@ export default function Hero() {
       setHeroVolume(currentMeta.volume);
     }
   }, [photoIndex, currentMeta?.volume]);
+
+  useEffect(() => {
+    if (isCurrentVideo) {
+      setLastVideoIndex(photoIndex);
+    }
+  }, [photoIndex, isCurrentVideo]);
+
+  const handleReplayVideo = (e) => {
+    if (e) e.stopPropagation();
+    if (videoRef.current) {
+      try {
+        videoRef.current.currentTime = currentMeta.startTime || 0;
+        videoRef.current.play().catch(() => {});
+      } catch (err) {}
+    }
+    setProgressKey(Date.now());
+  };
+
+  const handleReturnToVideo = (e) => {
+    if (e) e.stopPropagation();
+    if (lastVideoIndex !== null && lastVideoIndex >= 0 && lastVideoIndex < photos.length) {
+      triggerHeroTransition(lastVideoIndex);
+    }
+  };
 
   useEffect(() => {
     const video = videoRef.current;
@@ -736,7 +770,64 @@ export default function Hero() {
                         title={`Potencia de volumen: ${heroVolume}%`}
                       />
                     )}
+
+                    {/* Subtle divider */}
+                    <div style={{ width: '1px', height: '14px', background: 'rgba(255, 255, 255, 0.2)' }} />
+
+                    {/* Mini Refresh / Replay Button */}
+                    <button
+                      type="button"
+                      onClick={handleReplayVideo}
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        color: '#cbd5e1',
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: '2px',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.color = '#38bdf8')}
+                      onMouseLeave={(e) => (e.currentTarget.style.color = '#cbd5e1')}
+                      title="Reiniciar este video (volver a reproducir desde el inicio)"
+                    >
+                      <RotateCcw size={13} />
+                    </button>
                   </div>
+                )}
+
+                {/* If current slide is not a video but a video was recently active, show discreet button to bring that video back */}
+                {!isCurrentVideo && lastVideoIndex !== null && (
+                  <button
+                    type="button"
+                    onClick={handleReturnToVideo}
+                    style={{
+                      position: 'absolute',
+                      top: '16px',
+                      right: '16px',
+                      zIndex: 10,
+                      background: 'rgba(0, 0, 0, 0.78)',
+                      backdropFilter: 'blur(10px)',
+                      border: '1px solid rgba(56, 189, 248, 0.45)',
+                      borderRadius: '20px',
+                      padding: '5px 12px',
+                      color: '#38bdf8',
+                      fontSize: '0.72rem',
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      boxShadow: '0 4px 16px rgba(0, 0, 0, 0.55)',
+                      transition: 'all 0.25s ease'
+                    }}
+                    title="Volver a ver el video anterior en el carrousel"
+                  >
+                    <RotateCcw size={13} color="#38bdf8" />
+                    <span>VOLVER AL VIDEO</span>
+                  </button>
                 )}
 
                 {/* Vignette Gradients */}
