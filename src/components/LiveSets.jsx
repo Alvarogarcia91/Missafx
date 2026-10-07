@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Play, X, ExternalLink, Radio, Tv, Sparkles } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
-import { fetchSets, DEFAULT_SETS, recordSetClick } from '../utils/supabaseClient';
+import { fetchSets, DEFAULT_SETS, recordSetClick, recordSocialClick } from '../utils/supabaseClient';
 
 export default function LiveSets() {
   const { lang, t } = useLanguage();
@@ -417,6 +417,7 @@ export default function LiveSets() {
                       subtitle: activeVideo.subtitle,
                       youtube_id: activeVideo.youtube_id
                     });
+                    recordSocialClick('youtube');
                   }}
                   style={{
                     width: '36px',

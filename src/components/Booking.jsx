@@ -3,7 +3,7 @@ import { CheckCircle, Sparkles } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useSiteConfig } from '../context/SiteConfigContext';
 import { WhatsAppIcon, InstagramIcon } from './SocialIcons';
-import { recordWhatsAppClick } from '../utils/supabaseClient';
+import { recordWhatsAppClick, recordSocialClick } from '../utils/supabaseClient';
 
 export default function Booking() {
   const { t } = useLanguage();
@@ -68,6 +68,10 @@ export default function Booking() {
                 href={directWhatsappUrl}
                 target="_blank"
                 rel="noreferrer"
+                onClick={() => {
+                  recordWhatsAppClick();
+                  recordSocialClick('whatsapp');
+                }}
                 className="glass-panel"
                 style={{
                   padding: '20px',
@@ -107,6 +111,7 @@ export default function Booking() {
                 href={`https://www.instagram.com/${instagramUser}/`}
                 target="_blank"
                 rel="noreferrer"
+                onClick={() => recordSocialClick('instagram')}
                 className="glass-panel"
                 style={{
                   padding: '20px',

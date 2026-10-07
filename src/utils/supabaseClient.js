@@ -1181,7 +1181,15 @@ export const DEFAULT_ANALYTICS = {
   eventClicks: {},
   eventDetails: {},
   setClicks: {},
-  setDetails: {}
+  setDetails: {},
+  socialClicks: {
+    instagram: 0,
+    youtube: 0,
+    soundcloud: 0,
+    kick: 0,
+    whatsapp: 0
+  },
+  totalSocialClicks: 0
 };
 
 export async function fetchSiteAnalytics() {
@@ -1214,7 +1222,12 @@ export async function fetchSiteAnalytics() {
   const merged = {
     ...DEFAULT_ANALYTICS,
     ...localAnalytics,
-    ...(cloudAnalytics || {})
+    ...(cloudAnalytics || {}),
+    socialClicks: {
+      ...DEFAULT_ANALYTICS.socialClicks,
+      ...(localAnalytics?.socialClicks || {}),
+      ...(cloudAnalytics?.socialClicks || {})
+    }
   };
 
   return merged;
@@ -1223,7 +1236,11 @@ export async function fetchSiteAnalytics() {
 export async function saveSiteAnalytics(newAnalytics) {
   const merged = {
     ...DEFAULT_ANALYTICS,
-    ...newAnalytics
+    ...newAnalytics,
+    socialClicks: {
+      ...DEFAULT_ANALYTICS.socialClicks,
+      ...(newAnalytics?.socialClicks || {})
+    }
   };
 
   try {
@@ -1315,7 +1332,7 @@ export async function recordWhatsAppClick() {
 
   const now = Date.now();
   const lastWa = sessionStorage.getItem('missafx_last_wa_click');
-  if (lastWa && (now - parseInt(lastWa, 10) < 2500)) {
+  if (lastWa && (now - parseInt(lastWa, 10) < 2000)) {
     return;
   }
   try {
@@ -1324,14 +1341,95 @@ export async function recordWhatsAppClick() {
 
   try {
     const current = await fetchSiteAnalytics();
+    const socialClicks = {
+      ...DEFAULT_ANALYTICS.socialClicks,
+      ...(current.socialClicks || {})
+    };
+    socialClicks.whatsapp = (Number(socialClicks.whatsapp) || 0) + 1;
+    const totalSocial = Object.values(socialClicks).reduce((sum, n) => sum + (Number(n) || 0), 0);
+
     const updated = {
       ...current,
       whatsappClicks: (current.whatsappClicks || 0) + 1,
+      socialClicks,
+      totalSocialClicks: Math.max(totalSocial, (Number(current.totalSocialClicks) || 0) + 1),
       lastVisitAt: new Date().toISOString()
     };
     return await saveSiteAnalytics(updated);
   } catch (err) {
     console.warn('Error recording WhatsApp click:', err);
+  }
+}
+
+export async function recordSocialClick(platform) {
+  if (typeof window === 'undefined' || !platform) return;
+
+  const validKey = String(platform).toLowerCase().trim();
+  const now = Date.now();
+  const sessionKey = `missafx_last_social_${validKey}`;
+  const lastClick = sessionStorage.getItem(sessionKey);
+  if (lastClick && (now - parseInt(lastClick, 10) < 2000)) {
+    return;
+  }
+  try {
+    sessionStorage.setItem(sessionKey, String(now));
+  } catch (e) {}
+
+  try {
+    const current = await fetchSiteAnalytics();
+    const socialClicks = {
+      ...DEFAULT_ANALYTICS.socialClicks,
+      ...(current.socialClicks || {})
+    };
+
+    socialClicks[validKey] = (Number(socialClicks[validKey]) || 0) + 1;
+    const totalSocial = Object.values(socialClicks).reduce((sum, n) => sum + (Number(n) || 0), 0);
+
+    const updated = {
+      ...current,
+      socialClicks,
+      totalSocialClicks: Math.max(totalSocial, (Number(current.totalSocialClicks) || 0) + 1),
+      lastVisitAt: new Date().toISOString()
+    };
+
+    if (validKey === 'whatsapp') {
+      updated.whatsappClicks = (Number(current.whatsappClicks) || 0) + 1;
+    }
+
+    return await saveSiteAnalytics(updated);
+  } catch (err) {
+    console.warn(`Error recording social click for ${platform}:`, err);
+  }
+}
+
+export async function resetSocialClicks(platform = null) {
+  try {
+    const current = await fetchSiteAnalytics();
+    const socialClicks = {
+      ...DEFAULT_ANALYTICS.socialClicks,
+      ...(current.socialClicks || {})
+    };
+
+    if (platform) {
+      const validKey = String(platform).toLowerCase().trim();
+      socialClicks[validKey] = 0;
+    } else {
+      Object.keys(socialClicks).forEach(k => {
+        socialClicks[k] = 0;
+      });
+    }
+
+    const totalSocial = Object.values(socialClicks).reduce((sum, n) => sum + (Number(n) || 0), 0);
+
+    const updated = {
+      ...current,
+      socialClicks,
+      totalSocialClicks: totalSocial
+    };
+
+    return await saveSiteAnalytics(updated);
+  } catch (err) {
+    console.warn('Error resetting social clicks:', err);
   }
 }
 

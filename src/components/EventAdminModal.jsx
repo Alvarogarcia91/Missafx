@@ -48,8 +48,10 @@ import {
   RefreshCw,
   BarChart2,
   TrendingUp,
-  Zap
+  Zap,
+  Share2
 } from 'lucide-react';
+import { InstagramIcon, WhatsAppIcon, KickIcon, YouTubeIcon, SoundCloudIcon } from './SocialIcons';
 import {
   fetchEvents,
   sortEventsByDate,
@@ -101,6 +103,7 @@ import {
   resetSiteAnalytics,
   resetEventClicks,
   resetSetClicks,
+  resetSocialClicks,
   formatFileSize,
   getFileSizeAdvice,
   compressImageFile,
@@ -204,6 +207,16 @@ export default function EventAdminModal({ isOpen, onClose }) {
   const [loadingAnalytics, setLoadingAnalytics] = useState(false);
   const [resettingAnalytics, setResettingAnalytics] = useState(false);
   const [analyticsStatusMsg, setAnalyticsStatusMsg] = useState('');
+
+  // Social click metrics helpers
+  const socialClicksMap = analytics.socialClicks || {};
+  const igClicks = Number(socialClicksMap.instagram) || 0;
+  const ytClicks = Number(socialClicksMap.youtube) || 0;
+  const scClicks = Number(socialClicksMap.soundcloud) || 0;
+  const kickClicks = Number(socialClicksMap.kick) || 0;
+  const waClicks = Number(socialClicksMap.whatsapp) || Number(analytics.whatsappClicks) || 0;
+  const calculatedTotalSocial = igClicks + ytClicks + scClicks + kickClicks + waClicks;
+  const totalSocialCount = Math.max(calculatedTotalSocial, Number(analytics.totalSocialClicks) || 0);
 
   // Event specific stats modal state
   const [selectedEventStats, setSelectedEventStats] = useState(null);
@@ -325,7 +338,7 @@ export default function EventAdminModal({ isOpen, onClose }) {
 
   const handleResetAnalytics = async () => {
     const confirmed = window.confirm(
-      '¿Estás seguro de reiniciar todos los contadores de visitas a cero?\n\nEsta acción borrará el conteo acumulado de visitas y clicks a WhatsApp tanto en la nube como en el dispositivo.'
+      '¿Estás seguro de reiniciar todos los contadores de la web a cero?\n\nEsta acción borrará el conteo acumulado de visitas, WhatsApp, Nexora, Sets y Redes Sociales tanto en la nube como en el dispositivo.'
     );
     if (!confirmed) return;
 
@@ -6344,6 +6357,174 @@ export default function EventAdminModal({ isOpen, onClose }) {
                             </div>
                             <span style={{ fontSize: '0.66rem', color: '#64748b' }}>Reproducciones de sets</span>
                           </div>
+
+                          {/* Card 7: Total Social Media Clicks */}
+                          <div
+                            style={{
+                              background: 'rgba(255, 255, 255, 0.03)',
+                              border: '1px solid rgba(225, 48, 108, 0.35)',
+                              borderRadius: '12px',
+                              padding: '14px',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '6px'
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                              <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#94a3b8', letterSpacing: '0.04em' }}>
+                                CLICKS EN REDES
+                              </span>
+                              <Share2 size={15} color="#E1306C" />
+                            </div>
+                            <div style={{ fontSize: '1.65rem', fontWeight: 900, color: '#E1306C', lineHeight: 1 }}>
+                              {totalSocialCount.toLocaleString('es-MX')}
+                            </div>
+                            <span style={{ fontSize: '0.66rem', color: '#64748b' }}>Todas las redes</span>
+                          </div>
+                        </div>
+
+                        {/* Breakdown: Redes Sociales Clicks */}
+                        <div
+                          style={{
+                            background: 'rgba(0, 0, 0, 0.45)',
+                            border: '1px solid rgba(255, 255, 255, 0.08)',
+                            borderRadius: '12px',
+                            padding: '16px',
+                            marginBottom: '16px'
+                          }}
+                        >
+                          <div
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              marginBottom: '14px',
+                              flexWrap: 'wrap',
+                              gap: '8px'
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <Share2 size={16} color="#FF003C" />
+                              <span style={{ fontSize: '0.82rem', fontWeight: 900, color: '#FFFFFF', letterSpacing: '0.04em' }}>
+                                DESGLOSE DE CLICKS EN REDES SOCIALES
+                              </span>
+                            </div>
+                            <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
+                              Total acumulado: <strong style={{ color: '#00F0FF' }}>{totalSocialCount.toLocaleString('es-MX')}</strong> clics
+                            </span>
+                          </div>
+
+                          <div
+                            style={{
+                              display: 'grid',
+                              gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+                              gap: '10px'
+                            }}
+                          >
+                            {[
+                              {
+                                id: 'instagram',
+                                name: 'Instagram',
+                                handle: `@${generalConfig.instagramUser || 'missaa.fx'}`,
+                                count: igClicks,
+                                color: '#E1306C',
+                                icon: InstagramIcon,
+                                iconColor: 'gradient'
+                              },
+                              {
+                                id: 'youtube',
+                                name: 'YouTube',
+                                handle: 'Canal Oficial',
+                                count: ytClicks,
+                                color: '#FF0000',
+                                icon: YouTubeIcon,
+                                iconColor: '#FF0000'
+                              },
+                              {
+                                id: 'soundcloud',
+                                name: 'SoundCloud',
+                                handle: 'Sets & Mixes',
+                                count: scClicks,
+                                color: '#FF5500',
+                                icon: SoundCloudIcon,
+                                iconColor: '#FF5500'
+                              },
+                              {
+                                id: 'kick',
+                                name: 'Kick Live',
+                                handle: `/${generalConfig.kickChannel || '7missa'}`,
+                                count: kickClicks,
+                                color: '#53FC18',
+                                icon: KickIcon,
+                                iconColor: '#53FC18'
+                              },
+                              {
+                                id: 'whatsapp',
+                                name: 'WhatsApp',
+                                handle: 'Booking Directo',
+                                count: waClicks,
+                                color: '#25D366',
+                                icon: WhatsAppIcon,
+                                iconColor: '#25D366'
+                              }
+                            ].map((net) => {
+                              const NetIcon = net.icon;
+                              const sharePct = totalSocialCount > 0 ? Math.round((net.count / totalSocialCount) * 100) : 0;
+                              return (
+                                <div
+                                  key={net.id}
+                                  style={{
+                                    background: 'rgba(255, 255, 255, 0.02)',
+                                    border: `1px solid ${net.color}35`,
+                                    borderRadius: '10px',
+                                    padding: '12px 14px',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: '6px'
+                                  }}
+                                >
+                                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                      <NetIcon size={16} color={net.iconColor} />
+                                      <span style={{ fontSize: '0.74rem', fontWeight: 800, color: '#FFFFFF' }}>{net.name}</span>
+                                    </div>
+                                    <span style={{ fontSize: '0.64rem', color: net.color, fontWeight: 800 }}>
+                                      {sharePct}%
+                                    </span>
+                                  </div>
+
+                                  <div style={{ fontSize: '1.3rem', fontWeight: 900, color: net.color, lineHeight: 1.1 }}>
+                                    {net.count.toLocaleString('es-MX')}
+                                  </div>
+
+                                  <div style={{ fontSize: '0.66rem', color: '#94a3b8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                    {net.handle}
+                                  </div>
+
+                                  {/* Progress bar */}
+                                  <div
+                                    style={{
+                                      width: '100%',
+                                      height: '4px',
+                                      borderRadius: '2px',
+                                      background: 'rgba(255, 255, 255, 0.08)',
+                                      overflow: 'hidden',
+                                      marginTop: '2px'
+                                    }}
+                                  >
+                                    <div
+                                      style={{
+                                        width: `${sharePct}%`,
+                                        height: '100%',
+                                        background: net.color,
+                                        transition: 'width 0.3s ease'
+                                      }}
+                                    />
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
                         </div>
 
                         {/* Device Breakdown & Last Activity Bar */}
@@ -6945,8 +7126,9 @@ export default function EventAdminModal({ isOpen, onClose }) {
                           borderRadius: '10px'
                         }}
                       >
-                        <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 800, color: '#25D366', marginBottom: '6px' }}>
-                          TELÉFONO WHATSAPP DE BOOKING (GLOBAL DE LA PÁGINA)
+                        <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.72rem', fontWeight: 800, color: '#25D366', marginBottom: '6px' }}>
+                          <span>TELÉFONO WHATSAPP DE BOOKING (GLOBAL DE LA PÁGINA)</span>
+                          <span style={{ fontSize: '0.70rem', background: 'rgba(37, 211, 102, 0.2)', padding: '2px 8px', borderRadius: '4px' }}>📊 {waClicks.toLocaleString('es-MX')} clics</span>
                         </label>
                         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                           <input
@@ -7121,8 +7303,9 @@ export default function EventAdminModal({ isOpen, onClose }) {
                         </div>
 
                         <div>
-                          <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '6px' }}>
-                            CANAL DE KICK
+                          <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.72rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '6px' }}>
+                            <span>CANAL DE KICK</span>
+                            <span style={{ fontSize: '0.68rem', color: '#53fc18', fontWeight: 800, background: 'rgba(83, 252, 24, 0.15)', padding: '1px 6px', borderRadius: '4px' }}>📊 {kickClicks.toLocaleString('es-MX')} clics</span>
                           </label>
                           <input
                             type="text"
@@ -7143,8 +7326,9 @@ export default function EventAdminModal({ isOpen, onClose }) {
                         </div>
 
                         <div>
-                          <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '6px' }}>
-                            USUARIO DE INSTAGRAM
+                          <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.72rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '6px' }}>
+                            <span>USUARIO DE INSTAGRAM</span>
+                            <span style={{ fontSize: '0.68rem', color: '#e1306c', fontWeight: 800, background: 'rgba(225, 48, 108, 0.15)', padding: '1px 6px', borderRadius: '4px' }}>📊 {igClicks.toLocaleString('es-MX')} clics</span>
                           </label>
                           <input
                             type="text"
@@ -7165,8 +7349,9 @@ export default function EventAdminModal({ isOpen, onClose }) {
                         </div>
 
                         <div>
-                          <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '6px' }}>
-                            ENLACE O CANAL DE YOUTUBE
+                          <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.72rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '6px' }}>
+                            <span>ENLACE O CANAL DE YOUTUBE</span>
+                            <span style={{ fontSize: '0.68rem', color: '#ff4444', fontWeight: 800, background: 'rgba(255, 68, 68, 0.15)', padding: '1px 6px', borderRadius: '4px' }}>📊 {ytClicks.toLocaleString('es-MX')} clics</span>
                           </label>
                           <input
                             type="text"
@@ -7187,8 +7372,9 @@ export default function EventAdminModal({ isOpen, onClose }) {
                         </div>
 
                         <div>
-                          <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '6px' }}>
-                            ENLACE O PERFIL DE SOUNDCLOUD
+                          <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.72rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '6px' }}>
+                            <span>ENLACE O PERFIL DE SOUNDCLOUD</span>
+                            <span style={{ fontSize: '0.68rem', color: '#ff7700', fontWeight: 800, background: 'rgba(255, 119, 0, 0.15)', padding: '1px 6px', borderRadius: '4px' }}>📊 {scClicks.toLocaleString('es-MX')} clics</span>
                           </label>
                           <input
                             type="text"

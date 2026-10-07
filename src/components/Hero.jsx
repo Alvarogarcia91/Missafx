@@ -11,7 +11,9 @@ import {
   parseCarouselItemMeta,
   getObjectPositionCss,
   getCleanCarouselUrl,
-  preloadCarouselMedia
+  preloadCarouselMedia,
+  recordSocialClick,
+  recordWhatsAppClick
 } from '../utils/supabaseClient';
 
 export default function Hero() {
@@ -427,6 +429,7 @@ export default function Hero() {
                   href={`https://www.instagram.com/${instagramUser}/`}
                   target="_blank"
                   rel="noreferrer"
+                  onClick={() => recordSocialClick('instagram')}
                   className="glass-panel"
                   style={{
                     padding: '10px 12px',
@@ -452,6 +455,10 @@ export default function Hero() {
                   href={whatsappUrl}
                   target="_blank"
                   rel="noreferrer"
+                  onClick={() => {
+                    recordWhatsAppClick();
+                    recordSocialClick('whatsapp');
+                  }}
                   className="glass-panel"
                   style={{
                     padding: '10px 12px',
@@ -477,6 +484,7 @@ export default function Hero() {
                   href={`https://kick.com/${kickChannel}`}
                   target="_blank"
                   rel="noreferrer"
+                  onClick={() => recordSocialClick('kick')}
                   className="glass-panel"
                   style={{
                     padding: '10px 12px',
@@ -502,6 +510,7 @@ export default function Hero() {
                   href={youtubeUrl}
                   target="_blank"
                   rel="noreferrer"
+                  onClick={() => recordSocialClick('youtube')}
                   className="glass-panel"
                   style={{
                     padding: '10px 12px',
@@ -527,6 +536,7 @@ export default function Hero() {
                   href={soundcloudUrl}
                   target="_blank"
                   rel="noreferrer"
+                  onClick={() => recordSocialClick('soundcloud')}
                   className="glass-panel"
                   style={{
                     padding: '10px 12px',

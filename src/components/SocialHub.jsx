@@ -3,6 +3,7 @@ import { ExternalLink } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useSiteConfig } from '../context/SiteConfigContext';
 import { InstagramIcon, WhatsAppIcon, KickIcon, YouTubeIcon, SoundCloudIcon } from './SocialIcons';
+import { recordSocialClick, recordWhatsAppClick } from '../utils/supabaseClient';
 
 export default function SocialHub() {
   const { t } = useLanguage();
@@ -20,6 +21,7 @@ export default function SocialHub() {
 
   const SOCIAL_CHANNELS = [
     {
+      platformKey: 'whatsapp',
       name: 'WhatsApp',
       tag: t.socialHub.channels.whatsapp.tag,
       handle: displayPhone,
@@ -30,6 +32,7 @@ export default function SocialHub() {
       cta: t.socialHub.channels.whatsapp.cta
     },
     {
+      platformKey: 'instagram',
       name: 'Instagram',
       tag: t.socialHub.channels.instagram.tag,
       handle: `@${instagramUser}`,
@@ -40,6 +43,7 @@ export default function SocialHub() {
       cta: t.socialHub.channels.instagram.cta
     },
     {
+      platformKey: 'kick',
       name: 'Kick Live Stream',
       tag: t.socialHub.channels.kick.tag,
       handle: `kick.com/${kickChannel}`,
@@ -50,6 +54,7 @@ export default function SocialHub() {
       cta: t.socialHub.channels.kick.cta
     },
     {
+      platformKey: 'youtube',
       name: 'YouTube',
       tag: t.socialHub.channels.youtube.tag,
       handle: youtubeHandle,
@@ -60,6 +65,7 @@ export default function SocialHub() {
       cta: t.socialHub.channels.youtube.cta
     },
     {
+      platformKey: 'soundcloud',
       name: 'SoundCloud',
       tag: t.socialHub.channels.soundcloud.tag,
       handle: soundcloudHandle,
@@ -191,6 +197,12 @@ export default function SocialHub() {
                   href={item.url}
                   target="_blank"
                   rel="noreferrer"
+                  onClick={() => {
+                    recordSocialClick(item.platformKey);
+                    if (item.platformKey === 'whatsapp') {
+                      recordWhatsAppClick();
+                    }
+                  }}
                   className="btn btn-secondary btn-sm"
                   style={{
                     width: '100%',

@@ -3,7 +3,7 @@ import { ArrowUp, Settings } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useSiteConfig } from '../context/SiteConfigContext';
 import { InstagramIcon, WhatsAppIcon, KickIcon, YouTubeIcon, SoundCloudIcon } from './SocialIcons';
-import { recordNexoraClick } from '../utils/supabaseClient';
+import { recordNexoraClick, recordSocialClick, recordWhatsAppClick } from '../utils/supabaseClient';
 
 export default function Footer({ onOpenAdmin }) {
   const { t } = useLanguage();
@@ -57,11 +57,11 @@ export default function Footer({ onOpenAdmin }) {
           {/* Social Links */}
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
             {[
-              { name: 'Instagram', url: instagramUrl, color: '#E1306C', icon: InstagramIcon },
-              { name: 'WhatsApp', url: `https://wa.me/${bookingPhone}`, color: '#25D366', icon: WhatsAppIcon },
-              { name: 'Kick', url: kickUrl, color: '#53FC18', icon: KickIcon },
-              { name: 'YouTube', url: youtubeUrl, color: '#FF0000', icon: YouTubeIcon },
-              { name: 'SoundCloud', url: soundcloudUrl, color: '#FF5500', icon: SoundCloudIcon }
+              { id: 'instagram', name: 'Instagram', url: instagramUrl, color: '#E1306C', icon: InstagramIcon },
+              { id: 'whatsapp', name: 'WhatsApp', url: `https://wa.me/${bookingPhone}`, color: '#25D366', icon: WhatsAppIcon },
+              { id: 'kick', name: 'Kick', url: kickUrl, color: '#53FC18', icon: KickIcon },
+              { id: 'youtube', name: 'YouTube', url: youtubeUrl, color: '#FF0000', icon: YouTubeIcon },
+              { id: 'soundcloud', name: 'SoundCloud', url: soundcloudUrl, color: '#FF5500', icon: SoundCloudIcon }
             ].map((social) => {
               const Icon = social.icon;
               return (
@@ -70,6 +70,10 @@ export default function Footer({ onOpenAdmin }) {
                   href={social.url}
                   target="_blank"
                   rel="noreferrer"
+                  onClick={() => {
+                    recordSocialClick(social.id);
+                    if (social.id === 'whatsapp') recordWhatsAppClick();
+                  }}
                   className="btn btn-secondary btn-sm"
                   style={{
                     fontSize: '0.82rem',
