@@ -95,8 +95,21 @@ export async function fetchEvents() {
 }
 
 export function isVideoMedia(url) {
-  if (!url) return false;
-  return /\.(mp4|webm|mov)(\?.*)?$/i.test(url) || url.includes('/video/') || url.includes('.mp4');
+  if (!url || typeof url !== 'string') return false;
+  const cleanUrl = url.split('#')[0].split('?')[0].toLowerCase();
+  return /\.(mp4|webm|mov|m4v|mkv|avi|ogv)$/i.test(cleanUrl) || cleanUrl.includes('/video/') || url.includes('.mp4');
+}
+
+export function checkIsVideo(file, url = '') {
+  if (file) {
+    const rawExt = file.name ? file.name.split('.').pop().toLowerCase() : '';
+    if (['mp4', 'webm', 'mov', 'm4v', 'mkv', 'avi', 'ogv'].includes(rawExt)) return true;
+    if (file.type && file.type.toLowerCase().startsWith('video/')) return true;
+  }
+  if (url) {
+    return isVideoMedia(url);
+  }
+  return false;
 }
 
 export function getCarouselItemAudio(url) {

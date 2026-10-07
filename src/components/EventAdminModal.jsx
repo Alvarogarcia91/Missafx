@@ -49,6 +49,7 @@ import {
   getCleanTicketUrl,
   getCleanTitle,
   isVideoMedia,
+  checkIsVideo,
   fetchCarouselPhotos,
   fetchCarouselData,
   saveCarouselPhotos,
@@ -205,10 +206,14 @@ export default function EventAdminModal({ isOpen, onClose }) {
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (flyerPreview && flyerPreview.startsWith('blob:')) {
+        URL.revokeObjectURL(flyerPreview);
+      }
       setFlyerFile(file);
       const url = URL.createObjectURL(file);
       setFlyerPreview(url);
     }
+    e.target.value = '';
   };
 
   const startEditEvent = (ev) => {
@@ -403,17 +408,21 @@ export default function EventAdminModal({ isOpen, onClose }) {
   const handleCarouselFileChange = (e) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (carouselPreview && carouselPreview.startsWith('blob:')) {
+        URL.revokeObjectURL(carouselPreview);
+      }
       setCarouselFile(file);
       const url = URL.createObjectURL(file);
       setCarouselPreview(url);
     }
+    e.target.value = '';
   };
 
   const handleUploadCarouselPhoto = async (e) => {
     e.preventDefault();
     if (!carouselFile) {
       setCarouselStatus('error');
-      setCarouselStatusMsg('Por favor selecciona una foto para subir');
+      setCarouselStatusMsg('Por favor selecciona una foto o video para subir');
       return;
     }
 
@@ -422,7 +431,7 @@ export default function EventAdminModal({ isOpen, onClose }) {
     setCarouselStatusMsg('');
 
     try {
-      const isVid = (carouselFile && carouselFile.type?.startsWith('video/')) || isVideoMedia(carouselPreview);
+      const isVid = checkIsVideo(carouselFile, carouselPreview);
       let uploadedUrl = await uploadFlyerImage(carouselFile);
       if (isVid && carouselAudio) {
         uploadedUrl = buildCarouselItemUrl(uploadedUrl, true);
@@ -433,6 +442,9 @@ export default function EventAdminModal({ isOpen, onClose }) {
 
       setCarouselStatus('success');
       setCarouselStatusMsg(isVid ? '¡Video agregado al carrousel con éxito!' : '¡Foto agregada al carrousel con éxito!');
+      if (carouselPreview && carouselPreview.startsWith('blob:')) {
+        URL.revokeObjectURL(carouselPreview);
+      }
       setCarouselFile(null);
       setCarouselPreview('');
       setCarouselAudio(false);
@@ -511,7 +523,8 @@ export default function EventAdminModal({ isOpen, onClose }) {
   if (!isOpen) return null;
 
   const detectedSetId = getYouTubeId(setYoutubeUrl);
-  const isFlyerVideo = (flyerFile && flyerFile.type?.startsWith('video/')) || isVideoMedia(flyerPreview);
+  const isFlyerVideo = checkIsVideo(flyerFile, flyerPreview);
+  const isCarouselVideo = checkIsVideo(carouselFile, carouselPreview);
 
   return (
     <div
@@ -962,7 +975,7 @@ export default function EventAdminModal({ isOpen, onClose }) {
                         >
                           <input
                             type="file"
-                            accept="image/png, image/jpeg, image/webp, video/mp4, video/webm, video/quicktime"
+                            accept="image/png, image/jpeg, image/webp, image/*, video/mp4, video/webm, video/quicktime, video/*"
                             onChange={handleFileChange}
                             style={{
                               position: 'absolute',
@@ -2255,7 +2268,7 @@ export default function EventAdminModal({ isOpen, onClose }) {
                     >
                       <input
                         type="file"
-                        accept="image/png, image/jpeg, image/webp, video/mp4, video/webm, video/quicktime"
+                        accept="image/png, image/jpeg, image/webp, image/*, video/mp4, video/webm, video/quicktime, video/*"
                         onChange={handleCarouselFileChange}
                         style={{
                           position: 'absolute',
@@ -2267,35 +2280,46 @@ export default function EventAdminModal({ isOpen, onClose }) {
 
                       {carouselPreview ? (
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
-                          {(carouselFile && carouselFile.type?.startsWith('video/')) || isVideoMedia(carouselPreview) ? (
-                            <video
-                              src={carouselPreview}
-                              autoPlay
-                              loop
-                              muted={!carouselAudio}
-                              playsInline
-                              style={{
-                                maxHeight: '160px',
-                                maxWidth: '100%',
-                                borderRadius: '8px',
-                                border: '1px solid rgba(255, 255, 255, 0.2)',
-                                display: 'block'
-                              }}
-                            />
+                          {isCarouselVideo ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+                              <video
+                                key={carouselPreview}
+                                src={carouselPreview}
+                                autoPlay
+                                loop
+                                muted
+                                playsInline
+                                style={{
+                                  maxHeight: '160px',
+                                  maxWidth: '100%',
+                                  borderRadius: '8px',
+                                  border: '1px solid rgba(255, 0, 60, 0.4)',
+                                  display: 'block',
+                                  background: '#000',
+                                  pointerEvents: 'none'
+                                }}
+                              />
+                              <span style={{ fontSize: '0.72rem', color: '#38bdf8', fontWeight: 700 }}>
+                                🎥 {carouselFile?.name || 'Video detectado'}
+                              </span>
+                            </div>
                           ) : (
                             <img
+                              key={carouselPreview}
                               src={carouselPreview}
                               alt="Preview"
                               style={{
                                 maxHeight: '140px',
+                                maxWidth: '100%',
                                 borderRadius: '8px',
                                 border: '1px solid rgba(255, 255, 255, 0.2)',
-                                display: 'block'
+                                display: 'block',
+                                pointerEvents: 'none'
                               }}
                             />
                           )}
                           <span style={{ fontSize: '0.78rem', color: '#22c55e', fontWeight: 700 }}>
-                            ✓ {((carouselFile && carouselFile.type?.startsWith('video/')) || isVideoMedia(carouselPreview)) ? 'Video MP4 cargado' : 'Foto seleccionada'} (toca para cambiar)
+                            ✓ {isCarouselVideo ? 'Video listo para carrousel' : 'Foto seleccionada'} (toca para cambiar)
                           </span>
                         </div>
                       ) : (
@@ -2305,14 +2329,14 @@ export default function EventAdminModal({ isOpen, onClose }) {
                             Toca aquí para subir una nueva foto o video al carrousel
                           </div>
                           <div style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
-                            Acepta Fotos (JPG, PNG, WEBP) o Videos (MP4, WEBM)
+                            Acepta Fotos (JPG, PNG, WEBP) o Videos (MP4, WEBM, MOV)
                           </div>
                         </div>
                       )}
                     </div>
 
                     {/* Audio configuration if video is selected */}
-                    {carouselPreview && ((carouselFile && carouselFile.type?.startsWith('video/')) || isVideoMedia(carouselPreview)) && (
+                    {carouselPreview && isCarouselVideo && (
                       <div
                         style={{
                           marginTop: '12px',
@@ -2442,7 +2466,7 @@ export default function EventAdminModal({ isOpen, onClose }) {
                       >
                         {uploadingCarousel
                           ? 'SUBIENDO A SUPABASE...'
-                          : ((carouselFile && carouselFile.type?.startsWith('video/')) || isVideoMedia(carouselPreview))
+                          : isCarouselVideo
                           ? 'AGREGAR ESTE VIDEO AL CARROUSEL 🔥'
                           : 'AGREGAR ESTA FOTO AL CARROUSEL 🔥'}
                       </button>
