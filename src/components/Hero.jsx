@@ -102,6 +102,7 @@ export default function Hero() {
   }, [photos, isRandom, triggerHeroTransition]);
 
   useEffect(() => {
+    setUserMuted(true);
     if (currentMeta && currentMeta.volume !== undefined) {
       setHeroVolume(currentMeta.volume);
     }
