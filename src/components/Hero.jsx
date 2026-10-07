@@ -3,31 +3,42 @@ import { Flame } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { InstagramIcon, WhatsAppIcon, KickIcon, YouTubeIcon, SoundCloudIcon } from './SocialIcons';
 import { PhotoQueueManager } from '../utils/shuffleQueue';
-
-const HERO_PHOTOS = [
-  '/gallery/missa-01.jpg',
-  '/gallery/missa-02.jpg',
-  '/gallery/missa-03.png',
-  '/gallery/missa-04.jpg',
-  '/gallery/missa-05.jpg',
-  '/gallery/missa-06.jpg',
-  '/gallery/missa-07.jpg',
-  '/gallery/missa-08.jpg',
-  '/gallery/missa-09.jpg'
-];
+import { fetchCarouselPhotos, DEFAULT_CAROUSEL_PHOTOS } from '../utils/supabaseClient';
 
 export default function Hero() {
   const { t } = useLanguage();
   const whatsappUrl = "https://wa.me/5214443570777?text=Hola%20Missa,%20me%20gustar%C3%ADa%20cotizar%20una%20fecha%20o%20evento";
 
+  const [photos, setPhotos] = useState(DEFAULT_CAROUSEL_PHOTOS);
   const [photoIndex, setPhotoIndex] = useState(0);
   const [prevPhotoIndex, setPrevPhotoIndex] = useState(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [progressKey, setProgressKey] = useState(0);
 
   const queueManager = useRef(null);
+
+  const loadPhotos = async () => {
+    try {
+      const data = await fetchCarouselPhotos();
+      if (Array.isArray(data) && data.length > 0) {
+        setPhotos(data);
+        queueManager.current = new PhotoQueueManager(data.length, 0);
+      }
+    } catch (e) {
+      console.warn('Error loading carousel photos in Hero:', e);
+    }
+  };
+
+  useEffect(() => {
+    loadPhotos();
+
+    const handleUpdate = () => loadPhotos();
+    window.addEventListener('missafx-carousel-updated', handleUpdate);
+    return () => window.removeEventListener('missafx-carousel-updated', handleUpdate);
+  }, []);
+
   if (!queueManager.current) {
-    queueManager.current = new PhotoQueueManager(HERO_PHOTOS.length, 0);
+    queueManager.current = new PhotoQueueManager(photos.length, 0);
   }
 
   const triggerHeroTransition = useCallback((nextIdx) => {
@@ -45,12 +56,15 @@ export default function Hero() {
   }, []);
 
   useEffect(() => {
+    if (photos.length <= 1) return;
     const timer = setInterval(() => {
-      const nextIdx = queueManager.current.next();
-      triggerHeroTransition(nextIdx);
+      if (queueManager.current) {
+        const nextIdx = queueManager.current.next();
+        triggerHeroTransition(nextIdx);
+      }
     }, 10000);
     return () => clearInterval(timer);
-  }, [triggerHeroTransition]);
+  }, [photos, triggerHeroTransition]);
 
   return (
     <section
@@ -412,10 +426,10 @@ export default function Hero() {
                 {isTransitioning && <div className="carousel-laser-scan" />}
 
                 {/* PREVIOUS SLIDE (glitch exit animation) */}
-                {prevPhotoIndex !== null && isTransitioning && (
+                {prevPhotoIndex !== null && isTransitioning && photos[prevPhotoIndex] && (
                   <img
                     key={`hero-prev-${prevPhotoIndex}`}
-                    src={HERO_PHOTOS[prevPhotoIndex]}
+                    src={photos[prevPhotoIndex]}
                     alt="DJ Missa en vivo"
                     className="carousel-slide-exit"
                     style={{
@@ -432,7 +446,7 @@ export default function Hero() {
                 {/* CURRENT ACTIVE SLIDE */}
                 <img
                   key={`hero-curr-${photoIndex}-${progressKey}`}
-                  src={HERO_PHOTOS[photoIndex]}
+                  src={photos[photoIndex % photos.length] || photos[0]}
                   alt="DJ Missa en vivo"
                   className={isTransitioning ? 'carousel-slide-enter' : 'carousel-ken-burns'}
                   style={{

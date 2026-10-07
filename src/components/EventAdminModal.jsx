@@ -15,7 +15,11 @@ import {
   Tv,
   Play,
   Film,
-  Video
+  Video,
+  Image as ImageIcon,
+  ArrowUp,
+  ArrowDown,
+  RotateCcw
 } from 'lucide-react';
 import {
   fetchEvents,
@@ -30,7 +34,11 @@ import {
   getEventStatus,
   getCleanTicketUrl,
   getCleanTitle,
-  isVideoMedia
+  isVideoMedia,
+  fetchCarouselPhotos,
+  saveCarouselPhotos,
+  resetCarouselPhotos,
+  DEFAULT_CAROUSEL_PHOTOS
 } from '../utils/supabaseClient';
 
 const REQUIRED_PIN = '2305';
@@ -43,7 +51,7 @@ export default function EventAdminModal({ isOpen, onClose }) {
   const [pinError, setPinError] = useState(false);
   const [pinSuccess, setPinSuccess] = useState(false);
 
-  // High level section: 'events' | 'sets'
+  // High level section: 'events' | 'sets' | 'carousel'
   const [adminSection, setAdminSection] = useState('events');
 
   // Events wizard form state
@@ -76,10 +84,20 @@ export default function EventAdminModal({ isOpen, onClose }) {
   const [setStatus, setSetStatus] = useState('');
   const [setStatusMsg, setSetStatusMsg] = useState('');
 
+  // Carousel state
+  const [carouselPhotos, setCarouselPhotos] = useState([]);
+  const [loadingCarousel, setLoadingCarousel] = useState(false);
+  const [uploadingCarousel, setUploadingCarousel] = useState(false);
+  const [carouselFile, setCarouselFile] = useState(null);
+  const [carouselPreview, setCarouselPreview] = useState('');
+  const [carouselStatus, setCarouselStatus] = useState('');
+  const [carouselStatusMsg, setCarouselStatusMsg] = useState('');
+
   useEffect(() => {
     if (isOpen && isAuthenticated) {
       loadManageList();
       loadSetsList();
+      loadCarouselList();
     }
   }, [isOpen, isAuthenticated]);
 
@@ -104,6 +122,18 @@ export default function EventAdminModal({ isOpen, onClose }) {
       console.warn('Error fetching sets for manager:', e);
     } finally {
       setLoadingSets(false);
+    }
+  };
+
+  const loadCarouselList = async () => {
+    setLoadingCarousel(true);
+    try {
+      const data = await fetchCarouselPhotos();
+      if (data) setCarouselPhotos(data);
+    } catch (e) {
+      console.warn('Error fetching carousel photos:', e);
+    } finally {
+      setLoadingCarousel(false);
     }
   };
 
@@ -132,6 +162,7 @@ export default function EventAdminModal({ isOpen, onClose }) {
         setPin('');
         loadManageList();
         loadSetsList();
+        loadCarouselList();
       }, 400);
     } else {
       setPinError(true);
@@ -308,6 +339,84 @@ export default function EventAdminModal({ isOpen, onClose }) {
     }
   };
 
+  // Carousel handlers
+  const handleCarouselFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setCarouselFile(file);
+      const url = URL.createObjectURL(file);
+      setCarouselPreview(url);
+    }
+  };
+
+  const handleUploadCarouselPhoto = async (e) => {
+    e.preventDefault();
+    if (!carouselFile) {
+      setCarouselStatus('error');
+      setCarouselStatusMsg('Por favor selecciona una foto para subir');
+      return;
+    }
+
+    setUploadingCarousel(true);
+    setCarouselStatus('');
+    setCarouselStatusMsg('');
+
+    try {
+      const uploadedUrl = await uploadFlyerImage(carouselFile);
+      const updated = [...carouselPhotos, uploadedUrl];
+      await saveCarouselPhotos(updated);
+      setCarouselPhotos(updated);
+
+      setCarouselStatus('success');
+      setCarouselStatusMsg('¡Foto agregada al carrousel con éxito!');
+      setCarouselFile(null);
+      setCarouselPreview('');
+
+      window.dispatchEvent(new CustomEvent('missafx-carousel-updated'));
+    } catch (err) {
+      console.error(err);
+      setCarouselStatus('error');
+      setCarouselStatusMsg(err.message || 'Error al subir foto');
+    } finally {
+      setUploadingCarousel(false);
+    }
+  };
+
+  const handleDeleteCarouselPhoto = async (index) => {
+    if (!window.confirm('¿Seguro que deseas eliminar esta foto del carrousel?')) return;
+    try {
+      const updated = carouselPhotos.filter((_, i) => i !== index);
+      await saveCarouselPhotos(updated);
+      setCarouselPhotos(updated);
+      window.dispatchEvent(new CustomEvent('missafx-carousel-updated'));
+    } catch (err) {
+      alert('Error al eliminar foto: ' + err.message);
+    }
+  };
+
+  const handleMoveCarouselPhoto = async (index, direction) => {
+    const targetIndex = index + direction;
+    if (targetIndex < 0 || targetIndex >= carouselPhotos.length) return;
+    const updated = [...carouselPhotos];
+    const temp = updated[index];
+    updated[index] = updated[targetIndex];
+    updated[targetIndex] = temp;
+    await saveCarouselPhotos(updated);
+    setCarouselPhotos(updated);
+    window.dispatchEvent(new CustomEvent('missafx-carousel-updated'));
+  };
+
+  const handleResetCarousel = async () => {
+    if (!window.confirm('¿Restablecer el carrousel a las 9 fotos oficiales originales?')) return;
+    try {
+      const def = await resetCarouselPhotos();
+      setCarouselPhotos(def);
+      window.dispatchEvent(new CustomEvent('missafx-carousel-updated'));
+    } catch (err) {
+      alert('Error al restablecer: ' + err.message);
+    }
+  };
+
   if (!isOpen) return null;
 
   const detectedSetId = getYouTubeId(setYoutubeUrl);
@@ -332,7 +441,7 @@ export default function EventAdminModal({ isOpen, onClose }) {
         onClick={(e) => e.stopPropagation()}
         style={{
           width: '100%',
-          maxWidth: isAuthenticated ? '720px' : '380px',
+          maxWidth: isAuthenticated ? '760px' : '380px',
           maxHeight: '92vh',
           background: '#0c0c10',
           border: '1px solid rgba(255, 0, 60, 0.35)',
@@ -559,11 +668,12 @@ export default function EventAdminModal({ isOpen, onClose }) {
           ) : (
             /* Authenticated Manager View */
             <div>
-              {/* TOP LEVEL MODULE SELECTOR */}
+              {/* TOP LEVEL MODULE SELECTOR (3 MODULES) */}
               <div
                 style={{
-                  display: 'flex',
-                  gap: '10px',
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(3, 1fr)',
+                  gap: '8px',
                   marginBottom: '20px',
                   paddingBottom: '16px',
                   borderBottom: '1px solid rgba(255, 255, 255, 0.08)'
@@ -572,49 +682,70 @@ export default function EventAdminModal({ isOpen, onClose }) {
                 <button
                   onClick={() => setAdminSection('events')}
                   style={{
-                    flex: 1,
-                    padding: '12px 14px',
+                    padding: '12px 8px',
                     borderRadius: '10px',
                     border: adminSection === 'events' ? '1px solid rgba(255, 0, 60, 0.6)' : '1px solid rgba(255, 255, 255, 0.08)',
                     background: adminSection === 'events' ? 'rgba(255, 0, 60, 0.16)' : 'rgba(255, 255, 255, 0.03)',
                     color: adminSection === 'events' ? '#FFFFFF' : 'var(--text-muted, #94a3b8)',
                     fontWeight: 800,
-                    fontSize: '0.86rem',
+                    fontSize: '0.80rem',
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    gap: '8px',
+                    gap: '6px',
                     transition: 'all 0.2s ease',
                     boxShadow: adminSection === 'events' ? '0 0 15px rgba(255, 0, 60, 0.2)' : 'none'
                   }}
                 >
-                  <Calendar size={16} color={adminSection === 'events' ? '#FF003C' : '#94a3b8'} />
-                  <span>FLYERS & EVENTOS ({eventsList.length})</span>
+                  <Calendar size={15} color={adminSection === 'events' ? '#FF003C' : '#94a3b8'} />
+                  <span>EVENTOS ({eventsList.length})</span>
                 </button>
 
                 <button
                   onClick={() => setAdminSection('sets')}
                   style={{
-                    flex: 1,
-                    padding: '12px 14px',
+                    padding: '12px 8px',
                     borderRadius: '10px',
                     border: adminSection === 'sets' ? '1px solid rgba(255, 0, 60, 0.6)' : '1px solid rgba(255, 255, 255, 0.08)',
                     background: adminSection === 'sets' ? 'rgba(255, 0, 60, 0.16)' : 'rgba(255, 255, 255, 0.03)',
                     color: adminSection === 'sets' ? '#FFFFFF' : 'var(--text-muted, #94a3b8)',
                     fontWeight: 800,
-                    fontSize: '0.86rem',
+                    fontSize: '0.80rem',
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    gap: '8px',
+                    gap: '6px',
                     transition: 'all 0.2s ease',
                     boxShadow: adminSection === 'sets' ? '0 0 15px rgba(255, 0, 60, 0.2)' : 'none'
                   }}
                 >
-                  <Tv size={16} color={adminSection === 'sets' ? '#FF003C' : '#94a3b8'} />
-                  <span>SETS DE YOUTUBE ({setsList.length})</span>
+                  <Tv size={15} color={adminSection === 'sets' ? '#FF003C' : '#94a3b8'} />
+                  <span>SETS ({setsList.length})</span>
+                </button>
+
+                <button
+                  onClick={() => setAdminSection('carousel')}
+                  style={{
+                    padding: '12px 8px',
+                    borderRadius: '10px',
+                    border: adminSection === 'carousel' ? '1px solid rgba(255, 0, 60, 0.6)' : '1px solid rgba(255, 255, 255, 0.08)',
+                    background: adminSection === 'carousel' ? 'rgba(255, 0, 60, 0.16)' : 'rgba(255, 255, 255, 0.03)',
+                    color: adminSection === 'carousel' ? '#FFFFFF' : 'var(--text-muted, #94a3b8)',
+                    fontWeight: 800,
+                    fontSize: '0.80rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                    transition: 'all 0.2s ease',
+                    boxShadow: adminSection === 'carousel' ? '0 0 15px rgba(255, 0, 60, 0.2)' : 'none'
+                  }}
+                >
+                  <ImageIcon size={15} color={adminSection === 'carousel' ? '#FF003C' : '#94a3b8'} />
+                  <span>CARROUSEL ({carouselPhotos.length})</span>
                 </button>
               </div>
 
@@ -636,9 +767,7 @@ export default function EventAdminModal({ isOpen, onClose }) {
                     }}
                   >
                     <button
-                      onClick={() => {
-                        setActiveTab('create');
-                      }}
+                      onClick={() => setActiveTab('create')}
                       style={{
                         flex: 1,
                         padding: '10px 14px',
@@ -876,7 +1005,7 @@ export default function EventAdminModal({ isOpen, onClose }) {
                         />
                       </div>
 
-                      {/* Step 5: Status Badge (Sold Out / Últimos Boletos / Normal) */}
+                      {/* Step 5: Status Badge */}
                       <div>
                         <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: 800, color: '#fff', marginBottom: '8px' }}>
                           5. ESTADO DE BOLETOS // MARCA DEL EVENTO
@@ -1358,7 +1487,7 @@ export default function EventAdminModal({ isOpen, onClose }) {
                         </label>
                         <input
                           type="text"
-                          placeholder="Ej. TECH HOUSE // B2B SESSION"
+                          placeholder="Ej. TECH HOUSE // LIVE SET"
                           value={setSubtitle}
                           onChange={(e) => setSetSubtitle(e.target.value)}
                           style={{
@@ -1573,6 +1702,315 @@ export default function EventAdminModal({ isOpen, onClose }) {
                       )}
                     </div>
                   )}
+                </div>
+              )}
+
+              {/* ======================================================== */}
+              {/* SECTION 3: FOTOS DE CARROUSEL */}
+              {/* ======================================================== */}
+              {adminSection === 'carousel' && (
+                <div>
+                  {/* Top Info & Reset Bar */}
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      marginBottom: '20px',
+                      padding: '12px 16px',
+                      background: 'rgba(255, 255, 255, 0.03)',
+                      border: '1px solid rgba(255, 255, 255, 0.08)',
+                      borderRadius: '10px'
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#FFFFFF' }}>
+                        FOTOS ACTIVAS EN CARROUSEL: {carouselPhotos.length}
+                      </div>
+                      <div style={{ fontSize: '0.74rem', color: '#94a3b8' }}>
+                        Aparecen en el Hero principal y en la sección Bio & Rider.
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={handleResetCarousel}
+                      style={{
+                        background: 'rgba(255, 255, 255, 0.06)',
+                        border: '1px solid rgba(255, 255, 255, 0.15)',
+                        borderRadius: '8px',
+                        color: '#94a3b8',
+                        padding: '6px 12px',
+                        fontSize: '0.74rem',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}
+                      title="Restablecer fotos oficiales"
+                    >
+                      <RotateCcw size={13} />
+                      <span>Restablecer Originales</span>
+                    </button>
+                  </div>
+
+                  {/* Upload New Photo Form */}
+                  <form onSubmit={handleUploadCarouselPhoto} style={{ marginBottom: '28px' }}>
+                    <div
+                      style={{
+                        border: '2px dashed rgba(255, 0, 60, 0.35)',
+                        borderRadius: '12px',
+                        padding: '20px',
+                        textAlign: 'center',
+                        background: 'rgba(255, 0, 60, 0.03)',
+                        position: 'relative',
+                        cursor: 'pointer',
+                        overflow: 'hidden'
+                      }}
+                    >
+                      <input
+                        type="file"
+                        accept="image/png, image/jpeg, image/webp"
+                        onChange={handleCarouselFileChange}
+                        style={{
+                          position: 'absolute',
+                          inset: 0,
+                          opacity: 0,
+                          cursor: 'pointer'
+                        }}
+                      />
+
+                      {carouselPreview ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
+                          <img
+                            src={carouselPreview}
+                            alt="Preview"
+                            style={{
+                              maxHeight: '140px',
+                              borderRadius: '8px',
+                              border: '1px solid rgba(255, 255, 255, 0.2)',
+                              display: 'block'
+                            }}
+                          />
+                          <span style={{ fontSize: '0.78rem', color: '#22c55e', fontWeight: 700 }}>
+                            ✓ Foto seleccionada (toca para cambiar)
+                          </span>
+                        </div>
+                      ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+                          <Upload size={28} color="#FF003C" />
+                          <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#FFFFFF' }}>
+                            Toca aquí para subir una nueva foto al carrousel
+                          </div>
+                          <div style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
+                            Acepta JPG, PNG, WEBP (se optimiza y sube a Supabase)
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {carouselStatus === 'error' && (
+                      <div
+                        style={{
+                          marginTop: '10px',
+                          padding: '10px',
+                          borderRadius: '8px',
+                          background: 'rgba(239, 68, 68, 0.15)',
+                          border: '1px solid rgba(239, 68, 68, 0.35)',
+                          color: '#ef4444',
+                          fontSize: '0.80rem',
+                          fontWeight: 700,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px'
+                        }}
+                      >
+                        <AlertCircle size={15} />
+                        <span>{carouselStatusMsg}</span>
+                      </div>
+                    )}
+
+                    {carouselStatus === 'success' && (
+                      <div
+                        style={{
+                          marginTop: '10px',
+                          padding: '10px',
+                          borderRadius: '8px',
+                          background: 'rgba(34, 197, 94, 0.15)',
+                          border: '1px solid rgba(34, 197, 94, 0.35)',
+                          color: '#22c55e',
+                          fontSize: '0.80rem',
+                          fontWeight: 700,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px'
+                        }}
+                      >
+                        <CheckCircle size={15} />
+                        <span>{carouselStatusMsg}</span>
+                      </div>
+                    )}
+
+                    {carouselPreview && (
+                      <button
+                        type="submit"
+                        disabled={uploadingCarousel}
+                        style={{
+                          marginTop: '12px',
+                          width: '100%',
+                          padding: '12px',
+                          borderRadius: '8px',
+                          border: 'none',
+                          background: uploadingCarousel ? '#94a3b8' : '#FF003C',
+                          color: '#FFFFFF',
+                          fontSize: '0.88rem',
+                          fontWeight: 800,
+                          cursor: uploadingCarousel ? 'not-allowed' : 'pointer',
+                          letterSpacing: '0.06em',
+                          textTransform: 'uppercase',
+                          boxShadow: '0 4px 15px rgba(255, 0, 60, 0.4)'
+                        }}
+                      >
+                        {uploadingCarousel ? 'SUBIENDO A SUPABASE...' : 'AGREGAR ESTA FOTO AL CARROUSEL 🔥'}
+                      </button>
+                    )}
+                  </form>
+
+                  {/* List of Carousel Photos */}
+                  <div>
+                    <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#FFFFFF', marginBottom: '12px' }}>
+                      FOTOS ACTUALES (ORDEN DE REPRODUCCIÓN)
+                    </div>
+
+                    {loadingCarousel ? (
+                      <div style={{ textAlign: 'center', padding: '20px 0', color: '#94a3b8' }}>
+                        Cargando carrousel...
+                      </div>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        {carouselPhotos.map((photoUrl, idx) => (
+                          <div
+                            key={photoUrl + idx}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '12px',
+                              background: 'rgba(255, 255, 255, 0.03)',
+                              border: '1px solid rgba(255, 255, 255, 0.08)',
+                              padding: '10px 14px',
+                              borderRadius: '10px'
+                            }}
+                          >
+                            {/* Position Number */}
+                            <span
+                              style={{
+                                width: '26px',
+                                height: '26px',
+                                borderRadius: '50%',
+                                background: 'rgba(255, 0, 60, 0.15)',
+                                color: '#FF003C',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: '0.74rem',
+                                fontWeight: 900,
+                                fontFamily: 'monospace'
+                              }}
+                            >
+                              {idx + 1}
+                            </span>
+
+                            {/* Thumbnail */}
+                            <img
+                              src={photoUrl}
+                              alt=""
+                              style={{
+                                width: '48px',
+                                height: '48px',
+                                objectFit: 'cover',
+                                borderRadius: '6px',
+                                border: '1px solid rgba(255, 255, 255, 0.1)'
+                              }}
+                            />
+
+                            {/* Photo path / url preview */}
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontSize: '0.80rem', color: '#FFFFFF', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: 600 }}>
+                                {photoUrl.startsWith('http') ? 'Foto Subida (Supabase)' : photoUrl.replace('/gallery/', 'Oficial: ')}
+                              </div>
+                              <div style={{ fontSize: '0.70rem', color: '#94a3b8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {photoUrl}
+                              </div>
+                            </div>
+
+                            {/* Reorder and Delete Actions */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <button
+                                onClick={() => handleMoveCarouselPhoto(idx, -1)}
+                                disabled={idx === 0}
+                                style={{
+                                  width: '28px',
+                                  height: '28px',
+                                  borderRadius: '6px',
+                                  background: 'rgba(255, 255, 255, 0.06)',
+                                  border: '1px solid rgba(255, 255, 255, 0.12)',
+                                  color: idx === 0 ? '#475569' : '#FFFFFF',
+                                  cursor: idx === 0 ? 'not-allowed' : 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center'
+                                }}
+                                title="Subir orden"
+                              >
+                                <ArrowUp size={14} />
+                              </button>
+
+                              <button
+                                onClick={() => handleMoveCarouselPhoto(idx, 1)}
+                                disabled={idx === carouselPhotos.length - 1}
+                                style={{
+                                  width: '28px',
+                                  height: '28px',
+                                  borderRadius: '6px',
+                                  background: 'rgba(255, 255, 255, 0.06)',
+                                  border: '1px solid rgba(255, 255, 255, 0.12)',
+                                  color: idx === carouselPhotos.length - 1 ? '#475569' : '#FFFFFF',
+                                  cursor: idx === carouselPhotos.length - 1 ? 'not-allowed' : 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center'
+                                }}
+                                title="Bajar orden"
+                              >
+                                <ArrowDown size={14} />
+                              </button>
+
+                              <button
+                                onClick={() => handleDeleteCarouselPhoto(idx)}
+                                disabled={carouselPhotos.length <= 1}
+                                style={{
+                                  width: '28px',
+                                  height: '28px',
+                                  borderRadius: '6px',
+                                  background: 'rgba(239, 68, 68, 0.15)',
+                                  border: '1px solid rgba(239, 68, 68, 0.3)',
+                                  color: carouselPhotos.length <= 1 ? '#475569' : '#ef4444',
+                                  cursor: carouselPhotos.length <= 1 ? 'not-allowed' : 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  marginLeft: '4px'
+                                }}
+                                title="Eliminar del carrousel"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>

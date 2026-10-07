@@ -3,31 +3,42 @@ import { Sliders, Headphones } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { WhatsAppIcon } from './SocialIcons';
 import { PhotoQueueManager } from '../utils/shuffleQueue';
-
-const ABOUT_PHOTOS = [
-  '/gallery/missa-01.jpg',
-  '/gallery/missa-02.jpg',
-  '/gallery/missa-03.png',
-  '/gallery/missa-04.jpg',
-  '/gallery/missa-05.jpg',
-  '/gallery/missa-06.jpg',
-  '/gallery/missa-07.jpg',
-  '/gallery/missa-08.jpg',
-  '/gallery/missa-09.jpg'
-];
+import { fetchCarouselPhotos, DEFAULT_CAROUSEL_PHOTOS } from '../utils/supabaseClient';
 
 export default function About() {
   const { t } = useLanguage();
   const whatsappUrl = "https://wa.me/5214443570777?text=Hola%20Missa,%20me%20gustar%C3%ADa%20solicitar%20el%20Press%20Kit%20completo%20y%20Rider";
 
+  const [photos, setPhotos] = useState(DEFAULT_CAROUSEL_PHOTOS);
   const [photoIndex, setPhotoIndex] = useState(3);
   const [prevPhotoIndex, setPrevPhotoIndex] = useState(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [progressKey, setProgressKey] = useState(0);
 
   const queueManager = useRef(null);
+
+  const loadPhotos = async () => {
+    try {
+      const data = await fetchCarouselPhotos();
+      if (Array.isArray(data) && data.length > 0) {
+        setPhotos(data);
+        queueManager.current = new PhotoQueueManager(data.length, Math.min(3, data.length - 1));
+      }
+    } catch (e) {
+      console.warn('Error loading carousel photos in About:', e);
+    }
+  };
+
+  useEffect(() => {
+    loadPhotos();
+
+    const handleUpdate = () => loadPhotos();
+    window.addEventListener('missafx-carousel-updated', handleUpdate);
+    return () => window.removeEventListener('missafx-carousel-updated', handleUpdate);
+  }, []);
+
   if (!queueManager.current) {
-    queueManager.current = new PhotoQueueManager(ABOUT_PHOTOS.length, 3);
+    queueManager.current = new PhotoQueueManager(photos.length, Math.min(3, photos.length - 1));
   }
 
   const triggerAboutTransition = useCallback((nextIdx) => {
@@ -45,12 +56,15 @@ export default function About() {
   }, []);
 
   useEffect(() => {
+    if (photos.length <= 1) return;
     const timer = setInterval(() => {
-      const nextIdx = queueManager.current.next();
-      triggerAboutTransition(nextIdx);
+      if (queueManager.current) {
+        const nextIdx = queueManager.current.next();
+        triggerAboutTransition(nextIdx);
+      }
     }, 10000);
     return () => clearInterval(timer);
-  }, [triggerAboutTransition]);
+  }, [photos, triggerAboutTransition]);
 
   return (
     <section id="about" style={{ padding: '90px 0', position: 'relative' }}>
@@ -139,10 +153,10 @@ export default function About() {
                 {isTransitioning && <div className="carousel-laser-scan" />}
 
                 {/* PREVIOUS SLIDE (glitch exit animation) */}
-                {prevPhotoIndex !== null && isTransitioning && (
+                {prevPhotoIndex !== null && isTransitioning && photos[prevPhotoIndex] && (
                   <img
                     key={`about-prev-${prevPhotoIndex}`}
-                    src={ABOUT_PHOTOS[prevPhotoIndex]}
+                    src={photos[prevPhotoIndex]}
                     alt="DJ Missa"
                     className="carousel-slide-exit"
                     style={{
@@ -159,7 +173,7 @@ export default function About() {
                 {/* CURRENT ACTIVE SLIDE */}
                 <img
                   key={`about-curr-${photoIndex}-${progressKey}`}
-                  src={ABOUT_PHOTOS[photoIndex]}
+                  src={photos[photoIndex % photos.length] || photos[0]}
                   alt="DJ Missa"
                   className={isTransitioning ? 'carousel-slide-enter' : 'carousel-ken-burns'}
                   style={{

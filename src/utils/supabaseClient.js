@@ -382,3 +382,101 @@ export async function deleteSetRecord(id) {
 
   return true;
 }
+
+export const DEFAULT_CAROUSEL_PHOTOS = [
+  '/gallery/missa-01.jpg',
+  '/gallery/missa-02.jpg',
+  '/gallery/missa-03.png',
+  '/gallery/missa-04.jpg',
+  '/gallery/missa-05.jpg',
+  '/gallery/missa-06.jpg',
+  '/gallery/missa-07.jpg',
+  '/gallery/missa-08.jpg',
+  '/gallery/missa-09.jpg'
+];
+
+export async function fetchCarouselPhotos() {
+  let cloudPhotos = [];
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/carousel?select=*&order=display_order.asc,created_at.asc`, {
+      headers: defaultHeaders
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        cloudPhotos = data.map(item => item.image_url).filter(Boolean);
+      }
+    }
+  } catch (err) {
+    console.warn('Supabase carousel fetch error, falling back:', err);
+  }
+
+  if (cloudPhotos.length > 0) {
+    return cloudPhotos;
+  }
+
+  // Check localStorage
+  try {
+    const saved = localStorage.getItem('missafx_carousel_photos');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed;
+      }
+    }
+  } catch (e) {}
+
+  return DEFAULT_CAROUSEL_PHOTOS;
+}
+
+export async function saveCarouselPhotos(photosList) {
+  const cleanList = Array.isArray(photosList) ? photosList.filter(Boolean) : DEFAULT_CAROUSEL_PHOTOS;
+
+  // 1. Save to localStorage immediately
+  try {
+    localStorage.setItem('missafx_carousel_photos', JSON.stringify(cleanList));
+  } catch (e) {}
+
+  // 2. Try to sync to Supabase if table exists
+  try {
+    // Delete existing rows
+    await fetch(`${SUPABASE_URL}/rest/v1/carousel?id=not.is.null`, {
+      method: 'DELETE',
+      headers: defaultHeaders
+    });
+
+    // Insert new rows
+    const rows = cleanList.map((url, idx) => ({
+      image_url: url,
+      display_order: idx
+    }));
+
+    await fetch(`${SUPABASE_URL}/rest/v1/carousel`, {
+      method: 'POST',
+      headers: {
+        ...defaultHeaders,
+        Prefer: 'return=representation'
+      },
+      body: JSON.stringify(rows)
+    });
+  } catch (e) {
+    console.warn('Could not sync carousel to Supabase table:', e);
+  }
+
+  return cleanList;
+}
+
+export async function resetCarouselPhotos() {
+  try {
+    localStorage.removeItem('missafx_carousel_photos');
+  } catch (e) {}
+
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/carousel?id=not.is.null`, {
+      method: 'DELETE',
+      headers: defaultHeaders
+    });
+  } catch (e) {}
+
+  return DEFAULT_CAROUSEL_PHOTOS;
+}
