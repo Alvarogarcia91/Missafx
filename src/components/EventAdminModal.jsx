@@ -98,7 +98,8 @@ import {
   DEFAULT_ANALYTICS,
   fetchSiteAnalytics,
   resetSiteAnalytics,
-  resetEventClicks
+  resetEventClicks,
+  resetSetClicks
 } from '../utils/supabaseClient';
 
 const REQUIRED_PIN = '2305';
@@ -197,6 +198,10 @@ export default function EventAdminModal({ isOpen, onClose }) {
   // Event specific stats modal state
   const [selectedEventStats, setSelectedEventStats] = useState(null);
   const [resettingEventId, setResettingEventId] = useState(null);
+
+  // Set specific stats modal state
+  const [selectedSetStats, setSelectedSetStats] = useState(null);
+  const [resettingSetId, setResettingSetId] = useState(null);
 
   useEffect(() => {
     if (isOpen && isAuthenticated) {
@@ -322,6 +327,25 @@ export default function EventAdminModal({ isOpen, onClose }) {
       console.warn('Error resetting event clicks:', e);
     } finally {
       setResettingEventId(null);
+    }
+  };
+
+  const handleResetSetClicks = async (setId, setTitle) => {
+    const confirmed = window.confirm(
+      `¿Estás seguro de reiniciar a 0 los clics para el set "${setTitle || 'este set'}"?\n\nEsta acción reiniciará el contador de reproducciones/clics de este video.`
+    );
+    if (!confirmed) return;
+
+    setResettingSetId(setId);
+    try {
+      const updated = await resetSetClicks(setId);
+      if (updated) setAnalytics(updated);
+      setAnalyticsStatusMsg(`Contador de "${setTitle || 'set'}" reiniciado a 0.`);
+      setTimeout(() => setAnalyticsStatusMsg(''), 4000);
+    } catch (e) {
+      console.warn('Error resetting set clicks:', e);
+    } finally {
+      setResettingSetId(null);
     }
   };
 
@@ -2783,108 +2807,431 @@ export default function EventAdminModal({ isOpen, onClose }) {
                         </div>
                       ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                          {setsList.map((item) => (
+                          {/* Top Sets Performance Banner */}
+                          {(() => {
+                            const setClicksMap = analytics.setClicks || {};
+                            const totalSetClicks = Object.values(setClicksMap).reduce((sum, n) => sum + (Number(n) || 0), 0);
+                            return (
+                              <div
+                                style={{
+                                  marginBottom: '8px',
+                                  padding: '12px 16px',
+                                  borderRadius: '10px',
+                                  background: 'linear-gradient(135deg, rgba(255, 0, 60, 0.12) 0%, rgba(13, 14, 20, 0.7) 100%)',
+                                  border: '1px solid rgba(255, 0, 60, 0.25)',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'space-between',
+                                  flexWrap: 'wrap',
+                                  gap: '10px'
+                                }}
+                              >
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                  <BarChart2 size={16} color="#FF003C" />
+                                  <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#FFFFFF', letterSpacing: '0.04em' }}>
+                                    MÉTRICAS DE REPRODUCCIÓN EN SETS
+                                  </span>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                                  <div style={{ fontSize: '0.80rem', color: '#94a3b8' }}>
+                                    Total Clics: <span style={{ color: '#FF003C', fontWeight: 900, fontSize: '0.92rem' }}>{totalSetClicks}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })()}
+
+                          {setsList.map((item) => {
+                            const sClicks = (analytics.setClicks && analytics.setClicks[item.id]) || 0;
+                            return (
+                              <div
+                                key={item.id}
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '14px',
+                                  background: 'rgba(255, 255, 255, 0.03)',
+                                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                                  padding: '12px 16px',
+                                  borderRadius: '12px'
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    width: '90px',
+                                    aspectRatio: '16 / 9',
+                                    borderRadius: '6px',
+                                    overflow: 'hidden',
+                                    background: '#000',
+                                    flexShrink: 0,
+                                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                                    position: 'relative'
+                                  }}
+                                >
+                                  <img
+                                    src={`https://img.youtube.com/vi/${item.youtube_id}/mqdefault.jpg`}
+                                    alt=""
+                                    style={{
+                                      width: '100%',
+                                      height: '100%',
+                                      objectFit: 'cover'
+                                    }}
+                                  />
+                                </div>
+
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                  <div
+                                    style={{
+                                      fontSize: '0.88rem',
+                                      fontWeight: 800,
+                                      color: '#fff',
+                                      whiteSpace: 'nowrap',
+                                      overflow: 'hidden',
+                                      textOverflow: 'ellipsis'
+                                    }}
+                                  >
+                                    {item.title}
+                                  </div>
+                                  <div style={{ fontSize: '0.74rem', color: '#FF003C', fontWeight: 700 }}>
+                                    {item.subtitle || 'LIVE SET'}
+                                  </div>
+                                  <div style={{ fontSize: '0.70rem', color: '#94a3b8' }}>
+                                    ID: {item.youtube_id}
+                                  </div>
+
+                                  <div
+                                    style={{
+                                      marginTop: '6px',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '5px',
+                                      fontSize: '0.72rem',
+                                      fontWeight: 800,
+                                      color: sClicks > 0 ? '#22c55e' : '#94a3b8',
+                                      background: sClicks > 0 ? 'rgba(34, 197, 94, 0.12)' : 'rgba(255, 255, 255, 0.05)',
+                                      border: sClicks > 0 ? '1px solid rgba(34, 197, 94, 0.3)' : '1px solid rgba(255, 255, 255, 0.08)',
+                                      padding: '2px 8px',
+                                      borderRadius: '6px'
+                                    }}
+                                  >
+                                    <TrendingUp size={11} color={sClicks > 0 ? '#22c55e' : '#94a3b8'} />
+                                    <span>{sClicks} {sClicks === 1 ? 'reproducción / clic' : 'reproducciones / clics'}</span>
+                                  </div>
+                                </div>
+
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                  <button
+                                    type="button"
+                                    onClick={() => setSelectedSetStats(item)}
+                                    style={{
+                                      background: 'rgba(255, 0, 60, 0.15)',
+                                      border: '1px solid rgba(255, 0, 60, 0.35)',
+                                      borderRadius: '8px',
+                                      color: '#FF003C',
+                                      padding: '8px 12px',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: '6px',
+                                      cursor: 'pointer',
+                                      fontWeight: 700,
+                                      fontSize: '0.78rem',
+                                      transition: 'all 0.2s ease'
+                                    }}
+                                    title="Ver estadísticas de este set"
+                                  >
+                                    <BarChart2 size={14} />
+                                    <span>Estadística</span>
+                                  </button>
+
+                                  <a
+                                    href={`https://www.youtube.com/watch?v=${item.youtube_id}`}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    style={{
+                                      width: '32px',
+                                      height: '32px',
+                                      borderRadius: '8px',
+                                      background: 'rgba(255, 255, 255, 0.06)',
+                                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                                      color: '#FFFFFF',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      textDecoration: 'none'
+                                    }}
+                                    title="Ver en YouTube"
+                                  >
+                                    <ExternalLink size={14} />
+                                  </a>
+
+                                  <button
+                                    onClick={() => handleDeleteSet(item.id)}
+                                    style={{
+                                      background: 'rgba(239, 68, 68, 0.15)',
+                                      border: '1px solid rgba(239, 68, 68, 0.3)',
+                                      borderRadius: '8px',
+                                      color: '#ef4444',
+                                      padding: '8px 12px',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: '6px',
+                                      cursor: 'pointer',
+                                      fontWeight: 700,
+                                      fontSize: '0.78rem'
+                                    }}
+                                    title="Eliminar set"
+                                  >
+                                    <Trash2 size={14} />
+                                    <span>Eliminar</span>
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {/* Set Details & Statistics Modal */}
+                      {selectedSetStats && (
+                        <div
+                          style={{
+                            position: 'fixed',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            background: 'rgba(0, 0, 0, 0.82)',
+                            backdropFilter: 'blur(8px)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            zIndex: 999999,
+                            padding: '16px'
+                          }}
+                          onClick={() => setSelectedSetStats(null)}
+                        >
+                          <div
+                            style={{
+                              background: '#0d0e14',
+                              border: '1px solid rgba(255, 0, 60, 0.35)',
+                              borderRadius: '16px',
+                              width: '100%',
+                              maxWidth: '460px',
+                              padding: '24px',
+                              boxShadow: '0 20px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(255, 0, 60, 0.15)',
+                              position: 'relative'
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {/* Modal Header */}
                             <div
-                              key={item.id}
                               style={{
                                 display: 'flex',
                                 alignItems: 'center',
+                                justifyContent: 'space-between',
+                                marginBottom: '18px',
+                                borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                                paddingBottom: '12px'
+                              }}
+                            >
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <BarChart2 size={18} color="#FF003C" />
+                                <h4 style={{ margin: 0, fontSize: '0.98rem', fontWeight: 900, color: '#FFFFFF', letterSpacing: '0.04em' }}>
+                                  ESTADÍSTICAS DEL SET
+                                </h4>
+                              </div>
+                              <button
+                                onClick={() => setSelectedSetStats(null)}
+                                style={{
+                                  background: 'rgba(255, 255, 255, 0.08)',
+                                  border: 'none',
+                                  color: '#94a3b8',
+                                  borderRadius: '50%',
+                                  width: '28px',
+                                  height: '28px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  cursor: 'pointer'
+                                }}
+                              >
+                                <X size={16} />
+                              </button>
+                            </div>
+
+                            {/* Set Details Preview */}
+                            <div
+                              style={{
+                                display: 'flex',
                                 gap: '14px',
                                 background: 'rgba(255, 255, 255, 0.03)',
                                 border: '1px solid rgba(255, 255, 255, 0.08)',
-                                padding: '12px 16px',
-                                borderRadius: '12px'
+                                borderRadius: '12px',
+                                padding: '12px',
+                                marginBottom: '18px',
+                                alignItems: 'center'
                               }}
                             >
                               <div
                                 style={{
-                                  width: '90px',
+                                  width: '84px',
                                   aspectRatio: '16 / 9',
                                   borderRadius: '6px',
                                   overflow: 'hidden',
                                   background: '#000',
-                                  flexShrink: 0,
-                                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                                  position: 'relative'
+                                  flexShrink: 0
                                 }}
                               >
                                 <img
-                                  src={`https://img.youtube.com/vi/${item.youtube_id}/mqdefault.jpg`}
+                                  src={`https://img.youtube.com/vi/${selectedSetStats.youtube_id}/mqdefault.jpg`}
                                   alt=""
-                                  style={{
-                                    width: '100%',
-                                    height: '100%',
-                                    objectFit: 'cover'
-                                  }}
+                                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                                 />
                               </div>
-
                               <div style={{ flex: 1, minWidth: 0 }}>
-                                <div
-                                  style={{
-                                    fontSize: '0.88rem',
-                                    fontWeight: 800,
-                                    color: '#fff',
-                                    whiteSpace: 'nowrap',
-                                    overflow: 'hidden',
-                                    textOverflow: 'ellipsis'
-                                  }}
-                                >
-                                  {item.title}
+                                <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#FFFFFF', marginBottom: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                  {selectedSetStats.title}
                                 </div>
-                                <div style={{ fontSize: '0.74rem', color: '#FF003C', fontWeight: 700 }}>
-                                  {item.subtitle || 'LIVE SET'}
+                                <div style={{ fontSize: '0.74rem', color: '#FF003C', fontWeight: 700, marginBottom: '2px' }}>
+                                  {selectedSetStats.subtitle || 'LIVE SET'}
                                 </div>
                                 <div style={{ fontSize: '0.70rem', color: '#94a3b8' }}>
-                                  ID: {item.youtube_id}
+                                  ID: {selectedSetStats.youtube_id}
                                 </div>
                               </div>
-
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <a
-                                  href={`https://www.youtube.com/watch?v=${item.youtube_id}`}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  style={{
-                                    width: '32px',
-                                    height: '32px',
-                                    borderRadius: '8px',
-                                    background: 'rgba(255, 255, 255, 0.06)',
-                                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                                    color: '#FFFFFF',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    textDecoration: 'none'
-                                  }}
-                                  title="Ver en YouTube"
-                                >
-                                  <ExternalLink size={14} />
-                                </a>
-
-                                <button
-                                  onClick={() => handleDeleteSet(item.id)}
-                                  style={{
-                                    background: 'rgba(239, 68, 68, 0.15)',
-                                    border: '1px solid rgba(239, 68, 68, 0.3)',
-                                    borderRadius: '8px',
-                                    color: '#ef4444',
-                                    padding: '8px 12px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '6px',
-                                    cursor: 'pointer',
-                                    fontWeight: 700,
-                                    fontSize: '0.78rem'
-                                  }}
-                                  title="Eliminar set"
-                                >
-                                  <Trash2 size={14} />
-                                  <span>Eliminar</span>
-                                </button>
-                              </div>
                             </div>
-                          ))}
+
+                            {/* Metrics Cards */}
+                            {(() => {
+                              const sClicks = (analytics.setClicks && analytics.setClicks[selectedSetStats.id]) || 0;
+                              const totalSetClicks = Object.values(analytics.setClicks || {}).reduce((sum, n) => sum + (Number(n) || 0), 0);
+                              const sharePct = totalSetClicks > 0 ? Math.round((sClicks / totalSetClicks) * 100) : 0;
+                              const lastClickIso = analytics.setDetails?.[selectedSetStats.id]?.lastClickAt;
+
+                              return (
+                                <>
+                                  <div
+                                    style={{
+                                      display: 'grid',
+                                      gridTemplateColumns: 'repeat(2, 1fr)',
+                                      gap: '12px',
+                                      marginBottom: '16px'
+                                    }}
+                                  >
+                                    {/* Box 1: Clics Totales */}
+                                    <div
+                                      style={{
+                                        background: 'rgba(255, 0, 60, 0.06)',
+                                        border: '1px solid rgba(255, 0, 60, 0.25)',
+                                        borderRadius: '12px',
+                                        padding: '14px',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: '4px'
+                                      }}
+                                    >
+                                      <div style={{ fontSize: '0.68rem', fontWeight: 800, color: '#94a3b8' }}>REPRODUCCIONES / CLICS</div>
+                                      <div style={{ fontSize: '1.8rem', fontWeight: 900, color: '#FF003C', lineHeight: 1 }}>
+                                        {sClicks.toLocaleString('es-MX')}
+                                      </div>
+                                      <div style={{ fontSize: '0.66rem', color: '#64748b' }}>Personas que vieron el set</div>
+                                    </div>
+
+                                    {/* Box 2: Porcentaje de Audiencia */}
+                                    <div
+                                      style={{
+                                        background: 'rgba(168, 85, 247, 0.06)',
+                                        border: '1px solid rgba(168, 85, 247, 0.25)',
+                                        borderRadius: '12px',
+                                        padding: '14px',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: '4px'
+                                      }}
+                                    >
+                                      <div style={{ fontSize: '0.68rem', fontWeight: 800, color: '#94a3b8' }}>% DE REPRODUCCIONES</div>
+                                      <div style={{ fontSize: '1.8rem', fontWeight: 900, color: '#a855f7', lineHeight: 1 }}>
+                                        {sharePct}%
+                                      </div>
+                                      <div style={{ fontSize: '0.66rem', color: '#64748b' }}>Del total de sets</div>
+                                    </div>
+                                  </div>
+
+                                  {/* Last Activity */}
+                                  <div
+                                    style={{
+                                      background: 'rgba(255, 255, 255, 0.03)',
+                                      border: '1px solid rgba(255, 255, 255, 0.06)',
+                                      borderRadius: '10px',
+                                      padding: '10px 14px',
+                                      marginBottom: '20px',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'space-between',
+                                      fontSize: '0.74rem',
+                                      color: '#94a3b8'
+                                    }}
+                                  >
+                                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                      <Clock size={13} color="#FF003C" /> Última reproducción registrada:
+                                    </span>
+                                    <strong style={{ color: '#FFFFFF' }}>
+                                      {lastClickIso ? new Date(lastClickIso).toLocaleString('es-MX', {
+                                        day: '2-digit',
+                                        month: 'short',
+                                        hour: '2-digit',
+                                        minute: '2-digit',
+                                        hour12: true
+                                      }) : 'Sin reproducciones aún'}
+                                    </strong>
+                                  </div>
+
+                                  {/* Modal Actions */}
+                                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleResetSetClicks(selectedSetStats.id, selectedSetStats.title)}
+                                      disabled={resettingSetId === selectedSetStats.id || sClicks === 0}
+                                      style={{
+                                        padding: '9px 14px',
+                                        borderRadius: '8px',
+                                        background: sClicks === 0 ? 'rgba(255, 255, 255, 0.03)' : 'rgba(239, 68, 68, 0.12)',
+                                        border: sClicks === 0 ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid rgba(239, 68, 68, 0.3)',
+                                        color: sClicks === 0 ? '#64748b' : '#ef4444',
+                                        fontSize: '0.76rem',
+                                        fontWeight: 700,
+                                        cursor: sClicks === 0 ? 'not-allowed' : 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '6px',
+                                        transition: 'all 0.2s ease'
+                                      }}
+                                    >
+                                      <Trash2 size={13} />
+                                      <span>Reiniciar Clics a 0</span>
+                                    </button>
+
+                                    <button
+                                      type="button"
+                                      onClick={() => setSelectedSetStats(null)}
+                                      style={{
+                                        padding: '9px 18px',
+                                        borderRadius: '8px',
+                                        background: 'rgba(255, 255, 255, 0.08)',
+                                        border: '1px solid rgba(255, 255, 255, 0.15)',
+                                        color: '#FFFFFF',
+                                        fontSize: '0.78rem',
+                                        fontWeight: 800,
+                                        cursor: 'pointer'
+                                      }}
+                                    >
+                                      Cerrar
+                                    </button>
+                                  </div>
+                                </>
+                              );
+                            })()}
+                          </div>
                         </div>
                       )}
                     </div>
@@ -5407,6 +5754,35 @@ export default function EventAdminModal({ isOpen, onClose }) {
                               {(analytics.nexoraClicks || 0).toLocaleString('es-MX')}
                             </div>
                             <span style={{ fontSize: '0.66rem', color: '#64748b' }}>itnexora.com (Footer)</span>
+                          </div>
+
+                          {/* Card 6: Sets Clicks / Reproducciones */}
+                          <div
+                            style={{
+                              background: 'rgba(255, 255, 255, 0.03)',
+                              border: '1px solid rgba(255, 0, 60, 0.3)',
+                              borderRadius: '12px',
+                              padding: '14px',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '6px'
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                              <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#94a3b8', letterSpacing: '0.04em' }}>
+                                CLICKS EN SETS
+                              </span>
+                              <Tv size={15} color="#FF003C" />
+                            </div>
+                            <div style={{ fontSize: '1.65rem', fontWeight: 900, color: '#FF003C', lineHeight: 1 }}>
+                              {(() => {
+                                const setClicksMap = analytics.setClicks || {};
+                                const calculatedTotal = Object.values(setClicksMap).reduce((sum, n) => sum + (Number(n) || 0), 0);
+                                const total = Math.max(calculatedTotal, Number(analytics.totalSetClicks) || 0);
+                                return total.toLocaleString('es-MX');
+                              })()}
+                            </div>
+                            <span style={{ fontSize: '0.66rem', color: '#64748b' }}>Reproducciones de sets</span>
                           </div>
                         </div>
 

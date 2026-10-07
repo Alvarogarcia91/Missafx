@@ -1147,11 +1147,14 @@ export const DEFAULT_ANALYTICS = {
   todayDate: '',
   whatsappClicks: 0,
   nexoraClicks: 0,
+  totalSetClicks: 0,
   mobileVisits: 0,
   desktopVisits: 0,
   lastVisitAt: null,
   eventClicks: {},
-  eventDetails: {}
+  eventDetails: {},
+  setClicks: {},
+  setDetails: {}
 };
 
 export async function fetchSiteAnalytics() {
@@ -1413,6 +1416,79 @@ export async function resetEventClicks(eventId) {
     console.warn('Error resetting event clicks:', err);
   }
 }
+
+export async function recordSetClick(setId, setData = {}) {
+  if (!setId || typeof window === 'undefined') return;
+
+  const now = Date.now();
+  const sessionKey = `missafx_last_set_click_${setId}`;
+  const lastClick = sessionStorage.getItem(sessionKey);
+  if (lastClick && (now - parseInt(lastClick, 10) < 2000)) {
+    return;
+  }
+  try {
+    sessionStorage.setItem(sessionKey, String(now));
+  } catch (e) {}
+
+  try {
+    const current = await fetchSiteAnalytics();
+    const setClicks = { ...(current.setClicks || {}) };
+    const setDetails = { ...(current.setDetails || {}) };
+
+    const currentCount = (setClicks[setId] || 0) + 1;
+    setClicks[setId] = currentCount;
+
+    setDetails[setId] = {
+      id: setId,
+      title: setData.title || setDetails[setId]?.title || 'Set',
+      subtitle: setData.subtitle || setDetails[setId]?.subtitle || '',
+      youtube_id: setData.youtube_id || setDetails[setId]?.youtube_id || '',
+      clicks: currentCount,
+      lastClickAt: new Date().toISOString()
+    };
+
+    const updated = {
+      ...current,
+      setClicks,
+      setDetails,
+      totalSetClicks: (current.totalSetClicks || 0) + 1,
+      lastVisitAt: new Date().toISOString()
+    };
+
+    return await saveSiteAnalytics(updated);
+  } catch (err) {
+    console.warn('Error recording set click:', err);
+  }
+}
+
+export async function resetSetClicks(setId) {
+  if (!setId) return;
+  try {
+    const current = await fetchSiteAnalytics();
+    const setClicks = { ...(current.setClicks || {}) };
+    const setDetails = { ...(current.setDetails || {}) };
+
+    setClicks[setId] = 0;
+    if (setDetails[setId]) {
+      setDetails[setId] = {
+        ...setDetails[setId],
+        clicks: 0,
+        lastClickAt: null
+      };
+    }
+
+    const updated = {
+      ...current,
+      setClicks,
+      setDetails
+    };
+
+    return await saveSiteAnalytics(updated);
+  } catch (err) {
+    console.warn('Error resetting set clicks:', err);
+  }
+}
+
 
 
 

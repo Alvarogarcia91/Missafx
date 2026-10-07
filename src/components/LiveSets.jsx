@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Play, X, ExternalLink, Radio, Tv, Sparkles } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
-import { fetchSets, DEFAULT_SETS } from '../utils/supabaseClient';
+import { fetchSets, DEFAULT_SETS, recordSetClick } from '../utils/supabaseClient';
 
 export default function LiveSets() {
   const { lang, t } = useLanguage();
@@ -151,7 +151,14 @@ export default function LiveSets() {
             return (
               <div
                 key={item.id}
-                onClick={() => setActiveVideo(item)}
+                onClick={() => {
+                  setActiveVideo(item);
+                  recordSetClick(item.id, {
+                    title: item.title,
+                    subtitle: item.subtitle,
+                    youtube_id: item.youtube_id
+                  });
+                }}
                 style={{
                   background: 'rgba(18, 18, 24, 0.85)',
                   border: '1px solid rgba(255, 255, 255, 0.10)',
@@ -404,6 +411,13 @@ export default function LiveSets() {
                   target="_blank"
                   rel="noreferrer"
                   title="Abrir en YouTube"
+                  onClick={() => {
+                    recordSetClick(activeVideo.id, {
+                      title: activeVideo.title,
+                      subtitle: activeVideo.subtitle,
+                      youtube_id: activeVideo.youtube_id
+                    });
+                  }}
                   style={{
                     width: '36px',
                     height: '36px',
