@@ -8,7 +8,8 @@ import {
   getEventStatus,
   getEventCoupon,
   getCleanTicketUrl,
-  getCleanTitle
+  getCleanTitle,
+  recordEventClick
 } from '../utils/supabaseClient';
 import { WhatsAppIcon } from './SocialIcons';
 
@@ -636,6 +637,7 @@ export default function UpcomingEvents({ onOpenAdmin, onEventsChange }) {
                         href={cleanTicket}
                         target="_blank"
                         rel="noreferrer"
+                        onClick={() => recordEventClick(event.id, { title: event.title, venue: event.venue, date: event.date })}
                         style={{
                           display: 'flex',
                           alignItems: 'center',
@@ -663,6 +665,7 @@ export default function UpcomingEvents({ onOpenAdmin, onEventsChange }) {
                         href={cleanTicket}
                         target="_blank"
                         rel="noreferrer"
+                        onClick={() => recordEventClick(event.id, { title: event.title, venue: event.venue, date: event.date })}
                         style={{
                           display: 'flex',
                           alignItems: 'center',
@@ -695,6 +698,7 @@ export default function UpcomingEvents({ onOpenAdmin, onEventsChange }) {
                         href={cleanTicket}
                         target="_blank"
                         rel="noreferrer"
+                        onClick={() => recordEventClick(event.id, { title: event.title, venue: event.venue, date: event.date })}
                         style={{
                           display: 'flex',
                           alignItems: 'center',
@@ -727,6 +731,7 @@ export default function UpcomingEvents({ onOpenAdmin, onEventsChange }) {
                         href={cleanTicket}
                         target="_blank"
                         rel="noreferrer"
+                        onClick={() => recordEventClick(event.id, { title: event.title, venue: event.venue, date: event.date })}
                         style={{
                           display: 'flex',
                           alignItems: 'center',
@@ -874,6 +879,7 @@ export default function UpcomingEvents({ onOpenAdmin, onEventsChange }) {
                 href={getCleanTicketUrl(activeFlyer.ticket_url)}
                 target="_blank"
                 rel="noreferrer"
+                onClick={() => recordEventClick(activeFlyer.id, { title: activeFlyer.title, venue: activeFlyer.venue, date: activeFlyer.date })}
                 style={{
                   padding: '10px 18px',
                   borderRadius: '8px',

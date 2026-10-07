@@ -45,7 +45,9 @@ import {
   Users,
   Smartphone,
   Monitor,
-  RefreshCw
+  RefreshCw,
+  BarChart2,
+  TrendingUp
 } from 'lucide-react';
 import {
   fetchEvents,
@@ -95,7 +97,8 @@ import {
   downloadMediaFile,
   DEFAULT_ANALYTICS,
   fetchSiteAnalytics,
-  resetSiteAnalytics
+  resetSiteAnalytics,
+  resetEventClicks
 } from '../utils/supabaseClient';
 
 const REQUIRED_PIN = '2305';
@@ -190,6 +193,10 @@ export default function EventAdminModal({ isOpen, onClose }) {
   const [loadingAnalytics, setLoadingAnalytics] = useState(false);
   const [resettingAnalytics, setResettingAnalytics] = useState(false);
   const [analyticsStatusMsg, setAnalyticsStatusMsg] = useState('');
+
+  // Event specific stats modal state
+  const [selectedEventStats, setSelectedEventStats] = useState(null);
+  const [resettingEventId, setResettingEventId] = useState(null);
 
   useEffect(() => {
     if (isOpen && isAuthenticated) {
@@ -296,6 +303,25 @@ export default function EventAdminModal({ isOpen, onClose }) {
       setTimeout(() => setAnalyticsStatusMsg(''), 4000);
     } finally {
       setResettingAnalytics(false);
+    }
+  };
+
+  const handleResetEventClicks = async (eventId, eventTitle) => {
+    const confirmed = window.confirm(
+      `¿Estás seguro de reiniciar a 0 los clics para el evento "${eventTitle || 'este evento'}"?\n\nEsta acción reiniciará el contador de boletos/accesos de esta fecha.`
+    );
+    if (!confirmed) return;
+
+    setResettingEventId(eventId);
+    try {
+      const updated = await resetEventClicks(eventId);
+      if (updated) setAnalytics(updated);
+      setAnalyticsStatusMsg(`Contador de "${eventTitle || 'evento'}" reiniciado a 0.`);
+      setTimeout(() => setAnalyticsStatusMsg(''), 4000);
+    } catch (e) {
+      console.warn('Error resetting event clicks:', e);
+    } finally {
+      setResettingEventId(null);
     }
   };
 
@@ -1939,149 +1965,523 @@ export default function EventAdminModal({ isOpen, onClose }) {
                           </button>
                         </div>
                       ) : (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                          {eventsList.map((ev) => {
-                            const status = getEventStatus(ev);
-                            const isVid = isVideoMedia(ev.image_url);
-                            const coupon = getEventCoupon(ev);
-                            const details = extractEventDetails(ev);
-
+                        <div>
+                          {/* SUMMARY BANNER DE CLICS EN EVENTOS */}
+                          {(() => {
+                            const allEventClicks = Object.values(analytics.eventClicks || {}).reduce((sum, n) => sum + (Number(n) || 0), 0);
                             return (
                               <div
-                                key={ev.id}
                                 style={{
+                                  marginBottom: '16px',
+                                  padding: '14px 18px',
+                                  background: 'linear-gradient(135deg, rgba(0, 240, 255, 0.08) 0%, rgba(15, 23, 42, 0.75) 100%)',
+                                  border: '1px solid rgba(0, 240, 255, 0.25)',
+                                  borderRadius: '12px',
                                   display: 'flex',
                                   alignItems: 'center',
-                                  gap: '14px',
-                                  background: 'rgba(255, 255, 255, 0.03)',
-                                  border: status === 'sold_out'
-                                    ? '1px solid rgba(239, 68, 68, 0.4)'
-                                    : status === 'last_tickets'
-                                    ? '1px solid rgba(245, 158, 11, 0.4)'
-                                    : '1px solid rgba(255, 255, 255, 0.08)',
-                                  padding: '12px 16px',
-                                  borderRadius: '12px'
+                                  justifyContent: 'space-between',
+                                  flexWrap: 'wrap',
+                                  gap: '12px'
                                 }}
                               >
-                                <div
-                                  style={{
-                                    width: '46px',
-                                    height: '64px',
-                                    borderRadius: '6px',
-                                    overflow: 'hidden',
-                                    background: '#000',
-                                    flexShrink: 0,
-                                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                                    position: 'relative'
-                                  }}
-                                >
-                                  {isVid ? (
-                                    <video
-                                      src={ev.image_url}
-                                      autoPlay
-                                      loop
-                                      muted
-                                      playsInline
-                                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                                    />
-                                  ) : (
-                                    <img
-                                      src={ev.image_url}
-                                      alt=""
-                                      style={{
-                                        width: '100%',
-                                        height: '100%',
-                                        objectFit: 'cover'
-                                      }}
-                                    />
-                                  )}
-                                </div>
-
-                                <div style={{ flex: 1, minWidth: 0 }}>
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px', flexWrap: 'wrap' }}>
-                                    <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                      {ev.date}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                  <div
+                                    style={{
+                                      width: '36px',
+                                      height: '36px',
+                                      borderRadius: '10px',
+                                      background: 'rgba(0, 240, 255, 0.15)',
+                                      border: '1px solid rgba(0, 240, 255, 0.4)',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center'
+                                    }}
+                                  >
+                                    <BarChart2 size={18} color="#00F0FF" />
+                                  </div>
+                                  <div>
+                                    <div style={{ fontSize: '0.86rem', fontWeight: 900, color: '#fff', letterSpacing: '0.03em' }}>
+                                      ESTADÍSTICAS & CLICS EN EVENTOS
                                     </div>
-                                    {status === 'sold_out' && (
-                                      <span style={{ fontSize: '0.66rem', fontWeight: 800, color: '#ef4444', background: 'rgba(239,68,68,0.2)', padding: '1px 6px', borderRadius: '4px' }}>
-                                        SOLD OUT
-                                      </span>
-                                    )}
-                                    {status === 'last_tickets' && (
-                                      <span style={{ fontSize: '0.66rem', fontWeight: 800, color: '#fbbf24', background: 'rgba(245,158,11,0.2)', padding: '1px 6px', borderRadius: '4px' }}>
-                                        ÚLTIMOS BOLETOS
-                                      </span>
-                                    )}
-                                    {isVid && (
-                                      <span style={{ fontSize: '0.64rem', fontWeight: 800, color: '#38bdf8', background: 'rgba(56,189,248,0.2)', padding: '1px 5px', borderRadius: '4px' }}>
-                                        MP4
-                                      </span>
-                                    )}
-                                    {coupon && (
-                                      <span style={{ fontSize: '0.64rem', fontWeight: 800, color: '#10b981', background: 'rgba(16,185,129,0.2)', padding: '1px 6px', borderRadius: '4px' }}>
-                                        🎟️ {coupon}
-                                      </span>
-                                    )}
-                                    {details.contactType === 'rp' && (
-                                      <span style={{ fontSize: '0.64rem', fontWeight: 700, color: '#38bdf8', background: 'rgba(56,189,248,0.15)', padding: '1px 5px', borderRadius: '4px' }}>
-                                        RP {details.rpPhone ? `(${details.rpPhone})` : ''}
-                                      </span>
-                                    )}
-                                  </div>
-                                  <div style={{ fontSize: '0.78rem', color: '#94a3b8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                    {ev.venue}
-                                  </div>
-                                  <div style={{ fontSize: '0.72rem', color: '#FF003C', fontWeight: 700 }}>
-                                    {getCleanTitle(ev.title)}
+                                    <div style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
+                                      Conteo de personas que han tocado "Reservar" o "Comprar Boletos" en cada fecha.
+                                    </div>
                                   </div>
                                 </div>
 
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                  <button
-                                    onClick={() => startEditEvent(ev)}
-                                    style={{
-                                      background: 'rgba(255, 255, 255, 0.08)',
-                                      border: '1px solid rgba(255, 255, 255, 0.15)',
-                                      borderRadius: '8px',
-                                      color: '#FFFFFF',
-                                      padding: '8px 12px',
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      gap: '6px',
-                                      cursor: 'pointer',
-                                      fontWeight: 700,
-                                      fontSize: '0.78rem'
-                                    }}
-                                    title="Editar evento"
-                                  >
-                                    <Edit2 size={14} color="#FF003C" />
-                                    <span>Editar</span>
-                                  </button>
-
-                                  <button
-                                    onClick={() => handleDelete(ev.id)}
-                                    style={{
-                                      background: 'rgba(239, 68, 68, 0.15)',
-                                      border: '1px solid rgba(239, 68, 68, 0.3)',
-                                      borderRadius: '8px',
-                                      color: '#ef4444',
-                                      padding: '8px 12px',
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      gap: '6px',
-                                      cursor: 'pointer',
-                                      fontWeight: 700,
-                                      fontSize: '0.78rem'
-                                    }}
-                                    title="Eliminar evento"
-                                  >
-                                    <Trash2 size={14} />
-                                    <span>Eliminar</span>
-                                  </button>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                  <div style={{ textAlign: 'right' }}>
+                                    <div style={{ fontSize: '0.66rem', color: '#94a3b8', fontWeight: 800 }}>TOTAL CLICS EN BOLETOS</div>
+                                    <div style={{ fontSize: '1.35rem', fontWeight: 900, color: '#00F0FF', lineHeight: 1 }}>
+                                      {allEventClicks.toLocaleString('es-MX')}
+                                    </div>
+                                  </div>
                                 </div>
                               </div>
                             );
-                          })}
+                          })()}
+
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                            {eventsList.map((ev) => {
+                              const status = getEventStatus(ev);
+                              const isVid = isVideoMedia(ev.image_url);
+                              const coupon = getEventCoupon(ev);
+                              const details = extractEventDetails(ev);
+                              const evClicks = (analytics.eventClicks && analytics.eventClicks[ev.id]) || 0;
+
+                              return (
+                                <div
+                                  key={ev.id}
+                                  style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '14px',
+                                    background: 'rgba(255, 255, 255, 0.03)',
+                                    border: status === 'sold_out'
+                                      ? '1px solid rgba(239, 68, 68, 0.4)'
+                                      : status === 'last_tickets'
+                                      ? '1px solid rgba(245, 158, 11, 0.4)'
+                                      : '1px solid rgba(255, 255, 255, 0.08)',
+                                    padding: '12px 16px',
+                                    borderRadius: '12px',
+                                    flexWrap: 'wrap'
+                                  }}
+                                >
+                                  <div
+                                    style={{
+                                      width: '46px',
+                                      height: '64px',
+                                      borderRadius: '6px',
+                                      overflow: 'hidden',
+                                      background: '#000',
+                                      flexShrink: 0,
+                                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                                      position: 'relative'
+                                    }}
+                                  >
+                                    {isVid ? (
+                                      <video
+                                        src={ev.image_url}
+                                        autoPlay
+                                        loop
+                                        muted
+                                        playsInline
+                                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                      />
+                                    ) : (
+                                      <img
+                                        src={ev.image_url}
+                                        alt=""
+                                        style={{
+                                          width: '100%',
+                                          height: '100%',
+                                          objectFit: 'cover'
+                                        }}
+                                      />
+                                    )}
+                                  </div>
+
+                                  <div style={{ flex: 1, minWidth: '200px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px', flexWrap: 'wrap' }}>
+                                      <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                        {ev.date}
+                                      </div>
+
+                                      {/* Clics badge */}
+                                      <span
+                                        style={{
+                                          fontSize: '0.66rem',
+                                          fontWeight: 800,
+                                          color: evClicks > 0 ? '#00F0FF' : '#94a3b8',
+                                          background: evClicks > 0 ? 'rgba(0, 240, 255, 0.16)' : 'rgba(255, 255, 255, 0.05)',
+                                          border: evClicks > 0 ? '1px solid rgba(0, 240, 255, 0.4)' : '1px solid rgba(255, 255, 255, 0.1)',
+                                          padding: '1px 6px',
+                                          borderRadius: '4px',
+                                          display: 'inline-flex',
+                                          alignItems: 'center',
+                                          gap: '4px'
+                                        }}
+                                        title="Clics registrados en accesos a este evento"
+                                      >
+                                        <TrendingUp size={11} color={evClicks > 0 ? '#00F0FF' : '#94a3b8'} />
+                                        <span>{evClicks} {evClicks === 1 ? 'clic' : 'clics'}</span>
+                                      </span>
+
+                                      {status === 'sold_out' && (
+                                        <span style={{ fontSize: '0.66rem', fontWeight: 800, color: '#ef4444', background: 'rgba(239,68,68,0.2)', padding: '1px 6px', borderRadius: '4px' }}>
+                                          SOLD OUT
+                                        </span>
+                                      )}
+                                      {status === 'last_tickets' && (
+                                        <span style={{ fontSize: '0.66rem', fontWeight: 800, color: '#fbbf24', background: 'rgba(245,158,11,0.2)', padding: '1px 6px', borderRadius: '4px' }}>
+                                          ÚLTIMOS BOLETOS
+                                        </span>
+                                      )}
+                                      {isVid && (
+                                        <span style={{ fontSize: '0.64rem', fontWeight: 800, color: '#38bdf8', background: 'rgba(56,189,248,0.2)', padding: '1px 5px', borderRadius: '4px' }}>
+                                          MP4
+                                        </span>
+                                      )}
+                                      {coupon && (
+                                        <span style={{ fontSize: '0.64rem', fontWeight: 800, color: '#10b981', background: 'rgba(16,185,129,0.2)', padding: '1px 6px', borderRadius: '4px' }}>
+                                          🎟️ {coupon}
+                                        </span>
+                                      )}
+                                      {details.contactType === 'rp' && (
+                                        <span style={{ fontSize: '0.64rem', fontWeight: 700, color: '#38bdf8', background: 'rgba(56,189,248,0.15)', padding: '1px 5px', borderRadius: '4px' }}>
+                                          RP {details.rpPhone ? `(${details.rpPhone})` : ''}
+                                        </span>
+                                      )}
+                                    </div>
+                                    <div style={{ fontSize: '0.78rem', color: '#94a3b8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                      {ev.venue}
+                                    </div>
+                                    <div style={{ fontSize: '0.72rem', color: '#FF003C', fontWeight: 700 }}>
+                                      {getCleanTitle(ev.title)}
+                                    </div>
+                                  </div>
+
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginLeft: 'auto' }}>
+                                    {/* Botón de Estadísticas por Evento */}
+                                    <button
+                                      type="button"
+                                      onClick={() => setSelectedEventStats(ev)}
+                                      style={{
+                                        background: 'rgba(0, 240, 255, 0.12)',
+                                        border: '1px solid rgba(0, 240, 255, 0.35)',
+                                        borderRadius: '8px',
+                                        color: '#00F0FF',
+                                        padding: '8px 12px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '6px',
+                                        cursor: 'pointer',
+                                        fontWeight: 700,
+                                        fontSize: '0.78rem',
+                                        transition: 'all 0.2s ease',
+                                        boxShadow: '0 2px 8px rgba(0, 240, 255, 0.12)'
+                                      }}
+                                      title="Ver estadísticas y clics de este evento"
+                                    >
+                                      <BarChart2 size={14} color="#00F0FF" />
+                                      <span>Estadística</span>
+                                      {evClicks > 0 && (
+                                        <span
+                                          style={{
+                                            background: '#00F0FF',
+                                            color: '#000',
+                                            borderRadius: '8px',
+                                            padding: '1px 5px',
+                                            fontSize: '0.66rem',
+                                            fontWeight: 900
+                                          }}
+                                        >
+                                          {evClicks}
+                                        </span>
+                                      )}
+                                    </button>
+
+                                    <button
+                                      onClick={() => startEditEvent(ev)}
+                                      style={{
+                                        background: 'rgba(255, 255, 255, 0.08)',
+                                        border: '1px solid rgba(255, 255, 255, 0.15)',
+                                        borderRadius: '8px',
+                                        color: '#FFFFFF',
+                                        padding: '8px 12px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '6px',
+                                        cursor: 'pointer',
+                                        fontWeight: 700,
+                                        fontSize: '0.78rem'
+                                      }}
+                                      title="Editar evento"
+                                    >
+                                      <Edit2 size={14} color="#FF003C" />
+                                      <span>Editar</span>
+                                    </button>
+
+                                    <button
+                                      onClick={() => handleDelete(ev.id)}
+                                      style={{
+                                        background: 'rgba(239, 68, 68, 0.15)',
+                                        border: '1px solid rgba(239, 68, 68, 0.3)',
+                                        borderRadius: '8px',
+                                        color: '#ef4444',
+                                        padding: '8px 12px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '6px',
+                                        cursor: 'pointer',
+                                        fontWeight: 700,
+                                        fontSize: '0.78rem'
+                                      }}
+                                      title="Eliminar evento"
+                                    >
+                                      <Trash2 size={14} />
+                                      <span>Eliminar</span>
+                                    </button>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+
+                          {/* MODAL DETALLADO DE ESTADÍSTICAS DEL EVENTO SELECCIONADO */}
+                          {selectedEventStats && (
+                            <div
+                              style={{
+                                position: 'fixed',
+                                top: 0,
+                                left: 0,
+                                right: 0,
+                                bottom: 0,
+                                background: 'rgba(0, 0, 0, 0.82)',
+                                backdropFilter: 'blur(8px)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                zIndex: 999999,
+                                padding: '16px'
+                              }}
+                              onClick={() => setSelectedEventStats(null)}
+                            >
+                              <div
+                                style={{
+                                  background: '#0d0e14',
+                                  border: '1px solid rgba(0, 240, 255, 0.35)',
+                                  borderRadius: '16px',
+                                  width: '100%',
+                                  maxWidth: '460px',
+                                  padding: '24px',
+                                  boxShadow: '0 20px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(0, 240, 255, 0.15)',
+                                  position: 'relative'
+                                }}
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                {/* Modal Header */}
+                                <div
+                                  style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    marginBottom: '18px',
+                                    borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                                    paddingBottom: '12px'
+                                  }}
+                                >
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <BarChart2 size={18} color="#00F0FF" />
+                                    <h4 style={{ margin: 0, fontSize: '0.98rem', fontWeight: 900, color: '#FFFFFF', letterSpacing: '0.04em' }}>
+                                      ESTADÍSTICAS DEL EVENTO
+                                    </h4>
+                                  </div>
+                                  <button
+                                    onClick={() => setSelectedEventStats(null)}
+                                    style={{
+                                      background: 'rgba(255, 255, 255, 0.08)',
+                                      border: 'none',
+                                      color: '#94a3b8',
+                                      borderRadius: '50%',
+                                      width: '28px',
+                                      height: '28px',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      cursor: 'pointer'
+                                    }}
+                                  >
+                                    <X size={16} />
+                                  </button>
+                                </div>
+
+                                {/* Event Details Preview */}
+                                <div
+                                  style={{
+                                    display: 'flex',
+                                    gap: '14px',
+                                    background: 'rgba(255, 255, 255, 0.03)',
+                                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                                    borderRadius: '12px',
+                                    padding: '12px',
+                                    marginBottom: '18px',
+                                    alignItems: 'center'
+                                  }}
+                                >
+                                  <div
+                                    style={{
+                                      width: '48px',
+                                      height: '66px',
+                                      borderRadius: '6px',
+                                      overflow: 'hidden',
+                                      background: '#000',
+                                      flexShrink: 0
+                                    }}
+                                  >
+                                    {isVideoMedia(selectedEventStats.image_url) ? (
+                                      <video
+                                        src={selectedEventStats.image_url}
+                                        autoPlay
+                                        loop
+                                        muted
+                                        playsInline
+                                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                      />
+                                    ) : (
+                                      <img
+                                        src={selectedEventStats.image_url}
+                                        alt=""
+                                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                      />
+                                    )}
+                                  </div>
+                                  <div style={{ flex: 1, minWidth: 0 }}>
+                                    <div style={{ fontSize: '0.92rem', fontWeight: 800, color: '#FFFFFF', marginBottom: '2px' }}>
+                                      {selectedEventStats.date}
+                                    </div>
+                                    <div style={{ fontSize: '0.78rem', color: '#94a3b8', marginBottom: '2px' }}>
+                                      {selectedEventStats.venue}
+                                    </div>
+                                    <div style={{ fontSize: '0.74rem', color: '#FF003C', fontWeight: 700 }}>
+                                      {getCleanTitle(selectedEventStats.title)}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Metrics Cards */}
+                                {(() => {
+                                  const evClicks = (analytics.eventClicks && analytics.eventClicks[selectedEventStats.id]) || 0;
+                                  const totalEvClicks = Object.values(analytics.eventClicks || {}).reduce((sum, n) => sum + (Number(n) || 0), 0);
+                                  const sharePct = totalEvClicks > 0 ? Math.round((evClicks / totalEvClicks) * 100) : 0;
+                                  const lastClickIso = analytics.eventDetails?.[selectedEventStats.id]?.lastClickAt;
+
+                                  return (
+                                    <>
+                                      <div
+                                        style={{
+                                          display: 'grid',
+                                          gridTemplateColumns: 'repeat(2, 1fr)',
+                                          gap: '12px',
+                                          marginBottom: '16px'
+                                        }}
+                                      >
+                                        {/* Box 1: Clics Totales */}
+                                        <div
+                                          style={{
+                                            background: 'rgba(0, 240, 255, 0.06)',
+                                            border: '1px solid rgba(0, 240, 255, 0.25)',
+                                            borderRadius: '12px',
+                                            padding: '14px',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            gap: '4px'
+                                          }}
+                                        >
+                                          <div style={{ fontSize: '0.68rem', fontWeight: 800, color: '#94a3b8' }}>CLICS EN BOLETOS</div>
+                                          <div style={{ fontSize: '1.8rem', fontWeight: 900, color: '#00F0FF', lineHeight: 1 }}>
+                                            {evClicks.toLocaleString('es-MX')}
+                                          </div>
+                                          <div style={{ fontSize: '0.66rem', color: '#64748b' }}>Personas interesadas</div>
+                                        </div>
+
+                                        {/* Box 2: Porcentaje de Audiencia */}
+                                        <div
+                                          style={{
+                                            background: 'rgba(168, 85, 247, 0.06)',
+                                            border: '1px solid rgba(168, 85, 247, 0.25)',
+                                            borderRadius: '12px',
+                                            padding: '14px',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            gap: '4px'
+                                          }}
+                                        >
+                                          <div style={{ fontSize: '0.68rem', fontWeight: 800, color: '#94a3b8' }}>% DE AUDIENCIA</div>
+                                          <div style={{ fontSize: '1.8rem', fontWeight: 900, color: '#a855f7', lineHeight: 1 }}>
+                                            {sharePct}%
+                                          </div>
+                                          <div style={{ fontSize: '0.66rem', color: '#64748b' }}>Del total de eventos</div>
+                                        </div>
+                                      </div>
+
+                                      {/* Last Activity */}
+                                      <div
+                                        style={{
+                                          background: 'rgba(255, 255, 255, 0.03)',
+                                          border: '1px solid rgba(255, 255, 255, 0.06)',
+                                          borderRadius: '10px',
+                                          padding: '10px 14px',
+                                          marginBottom: '20px',
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          justifyContent: 'space-between',
+                                          fontSize: '0.74rem',
+                                          color: '#94a3b8'
+                                        }}
+                                      >
+                                        <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                          <Clock size={13} color="#00F0FF" /> Último clic registrado:
+                                        </span>
+                                        <strong style={{ color: '#FFFFFF' }}>
+                                          {lastClickIso ? new Date(lastClickIso).toLocaleString('es-MX', {
+                                            day: '2-digit',
+                                            month: 'short',
+                                            hour: '2-digit',
+                                            minute: '2-digit',
+                                            hour12: true
+                                          }) : 'Sin clics aún'}
+                                        </strong>
+                                      </div>
+
+                                      {/* Modal Actions */}
+                                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
+                                        <button
+                                          type="button"
+                                          onClick={() => handleResetEventClicks(selectedEventStats.id, selectedEventStats.title)}
+                                          disabled={resettingEventId === selectedEventStats.id || evClicks === 0}
+                                          style={{
+                                            padding: '9px 14px',
+                                            borderRadius: '8px',
+                                            background: evClicks === 0 ? 'rgba(255, 255, 255, 0.03)' : 'rgba(239, 68, 68, 0.12)',
+                                            border: evClicks === 0 ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid rgba(239, 68, 68, 0.3)',
+                                            color: evClicks === 0 ? '#64748b' : '#ef4444',
+                                            fontSize: '0.76rem',
+                                            fontWeight: 700,
+                                            cursor: evClicks === 0 ? 'not-allowed' : 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '6px',
+                                            transition: 'all 0.2s ease'
+                                          }}
+                                        >
+                                          <Trash2 size={13} />
+                                          <span>Reiniciar Clics a 0</span>
+                                        </button>
+
+                                        <button
+                                          type="button"
+                                          onClick={() => setSelectedEventStats(null)}
+                                          style={{
+                                            padding: '9px 18px',
+                                            borderRadius: '8px',
+                                            background: 'rgba(255, 255, 255, 0.08)',
+                                            border: '1px solid rgba(255, 255, 255, 0.15)',
+                                            color: '#FFFFFF',
+                                            fontSize: '0.78rem',
+                                            fontWeight: 800,
+                                            cursor: 'pointer'
+                                          }}
+                                        >
+                                          Cerrar
+                                        </button>
+                                      </div>
+                                    </>
+                                  );
+                                })()}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>

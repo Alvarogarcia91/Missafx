@@ -1148,7 +1148,9 @@ export const DEFAULT_ANALYTICS = {
   whatsappClicks: 0,
   mobileVisits: 0,
   desktopVisits: 0,
-  lastVisitAt: null
+  lastVisitAt: null,
+  eventClicks: {},
+  eventDetails: {}
 };
 
 export async function fetchSiteAnalytics() {
@@ -1313,6 +1315,79 @@ export async function resetSiteAnalytics() {
     todayDate: new Date().toISOString().split('T')[0]
   });
 }
+
+export async function recordEventClick(eventId, eventData = {}) {
+  if (!eventId || typeof window === 'undefined') return;
+
+  const now = Date.now();
+  const sessionKey = `missafx_last_ev_click_${eventId}`;
+  const lastClick = sessionStorage.getItem(sessionKey);
+  if (lastClick && (now - parseInt(lastClick, 10) < 2000)) {
+    return;
+  }
+  try {
+    sessionStorage.setItem(sessionKey, String(now));
+  } catch (e) {}
+
+  try {
+    const current = await fetchSiteAnalytics();
+    const eventClicks = { ...(current.eventClicks || {}) };
+    const eventDetails = { ...(current.eventDetails || {}) };
+
+    const currentCount = (eventClicks[eventId] || 0) + 1;
+    eventClicks[eventId] = currentCount;
+
+    eventDetails[eventId] = {
+      id: eventId,
+      title: eventData.title || eventDetails[eventId]?.title || 'Evento',
+      venue: eventData.venue || eventDetails[eventId]?.venue || '',
+      date: eventData.date || eventDetails[eventId]?.date || '',
+      clicks: currentCount,
+      lastClickAt: new Date().toISOString()
+    };
+
+    const updated = {
+      ...current,
+      eventClicks,
+      eventDetails,
+      whatsappClicks: (current.whatsappClicks || 0) + 1,
+      lastVisitAt: new Date().toISOString()
+    };
+
+    return await saveSiteAnalytics(updated);
+  } catch (err) {
+    console.warn('Error recording event click:', err);
+  }
+}
+
+export async function resetEventClicks(eventId) {
+  if (!eventId) return;
+  try {
+    const current = await fetchSiteAnalytics();
+    const eventClicks = { ...(current.eventClicks || {}) };
+    const eventDetails = { ...(current.eventDetails || {}) };
+
+    eventClicks[eventId] = 0;
+    if (eventDetails[eventId]) {
+      eventDetails[eventId] = {
+        ...eventDetails[eventId],
+        clicks: 0,
+        lastClickAt: null
+      };
+    }
+
+    const updated = {
+      ...current,
+      eventClicks,
+      eventDetails
+    };
+
+    return await saveSiteAnalytics(updated);
+  } catch (err) {
+    console.warn('Error resetting event clicks:', err);
+  }
+}
+
 
 
 
