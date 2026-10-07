@@ -3,7 +3,7 @@ import { Menu, X } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { WhatsAppIcon } from './SocialIcons';
 
-export default function Navbar() {
+export default function Navbar({ hasEvents }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { lang, setLang, t } = useLanguage();
@@ -64,7 +64,7 @@ export default function Navbar() {
           className="desktop-nav"
         >
           <a href="#home" className="nav-link">{t.nav.home}</a>
-          <a href="#upcoming-events" className="nav-link">{t.nav.events}</a>
+          {hasEvents && <a href="#upcoming-events" className="nav-link">{t.nav.events}</a>}
           <a href="#social-hub" className="nav-link">{t.nav.socials}</a>
           <a href="#about" className="nav-link">{t.nav.about}</a>
           <a href="#contact" className="nav-link">{t.nav.contact}</a>
@@ -212,14 +212,16 @@ export default function Navbar() {
           >
             {t.nav.home}
           </a>
-          <a
-            href="#upcoming-events"
-            onClick={() => setMobileMenuOpen(false)}
-            className="nav-link"
-            style={{ fontSize: '1.1rem' }}
-          >
-            {t.nav.events}
-          </a>
+          {hasEvents && (
+            <a
+              href="#upcoming-events"
+              onClick={() => setMobileMenuOpen(false)}
+              className="nav-link"
+              style={{ fontSize: '1.1rem' }}
+            >
+              {t.nav.events}
+            </a>
+          )}
           <a
             href="#social-hub"
             onClick={() => setMobileMenuOpen(false)}

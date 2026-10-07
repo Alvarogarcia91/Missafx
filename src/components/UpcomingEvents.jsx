@@ -3,29 +3,7 @@ import { Calendar, MapPin, Ticket, Maximize2, X, ExternalLink, Sparkles } from '
 import { fetchEvents } from '../utils/supabaseClient';
 import { WhatsAppIcon } from './SocialIcons';
 
-// Fallback seed events so the section always looks full and impressive
-const DEFAULT_EVENTS = [
-  {
-    id: 'seed-1',
-    title: 'EXCLUSIVE DJ SET',
-    date: 'SÁBADO 24 OCT // 2026',
-    venue: 'SAN LUIS POTOSÍ • CLUB DOME',
-    image_url: '/missa-capture-2.jpg',
-    ticket_url: 'https://wa.me/5214443570777?text=Hola%20Missa%2C%20quiero%20informaci%C3%B3n%20sobre%20el%20evento%20en%20Club%20Dome',
-    is_default: true
-  },
-  {
-    id: 'seed-2',
-    title: 'TECH HOUSE SESSION // ALL NIGHT',
-    date: 'VIERNES 14 NOV // 2026',
-    venue: 'CDMX • WAREHOUSE UNDERGROUND',
-    image_url: '/gallery/missa-04.jpg',
-    ticket_url: 'https://wa.me/5214443570777?text=Hola%20Missa%2C%20quiero%20informaci%C3%B3n%20sobre%20el%20evento%20en%20CDMX',
-    is_default: true
-  }
-];
-
-export default function UpcomingEvents({ onOpenAdmin }) {
+export default function UpcomingEvents({ onOpenAdmin, onEventsChange }) {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeFlyer, setActiveFlyer] = useState(null);
@@ -34,14 +12,13 @@ export default function UpcomingEvents({ onOpenAdmin }) {
     setLoading(true);
     try {
       const data = await fetchEvents();
-      if (data && data.length > 0) {
-        setEvents(data);
-      } else {
-        setEvents(DEFAULT_EVENTS);
-      }
+      const list = Array.isArray(data) ? data : [];
+      setEvents(list);
+      if (onEventsChange) onEventsChange(list.length);
     } catch (e) {
-      console.warn('Using default events fallback:', e);
-      setEvents(DEFAULT_EVENTS);
+      console.warn('Error fetching events:', e);
+      setEvents([]);
+      if (onEventsChange) onEventsChange(0);
     } finally {
       setLoading(false);
     }
@@ -50,11 +27,16 @@ export default function UpcomingEvents({ onOpenAdmin }) {
   useEffect(() => {
     loadEvents();
 
-    // Listen to custom refresh event when Missa publishes from the wizard
+    // Listen to custom refresh event when Missa publishes or deletes from the wizard
     const handleRefresh = () => loadEvents();
     window.addEventListener('missafx-events-updated', handleRefresh);
     return () => window.removeEventListener('missafx-events-updated', handleRefresh);
   }, []);
+
+  // When there are no events, hide the entire module completely so no fake events are displayed
+  if (events.length === 0) {
+    return null;
+  }
 
   return (
     <section

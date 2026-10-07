@@ -14,6 +14,7 @@ import EventAdminModal from './components/EventAdminModal.jsx';
 
 export default function App() {
   const [adminModalOpen, setAdminModalOpen] = useState(false);
+  const [hasEvents, setHasEvents] = useState(false);
   const [view, setView] = useState(() => {
     if (window.location.hash === '#story-creator') return 'story-creator';
     if (window.location.hash === '#card-creator') return 'card-creator';
@@ -64,10 +65,13 @@ export default function App() {
           <CardCreator onBack={backToHome} />
         ) : (
           <>
-            <Navbar />
+            <Navbar hasEvents={hasEvents} />
             <main>
               <Hero />
-              <UpcomingEvents onOpenAdmin={() => setAdminModalOpen(true)} />
+              <UpcomingEvents
+                onOpenAdmin={() => setAdminModalOpen(true)}
+                onEventsChange={(count) => setHasEvents(count > 0)}
+              />
               <SocialHub />
               <About />
               <Booking />
