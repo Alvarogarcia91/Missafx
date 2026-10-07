@@ -33,7 +33,7 @@ export const translations = {
       title1: 'PRÓXIMOS',
       title2: 'EVENTOS',
       desc: 'Presentaciones en vivo, residencias y sesiones oficiales de Missafx. Selecciona cualquier flyer para verlo a pantalla completa o reservar tus accesos directos.',
-      loading: 'CARGANDO FECHAS DE TOQUINES...',
+      loading: 'CARGANDO FECHAS...',
       btnBook: 'Reservar // WhatsApp',
       btnSoldOut: 'EVENTO AGOTADO',
       btnLastTickets: 'ÚLTIMOS BOLETOS // WhatsApp',
@@ -43,6 +43,13 @@ export const translations = {
       lightboxBook: 'Reservar',
       lightboxSoldOut: 'Agotado',
       videoBadge: 'VIDEO MP4'
+    },
+    liveSets: {
+      tag: 'LIVE SETS',
+      title1: 'SESIONES &',
+      title2: 'LIVE SETS',
+      desc: 'Grabaciones en vivo y sesiones completas de Tech House y Melodic Techno. Selecciona cualquier set para reproducirlo en alta definición.',
+      playCinema: 'Reproducir en Modo Cine'
     },
     socialHub: {
       tag: 'ECOSISTEMA DIGITAL',
@@ -56,7 +63,7 @@ export const translations = {
         },
         instagram: {
           tag: 'Comunidad & Fechas',
-          desc: 'Sigue el día a día en cabina, backstages de toquines y anuncios oficiales.',
+          desc: 'Sigue el día a día, presentaciones y anuncios oficiales.',
           cta: 'Seguir en Instagram'
         },
         kick: {
@@ -545,6 +552,13 @@ export const translations = {
       lightboxBook: 'Book Access',
       lightboxSoldOut: 'Sold Out',
       videoBadge: 'VIDEO MP4'
+    },
+    liveSets: {
+      tag: 'LIVE SETS',
+      title1: 'OFFICIAL',
+      title2: 'LIVE SETS',
+      desc: 'Live recordings and full Tech House and Melodic Techno sessions. Select any set to stream in high definition.',
+      playCinema: 'Play in Cinema Mode'
     },
     socialHub: {
       tag: 'DIGITAL ECOSYSTEM',

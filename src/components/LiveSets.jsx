@@ -1,8 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { Play, X, ExternalLink, Radio, Tv, Sparkles } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 import { fetchSets, DEFAULT_SETS } from '../utils/supabaseClient';
 
 export default function LiveSets() {
+  const { lang, t } = useLanguage();
+  const sText = t.liveSets || {
+    tag: 'LIVE SETS',
+    title1: 'SESIONES &',
+    title2: 'LIVE SETS',
+    desc: 'Grabaciones en vivo y sesiones completas de Tech House y Melodic Techno. Selecciona cualquier set para reproducirlo en alta definición.',
+    playCinema: 'Reproducir en Modo Cine'
+  };
   const [sets, setSets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeVideo, setActiveVideo] = useState(null);
@@ -95,7 +104,7 @@ export default function LiveSets() {
             }}
           >
             <Radio size={14} color="#FF003C" />
-            LIVE SESSIONS // CABINA & TOQUINES
+            {sText.tag}
           </div>
 
           <h2
@@ -109,7 +118,7 @@ export default function LiveSets() {
               color: '#FFFFFF'
             }}
           >
-            SESIONES & <span style={{ color: '#FF003C', textShadow: '0 0 24px rgba(255, 0, 60, 0.6)' }}>LIVE SETS</span>
+            {sText.title1} <span style={{ color: '#FF003C', textShadow: '0 0 24px rgba(255, 0, 60, 0.6)' }}>{sText.title2}</span>
           </h2>
 
           <p
@@ -121,7 +130,7 @@ export default function LiveSets() {
               lineHeight: 1.6
             }}
           >
-            Grabaciones en vivo, back-to-backs y sesiones completas de Tech House y Melodic Techno. Selecciona cualquier set para reproducirlo en alta definición.
+            {sText.desc}
           </p>
         </div>
 
@@ -317,7 +326,7 @@ export default function LiveSets() {
                       color: '#FF003C'
                     }}
                   >
-                    <span>Reproducir en Modo Cine</span>
+                    <span>{sText.playCinema}</span>
                     <Play size={14} fill="#FF003C" />
                   </div>
                 </div>

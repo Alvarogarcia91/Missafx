@@ -20,7 +20,7 @@ export default function UpcomingEvents({ onOpenAdmin, onEventsChange }) {
     title1: 'PRÓXIMOS',
     title2: 'EVENTOS',
     desc: 'Presentaciones en vivo, residencias y sesiones oficiales de Missafx. Selecciona cualquier flyer para verlo a pantalla completa o reservar tus accesos directos.',
-    loading: 'CARGANDO FECHAS DE TOQUINES...',
+    loading: 'CARGANDO FECHAS...',
     btnBook: 'Reservar // WhatsApp',
     btnSoldOut: 'EVENTO AGOTADO',
     btnLastTickets: 'ÚLTIMOS BOLETOS // WhatsApp',
