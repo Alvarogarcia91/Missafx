@@ -830,7 +830,32 @@ export async function fetchCarouselData() {
   const activePhotos = cloudPhotos.filter(url => !getCarouselItemHidden(url));
   const finalPhotos = activePhotos.length > 0 ? activePhotos : cloudPhotos;
 
+  try {
+    preloadCarouselMedia(finalPhotos.slice(0, 4));
+  } catch (e) {}
+
   return { photos: finalPhotos, allPhotos: cloudPhotos, isRandom };
+}
+
+export function preloadCarouselMedia(urlList) {
+  if (!Array.isArray(urlList) || typeof window === 'undefined') return;
+  urlList.forEach((raw) => {
+    if (!raw) return;
+    const clean = raw.split('#')[0];
+    if (!clean) return;
+    if (isVideoMedia(clean)) {
+      try {
+        const v = document.createElement('video');
+        v.preload = 'metadata';
+        v.src = clean;
+      } catch (e) {}
+    } else {
+      try {
+        const img = new Image();
+        img.src = clean;
+      } catch (e) {}
+    }
+  });
 }
 
 export async function fetchCarouselPhotos() {

@@ -10,7 +10,8 @@ import {
   isVideoMedia,
   parseCarouselItemMeta,
   getObjectPositionCss,
-  getCleanCarouselUrl
+  getCleanCarouselUrl,
+  preloadCarouselMedia
 } from '../utils/supabaseClient';
 
 export default function Hero() {
@@ -32,6 +33,7 @@ export default function Hero() {
   const [userMuted, setUserMuted] = useState(true); // Default to muted so video never sounds automatically
   const [heroVolume, setHeroVolume] = useState(50);
   const [lastVideoIndex, setLastVideoIndex] = useState(null);
+  const [isMediaLoading, setIsMediaLoading] = useState(false);
 
   const videoRef = useRef(null);
   const queueManager = useRef(null);
@@ -123,6 +125,15 @@ export default function Hero() {
       setLastVideoIndex(photoIndex);
     }
   }, [photoIndex, isCurrentVideo]);
+
+  // Preload upcoming slides and manage smooth loading state
+  useEffect(() => {
+    setIsMediaLoading(true);
+    if (!photos || photos.length === 0) return;
+    const next1 = photos[(photoIndex + 1) % photos.length];
+    const next2 = photos[(photoIndex + 2) % photos.length];
+    preloadCarouselMedia([next1, next2]);
+  }, [photos, photoIndex, progressKey]);
 
   const handleReplayVideo = (e) => {
     if (e) e.stopPropagation();
@@ -581,23 +592,20 @@ export default function Hero() {
                 {currentMeta.fit === 'contain' && (
                   <div style={{ position: 'absolute', inset: -15, overflow: 'hidden', pointerEvents: 'none', zIndex: 1 }}>
                     {isCurrentVideo ? (
-                      <video
-                        src={currentMeta.cleanUrl}
-                        autoPlay
-                        muted
-                        playsInline
+                      <div
                         style={{
                           width: '100%',
                           height: '100%',
-                          objectFit: 'cover',
-                          filter: 'blur(28px) brightness(0.42) saturate(1.4)',
-                          transform: 'scale(1.2)'
+                          background: 'radial-gradient(circle at center, rgba(255, 0, 60, 0.3) 0%, rgba(14, 14, 20, 0.96) 75%)',
+                          filter: 'blur(20px)'
                         }}
                       />
                     ) : (
                       <img
                         src={currentMeta.cleanUrl}
                         alt=""
+                        loading="eager"
+                        decoding="async"
                         style={{
                           width: '100%',
                           height: '100%',
@@ -616,8 +624,6 @@ export default function Hero() {
                     <video
                       key={`hero-prev-${prevPhotoIndex}`}
                       src={prevMeta.cleanUrl}
-                      autoPlay
-                      loop
                       muted
                       playsInline
                       className="carousel-slide-exit"
@@ -628,7 +634,8 @@ export default function Hero() {
                         height: '100%',
                         objectFit: prevMeta.fit,
                         objectPosition: getObjectPositionCss(prevMeta.pos),
-                        zIndex: 2
+                        zIndex: 2,
+                        pointerEvents: 'none'
                       }}
                     />
                   ) : (
@@ -636,6 +643,8 @@ export default function Hero() {
                       key={`hero-prev-${prevPhotoIndex}`}
                       src={prevMeta.cleanUrl}
                       alt="DJ Missa en vivo"
+                      loading="eager"
+                      decoding="async"
                       className="carousel-slide-exit"
                       style={{
                         position: 'absolute',
@@ -644,7 +653,8 @@ export default function Hero() {
                         height: '100%',
                         objectFit: prevMeta.fit,
                         objectPosition: getObjectPositionCss(prevMeta.pos),
-                        zIndex: 2
+                        zIndex: 2,
+                        pointerEvents: 'none'
                       }}
                     />
                   )
@@ -658,7 +668,12 @@ export default function Hero() {
                     src={currentMeta.cleanUrl}
                     autoPlay
                     playsInline
+                    preload="auto"
                     muted={!hasAudioConfig || userMuted}
+                    onCanPlay={() => setIsMediaLoading(false)}
+                    onLoadedData={() => setIsMediaLoading(false)}
+                    onWaiting={() => setIsMediaLoading(true)}
+                    onError={() => setIsMediaLoading(false)}
                     className={isTransitioning ? 'carousel-slide-enter' : (currentMeta.fit === 'contain' ? '' : 'carousel-ken-burns')}
                     style={{
                       position: 'absolute',
@@ -678,6 +693,14 @@ export default function Hero() {
                     key={`hero-curr-${photoIndex}-${progressKey}`}
                     src={currentMeta.cleanUrl}
                     alt="DJ Missa en vivo"
+                    loading="eager"
+                    decoding="async"
+                    onLoad={() => setIsMediaLoading(false)}
+                    onError={(e) => {
+                      setIsMediaLoading(false);
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = DEFAULT_CAROUSEL_PHOTOS[0];
+                    }}
                     className={isTransitioning ? 'carousel-slide-enter' : (currentMeta.fit === 'contain' ? '' : 'carousel-ken-burns')}
                     style={{
                       position: 'absolute',
@@ -692,6 +715,35 @@ export default function Hero() {
                       zIndex: 3
                     }}
                   />
+                )}
+
+                {/* Subtle Cyber Loading Spinner Overlay */}
+                {isMediaLoading && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      zIndex: 4,
+                      pointerEvents: 'none',
+                      background: 'rgba(6, 6, 8, 0.45)',
+                      backdropFilter: 'blur(3px)',
+                      transition: 'opacity 0.25s ease'
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '50%',
+                        border: '3px solid rgba(255, 0, 60, 0.25)',
+                        borderTopColor: '#FF003C',
+                        animation: 'spinAnim 0.75s linear infinite'
+                      }}
+                    />
+                  </div>
                 )}
 
                 {/* Floating audio toggle & volume potency controller for videos */}
