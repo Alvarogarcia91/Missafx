@@ -50,6 +50,125 @@ export function getEventStatus(event) {
   return 'none';
 }
 
+export function getEventCoupon(event) {
+  if (!event) return '';
+  if (event.coupon_code && event.coupon_code.trim()) {
+    return event.coupon_code.trim().toUpperCase();
+  }
+  const tUrl = event.ticket_url || '';
+  if (tUrl.includes('#')) {
+    const hash = tUrl.split('#')[1] || '';
+    const params = new URLSearchParams(hash);
+    const c = params.get('coupon');
+    if (c) return c.trim().toUpperCase();
+  }
+  return '';
+}
+
+export function sanitizePhoneNumber(phone) {
+  if (!phone) return '5214443570777';
+  let clean = String(phone).replace(/[^\d]/g, '');
+  if (clean.length === 10) clean = '521' + clean;
+  return clean || '5214443570777';
+}
+
+export function extractEventDetails(event) {
+  const url = event?.ticket_url || '';
+  const [clean, hash = ''] = url.split('#');
+  const params = new URLSearchParams(hash);
+
+  const status = event?.status_badge && event.status_badge !== 'none'
+    ? event.status_badge
+    : (params.get('status') || 'none');
+
+  const coupon = (event?.coupon_code || params.get('coupon') || '').trim().toUpperCase();
+
+  let contactType = params.get('contact') || '';
+  let rpPhone = params.get('rp_phone') || '';
+  let customUrl = '';
+  let customWaMessage = '';
+
+  if (clean.includes('wa.me') || clean.includes('whatsapp.com')) {
+    try {
+      const parsedUrl = new URL(clean);
+      const textParam = parsedUrl.searchParams.get('text');
+      if (textParam) customWaMessage = textParam;
+
+      const pathSegments = parsedUrl.pathname.replace(/^\//, '').split('/');
+      const phoneInPath = pathSegments[0] || '';
+      if (!contactType) {
+        if (phoneInPath.includes('5214443570777') || phoneInPath.includes('4443570777')) {
+          contactType = 'missa';
+        } else if (phoneInPath) {
+          contactType = 'rp';
+          if (!rpPhone) rpPhone = phoneInPath;
+        } else {
+          contactType = 'missa';
+        }
+      }
+    } catch (e) {
+      if (!contactType) contactType = 'missa';
+    }
+  } else {
+    contactType = 'custom';
+    customUrl = clean;
+  }
+
+  if (!contactType) contactType = 'missa';
+
+  return {
+    status,
+    coupon,
+    contactType,
+    rpPhone,
+    customUrl,
+    customWaMessage
+  };
+}
+
+export function buildEventTicketUrl({
+  contactType = 'missa',
+  rpPhone = '',
+  customUrl = '',
+  customMessage = '',
+  eventTitle = '',
+  eventVenue = '',
+  couponCode = '',
+  statusBadge = 'none'
+}) {
+  let baseTarget = '';
+  const cleanCoupon = (couponCode || '').trim().toUpperCase();
+
+  if (contactType === 'custom' && customUrl.trim()) {
+    baseTarget = customUrl.trim();
+  } else {
+    const targetPhone = contactType === 'rp' ? sanitizePhoneNumber(rpPhone) : '5214443570777';
+    let text = (customMessage || '').trim();
+    if (!text) {
+      text = '¡Hola! Vengo desde missafx.com y me gustaría reservar mis accesos para ' + (eventTitle.trim() || 'el evento');
+      if (eventVenue.trim()) text += ' en ' + eventVenue.trim();
+      text += '.';
+    }
+    if (cleanCoupon && !text.toUpperCase().includes(cleanCoupon)) {
+      text += ' Código de descuento / cortesía: ' + cleanCoupon;
+    }
+    baseTarget = `https://wa.me/${targetPhone}?text=${encodeURIComponent(text)}`;
+  }
+
+  const hashParams = new URLSearchParams();
+  if (statusBadge && statusBadge !== 'none') hashParams.set('status', statusBadge);
+  if (cleanCoupon) hashParams.set('coupon', cleanCoupon);
+  if (contactType === 'rp') {
+    hashParams.set('contact', 'rp');
+    if (rpPhone.trim()) hashParams.set('rp_phone', sanitizePhoneNumber(rpPhone));
+  } else if (contactType === 'custom') {
+    hashParams.set('contact', 'custom');
+  }
+
+  const hashStr = hashParams.toString();
+  return hashStr ? `${baseTarget}#${hashStr}` : baseTarget;
+}
+
 export function getCleanTicketUrl(url) {
   if (!url) return 'https://wa.me/5214443570777';
   return url.split('#')[0];
@@ -96,23 +215,28 @@ export async function uploadFlyerImage(file) {
   return `${SUPABASE_URL}/storage/v1/object/public/flyers/${fileName}`;
 }
 
-export async function createEventRecord({ title, date, venue, imageUrl, ticketUrl, statusBadge = 'none' }) {
-  let cleanTicketUrl = getCleanTicketUrl(ticketUrl);
-  if (statusBadge === 'sold_out') {
-    cleanTicketUrl += '#status=sold_out';
-  } else if (statusBadge === 'last_tickets') {
-    cleanTicketUrl += '#status=last_tickets';
+export async function createEventRecord({ title, date, venue, imageUrl, ticketUrl, statusBadge = 'none', couponCode = '' }) {
+  let finalTicketUrl = ticketUrl || 'https://wa.me/5214443570777';
+  const [clean, hash = ''] = finalTicketUrl.split('#');
+  const params = new URLSearchParams(hash);
+  if (statusBadge && statusBadge !== 'none' && !params.has('status')) {
+    params.set('status', statusBadge);
   }
+  if (couponCode && couponCode.trim() && !params.has('coupon')) {
+    params.set('coupon', couponCode.trim().toUpperCase());
+  }
+  const hashStr = params.toString();
+  finalTicketUrl = hashStr ? `${clean}#${hashStr}` : clean;
 
   const basePayload = {
     title: title ? title.trim() : 'EXCLUSIVE DJ SET',
     date: date.trim(),
     venue: venue.trim(),
     image_url: imageUrl,
-    ticket_url: cleanTicketUrl
+    ticket_url: finalTicketUrl
   };
 
-  // Try with status_badge column
+  // Try with status_badge and coupon_code columns
   try {
     const resWithCol = await fetch(`${SUPABASE_URL}/rest/v1/events`, {
       method: 'POST',
@@ -122,18 +246,17 @@ export async function createEventRecord({ title, date, venue, imageUrl, ticketUr
       },
       body: JSON.stringify({
         ...basePayload,
-        status_badge: statusBadge
+        status_badge: statusBadge,
+        coupon_code: couponCode ? couponCode.trim().toUpperCase() : null
       })
     });
     if (resWithCol.ok) {
       const data = await resWithCol.json();
       return Array.isArray(data) ? data[0] : data;
     }
-  } catch (e) {
-    // fallback
-  }
+  } catch (e) {}
 
-  // Fallback without status_badge column (status preserved via ticket_url hash)
+  // Fallback without extra columns (metadata preserved via ticket_url hash)
   const res = await fetch(`${SUPABASE_URL}/rest/v1/events`, {
     method: 'POST',
     headers: {
@@ -152,25 +275,34 @@ export async function createEventRecord({ title, date, venue, imageUrl, ticketUr
   return Array.isArray(data) ? data[0] : data;
 }
 
-export async function updateEventRecord(id, { title, date, venue, imageUrl, ticketUrl, statusBadge = 'none' }) {
-  let cleanTicketUrl = getCleanTicketUrl(ticketUrl);
-  if (statusBadge === 'sold_out') {
-    cleanTicketUrl += '#status=sold_out';
-  } else if (statusBadge === 'last_tickets') {
-    cleanTicketUrl += '#status=last_tickets';
+export async function updateEventRecord(id, { title, date, venue, imageUrl, ticketUrl, statusBadge = 'none', couponCode = '' }) {
+  let finalTicketUrl = ticketUrl || 'https://wa.me/5214443570777';
+  const [clean, hash = ''] = finalTicketUrl.split('#');
+  const params = new URLSearchParams(hash);
+  if (statusBadge && statusBadge !== 'none') {
+    params.set('status', statusBadge);
+  } else {
+    params.delete('status');
   }
+  if (couponCode && couponCode.trim()) {
+    params.set('coupon', couponCode.trim().toUpperCase());
+  } else {
+    params.delete('coupon');
+  }
+  const hashStr = params.toString();
+  finalTicketUrl = hashStr ? `${clean}#${hashStr}` : clean;
 
   const payload = {
     title: title ? title.trim() : 'EXCLUSIVE DJ SET',
     date: date.trim(),
     venue: venue.trim(),
-    ticket_url: cleanTicketUrl
+    ticket_url: finalTicketUrl
   };
   if (imageUrl) {
     payload.image_url = imageUrl;
   }
 
-  // 1. Try PATCH with status_badge column
+  // 1. Try PATCH with status_badge and coupon_code
   try {
     const resWithBadge = await fetch(`${SUPABASE_URL}/rest/v1/events?id=eq.${id}`, {
       method: 'PATCH',
@@ -180,7 +312,8 @@ export async function updateEventRecord(id, { title, date, venue, imageUrl, tick
       },
       body: JSON.stringify({
         ...payload,
-        status_badge: statusBadge
+        status_badge: statusBadge,
+        coupon_code: couponCode ? couponCode.trim().toUpperCase() : null
       })
     });
     if (resWithBadge.ok) {
@@ -189,9 +322,9 @@ export async function updateEventRecord(id, { title, date, venue, imageUrl, tick
     }
   } catch (e) {}
 
-  // 2. Try PATCH without status_badge column
+  // 2. Fallback PATCH without extra columns (metadata preserved via ticket_url hash)
   try {
-    const resPatch = await fetch(`${SUPABASE_URL}/rest/v1/events?id=eq.${id}`, {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/events?id=eq.${id}`, {
       method: 'PATCH',
       headers: {
         ...defaultHeaders,
@@ -199,22 +332,27 @@ export async function updateEventRecord(id, { title, date, venue, imageUrl, tick
       },
       body: JSON.stringify(payload)
     });
-    if (resPatch.ok) {
-      const data = await resPatch.json();
+    if (res.ok) {
+      const data = await res.json();
       if (Array.isArray(data) && data.length > 0) return data[0];
     }
   } catch (e) {}
 
   // 3. Fallback: If PATCH is blocked by RLS policies (0 rows updated), perform Delete + Re-Insert
-  await deleteEventRecord(id);
-  return await createEventRecord({
-    title: payload.title,
-    date: payload.date,
-    venue: payload.venue,
-    imageUrl: payload.image_url || imageUrl,
-    ticketUrl: payload.ticket_url,
-    statusBadge
-  });
+  try {
+    await deleteEventRecord(id);
+    return await createEventRecord({
+      title: payload.title,
+      date: payload.date,
+      venue: payload.venue,
+      imageUrl: payload.image_url || imageUrl,
+      ticketUrl: finalTicketUrl,
+      statusBadge,
+      couponCode
+    });
+  } catch (err) {
+    throw new Error(`Error al actualizar evento: ${err.message}`);
+  }
 }
 
 export async function deleteEventRecord(id) {

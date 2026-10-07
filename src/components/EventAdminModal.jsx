@@ -20,7 +20,13 @@ import {
   ArrowUp,
   ArrowDown,
   RotateCcw,
-  Shuffle
+  Shuffle,
+  Ticket,
+  MessageSquare,
+  Phone,
+  UserCheck,
+  Globe,
+  Wand2
 } from 'lucide-react';
 import {
   fetchEvents,
@@ -33,6 +39,10 @@ import {
   deleteSetRecord,
   getYouTubeId,
   getEventStatus,
+  getEventCoupon,
+  extractEventDetails,
+  buildEventTicketUrl,
+  sanitizePhoneNumber,
   getCleanTicketUrl,
   getCleanTitle,
   isVideoMedia,
@@ -67,6 +77,11 @@ export default function EventAdminModal({ isOpen, onClose }) {
   const [eventTitle, setEventTitle] = useState('EXCLUSIVE DJ SET');
   const [ticketUrl, setTicketUrl] = useState('https://wa.me/5214443570777');
   const [eventStatusBadge, setEventStatusBadge] = useState('none'); // 'none' | 'sold_out' | 'last_tickets'
+  const [contactType, setContactType] = useState('missa'); // 'missa' | 'rp' | 'custom'
+  const [rpPhone, setRpPhone] = useState('');
+  const [customUrl, setCustomUrl] = useState('');
+  const [customWaMessage, setCustomWaMessage] = useState('');
+  const [couponCode, setCouponCode] = useState('');
 
   const [publishing, setPublishing] = useState(false);
   const [publishStatus, setPublishStatus] = useState(''); // 'success' | 'error' | ''
@@ -194,8 +209,16 @@ export default function EventAdminModal({ isOpen, onClose }) {
     setEventDate(ev.date || '');
     setEventVenue(ev.venue || '');
     setEventTitle(getCleanTitle(ev.title));
+
+    const details = extractEventDetails(ev);
+    setEventStatusBadge(details.status || 'none');
+    setContactType(details.contactType || 'missa');
+    setRpPhone(details.rpPhone || '');
+    setCustomUrl(details.customUrl || '');
+    setCustomWaMessage(details.customWaMessage || '');
+    setCouponCode(details.coupon || '');
+
     setTicketUrl(getCleanTicketUrl(ev.ticket_url));
-    setEventStatusBadge(getEventStatus(ev));
     setFlyerPreview(ev.image_url || '');
     setFlyerFile(null);
     setPublishStatus('');
@@ -210,6 +233,11 @@ export default function EventAdminModal({ isOpen, onClose }) {
     setEventTitle('EXCLUSIVE DJ SET');
     setTicketUrl('https://wa.me/5214443570777');
     setEventStatusBadge('none');
+    setContactType('missa');
+    setRpPhone('');
+    setCustomUrl('');
+    setCustomWaMessage('');
+    setCouponCode('');
     setFlyerPreview('');
     setFlyerFile(null);
     setPublishStatus('');
@@ -239,6 +267,17 @@ export default function EventAdminModal({ isOpen, onClose }) {
         finalMediaUrl = await uploadFlyerImage(flyerFile);
       }
 
+      const finalTicketUrl = buildEventTicketUrl({
+        contactType,
+        rpPhone,
+        customUrl,
+        customMessage: customWaMessage,
+        eventTitle,
+        eventVenue,
+        couponCode,
+        statusBadge: eventStatusBadge
+      });
+
       if (editingEventId) {
         // UPDATE EVENT
         await updateEventRecord(editingEventId, {
@@ -246,8 +285,9 @@ export default function EventAdminModal({ isOpen, onClose }) {
           date: eventDate,
           venue: eventVenue,
           imageUrl: finalMediaUrl,
-          ticketUrl: ticketUrl,
-          statusBadge: eventStatusBadge
+          ticketUrl: finalTicketUrl,
+          statusBadge: eventStatusBadge,
+          couponCode: couponCode ? couponCode.trim().toUpperCase() : ''
         });
 
         setPublishStatus('success');
@@ -260,8 +300,9 @@ export default function EventAdminModal({ isOpen, onClose }) {
           date: eventDate,
           venue: eventVenue,
           imageUrl: finalMediaUrl,
-          ticketUrl: ticketUrl,
-          statusBadge: eventStatusBadge
+          ticketUrl: finalTicketUrl,
+          statusBadge: eventStatusBadge,
+          couponCode: couponCode ? couponCode.trim().toUpperCase() : ''
         });
 
         setPublishStatus('success');
@@ -273,6 +314,11 @@ export default function EventAdminModal({ isOpen, onClose }) {
       setFlyerPreview('');
       setEventDate('');
       setEventStatusBadge('none');
+      setContactType('missa');
+      setRpPhone('');
+      setCustomUrl('');
+      setCustomWaMessage('');
+      setCouponCode('');
 
       // Notify parent component and reload list
       window.dispatchEvent(new CustomEvent('missafx-events-updated'));
@@ -1088,6 +1134,280 @@ export default function EventAdminModal({ isOpen, onClose }) {
                         </div>
                       </div>
 
+                      {/* Step 6: Contact Destination (Missa WhatsApp, RP WhatsApp, or External URL) */}
+                      <div>
+                        <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: 800, color: '#fff', marginBottom: '8px' }}>
+                          6. DESTINO DE RESERVACIÓN // WHATSAPP O ENLACE
+                        </label>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', marginBottom: '12px' }}>
+                          <button
+                            type="button"
+                            onClick={() => setContactType('missa')}
+                            style={{
+                              padding: '12px 8px',
+                              borderRadius: '8px',
+                              border: contactType === 'missa' ? '2px solid #22c55e' : '1px solid rgba(255, 255, 255, 0.1)',
+                              background: contactType === 'missa' ? 'rgba(34, 197, 94, 0.18)' : 'rgba(255, 255, 255, 0.04)',
+                              color: contactType === 'missa' ? '#22c55e' : '#94a3b8',
+                              fontWeight: 800,
+                              fontSize: '0.76rem',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              gap: '6px',
+                              textAlign: 'center',
+                              transition: 'all 0.2s ease'
+                            }}
+                          >
+                            <UserCheck size={18} color={contactType === 'missa' ? '#22c55e' : '#94a3b8'} />
+                            <span>WA OFICIAL MISSA</span>
+                            <span style={{ fontSize: '0.66rem', color: '#64748b', fontWeight: 600 }}>444 357 0777</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => setContactType('rp')}
+                            style={{
+                              padding: '12px 8px',
+                              borderRadius: '8px',
+                              border: contactType === 'rp' ? '2px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.1)',
+                              background: contactType === 'rp' ? 'rgba(56, 189, 248, 0.18)' : 'rgba(255, 255, 255, 0.04)',
+                              color: contactType === 'rp' ? '#38bdf8' : '#94a3b8',
+                              fontWeight: 800,
+                              fontSize: '0.76rem',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              gap: '6px',
+                              textAlign: 'center',
+                              transition: 'all 0.2s ease'
+                            }}
+                          >
+                            <Phone size={18} color={contactType === 'rp' ? '#38bdf8' : '#94a3b8'} />
+                            <span>WA DE RP / PROMOTOR</span>
+                            <span style={{ fontSize: '0.66rem', color: '#64748b', fontWeight: 600 }}>Número específico</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => setContactType('custom')}
+                            style={{
+                              padding: '12px 8px',
+                              borderRadius: '8px',
+                              border: contactType === 'custom' ? '2px solid #a855f7' : '1px solid rgba(255, 255, 255, 0.1)',
+                              background: contactType === 'custom' ? 'rgba(168, 85, 247, 0.18)' : 'rgba(255, 255, 255, 0.04)',
+                              color: contactType === 'custom' ? '#c084fc' : '#94a3b8',
+                              fontWeight: 800,
+                              fontSize: '0.76rem',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              gap: '6px',
+                              textAlign: 'center',
+                              transition: 'all 0.2s ease'
+                            }}
+                          >
+                            <Globe size={18} color={contactType === 'custom' ? '#c084fc' : '#94a3b8'} />
+                            <span>ENLACE EXTERNO</span>
+                            <span style={{ fontSize: '0.66rem', color: '#64748b', fontWeight: 600 }}>Boletia, Passline...</span>
+                          </button>
+                        </div>
+
+                        {contactType === 'rp' && (
+                          <div style={{ marginTop: '8px' }}>
+                            <label style={{ display: 'block', fontSize: '0.76rem', fontWeight: 700, color: '#38bdf8', marginBottom: '6px' }}>
+                              📱 NÚMERO DE WHATSAPP DEL RP / ORGANIZADOR (10 DÍGITOS O CON LADA)
+                            </label>
+                            <input
+                              type="tel"
+                              placeholder="Ej. 4441234567 o +52 1 444 123 4567"
+                              value={rpPhone}
+                              onChange={(e) => setRpPhone(e.target.value)}
+                              style={{
+                                width: '100%',
+                                padding: '10px 14px',
+                                borderRadius: '8px',
+                                border: '1px solid rgba(56, 189, 248, 0.3)',
+                                background: 'rgba(56, 189, 248, 0.05)',
+                                color: '#FFFFFF',
+                                fontSize: '0.90rem',
+                                fontWeight: 600,
+                                outline: 'none',
+                                boxSizing: 'border-box'
+                              }}
+                            />
+                            <p style={{ margin: '4px 0 0 0', fontSize: '0.70rem', color: '#64748b' }}>
+                              Al dar clic en reservar, se abrirá WhatsApp directamente con este RP.
+                            </p>
+                          </div>
+                        )}
+
+                        {contactType === 'custom' && (
+                          <div style={{ marginTop: '8px' }}>
+                            <label style={{ display: 'block', fontSize: '0.76rem', fontWeight: 700, color: '#c084fc', marginBottom: '6px' }}>
+                              🌐 ENLACE COMPLETO DE BOLETERA O PÁGINA EXTERNA
+                            </label>
+                            <input
+                              type="url"
+                              placeholder="https://boletia.com/eventos/..."
+                              value={customUrl}
+                              onChange={(e) => setCustomUrl(e.target.value)}
+                              style={{
+                                width: '100%',
+                                padding: '10px 14px',
+                                borderRadius: '8px',
+                                border: '1px solid rgba(168, 85, 247, 0.3)',
+                                background: 'rgba(168, 85, 247, 0.05)',
+                                color: '#FFFFFF',
+                                fontSize: '0.90rem',
+                                fontWeight: 600,
+                                outline: 'none',
+                                boxSizing: 'border-box'
+                              }}
+                            />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Step 7: Pre-filled WhatsApp Message (Only if contact is WhatsApp) */}
+                      {contactType !== 'custom' && (
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                            <label style={{ fontSize: '0.84rem', fontWeight: 800, color: '#fff', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <MessageSquare size={15} color="#22c55e" />
+                              <span>7. MENSAJE PRE-ESCRITO DE WHATSAPP</span>
+                            </label>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                let defaultMsg = '¡Hola! Vengo desde missafx.com y me gustaría información y accesos para el evento';
+                                if (eventVenue && eventVenue.trim()) defaultMsg += ` en ${eventVenue.trim()}`;
+                                defaultMsg += '.';
+                                setCustomWaMessage(defaultMsg);
+                              }}
+                              style={{
+                                background: 'rgba(34, 197, 94, 0.1)',
+                                border: '1px solid rgba(34, 197, 94, 0.3)',
+                                borderRadius: '6px',
+                                padding: '3px 8px',
+                                color: '#22c55e',
+                                fontSize: '0.70rem',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px'
+                              }}
+                            >
+                              <Wand2 size={12} />
+                              Mensaje sugerido
+                            </button>
+                          </div>
+                          <textarea
+                            rows={3}
+                            placeholder="Ej. ¡Hola! Vengo desde missafx.com y me gustaría información y accesos para el evento."
+                            value={customWaMessage}
+                            onChange={(e) => setCustomWaMessage(e.target.value)}
+                            style={{
+                              width: '100%',
+                              padding: '10px 14px',
+                              borderRadius: '8px',
+                              border: '1px solid rgba(255, 255, 255, 0.12)',
+                              background: 'rgba(255, 255, 255, 0.05)',
+                              color: '#FFFFFF',
+                              fontSize: '0.86rem',
+                              fontFamily: 'inherit',
+                              lineHeight: 1.4,
+                              outline: 'none',
+                              boxSizing: 'border-box',
+                              resize: 'vertical'
+                            }}
+                          />
+                          <p style={{ margin: '4px 0 0 0', fontSize: '0.70rem', color: '#64748b' }}>
+                            {couponCode.trim()
+                              ? `💡 Al enviar, se agregará automáticamente al final: "Código de descuento / cortesía: ${couponCode.trim().toUpperCase()}".`
+                              : '💡 Si dejas este campo vacío, se usará el mensaje profesional estándar de Missafx.'}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Step 8: Promo Code / Coupon (Optional) */}
+                      <div>
+                        <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: 800, color: '#fff', marginBottom: '8px' }}>
+                          <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <Ticket size={15} color="#10b981" />
+                            <span>8. CÓDIGO DE CUPÓN / PROMOCIÓN (OPCIONAL)</span>
+                          </span>
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="Ej. MISSA10, VIPGUEST, TECHNO20"
+                          value={couponCode}
+                          onChange={(e) => setCouponCode(e.target.value.toUpperCase().replace(/\s+/g, ''))}
+                          style={{
+                            width: '100%',
+                            padding: '12px 14px',
+                            borderRadius: '8px',
+                            border: couponCode.trim() ? '1px solid rgba(16, 185, 129, 0.5)' : '1px solid rgba(255, 255, 255, 0.12)',
+                            background: couponCode.trim() ? 'rgba(16, 185, 129, 0.08)' : 'rgba(255, 255, 255, 0.05)',
+                            color: couponCode.trim() ? '#34d399' : '#FFFFFF',
+                            fontSize: '0.95rem',
+                            fontWeight: 700,
+                            letterSpacing: '0.08em',
+                            outline: 'none',
+                            boxSizing: 'border-box'
+                          }}
+                        />
+                        {couponCode.trim() ? (
+                          <div
+                            style={{
+                              marginTop: '8px',
+                              padding: '10px 12px',
+                              borderRadius: '8px',
+                              background: 'rgba(16, 185, 129, 0.12)',
+                              border: '1px solid rgba(16, 185, 129, 0.35)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              gap: '10px'
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <span style={{ fontSize: '1rem' }}>🎟️</span>
+                              <div>
+                                <div style={{ fontSize: '0.78rem', fontWeight: 800, color: '#34d399' }}>
+                                  VISTA PREVIA DEL DISTINTIVO:
+                                </div>
+                                <div style={{ fontSize: '0.72rem', color: '#a7f3d0' }}>
+                                  El flyer mostrará la marca "RESERVA CON CUPÓN: {couponCode.trim().toUpperCase()}"
+                                </div>
+                              </div>
+                            </div>
+                            <span
+                              style={{
+                                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                                color: '#fff',
+                                padding: '4px 10px',
+                                borderRadius: '6px',
+                                fontSize: '0.72rem',
+                                fontWeight: 900,
+                                letterSpacing: '0.08em',
+                                boxShadow: '0 0 10px rgba(16, 185, 129, 0.5)'
+                              }}
+                            >
+                              {couponCode.trim().toUpperCase()}
+                            </span>
+                          </div>
+                        ) : (
+                          <p style={{ margin: '4px 0 0 0', fontSize: '0.70rem', color: '#64748b' }}>
+                            Si agregas un código, el flyer mostrará una etiqueta verde exclusiva y el botón dirá "RESERVAR CON CUPÓN".
+                          </p>
+                        )}
+                      </div>
+
                       {/* Status alert */}
                       {publishStatus === 'error' && (
                         <div
@@ -1186,6 +1506,8 @@ export default function EventAdminModal({ isOpen, onClose }) {
                           {eventsList.map((ev) => {
                             const status = getEventStatus(ev);
                             const isVid = isVideoMedia(ev.image_url);
+                            const coupon = getEventCoupon(ev);
+                            const details = extractEventDetails(ev);
 
                             return (
                               <div
@@ -1239,7 +1561,7 @@ export default function EventAdminModal({ isOpen, onClose }) {
                                 </div>
 
                                 <div style={{ flex: 1, minWidth: 0 }}>
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px', flexWrap: 'wrap' }}>
                                     <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                       {ev.date}
                                     </div>
@@ -1256,6 +1578,16 @@ export default function EventAdminModal({ isOpen, onClose }) {
                                     {isVid && (
                                       <span style={{ fontSize: '0.64rem', fontWeight: 800, color: '#38bdf8', background: 'rgba(56,189,248,0.2)', padding: '1px 5px', borderRadius: '4px' }}>
                                         MP4
+                                      </span>
+                                    )}
+                                    {coupon && (
+                                      <span style={{ fontSize: '0.64rem', fontWeight: 800, color: '#10b981', background: 'rgba(16,185,129,0.2)', padding: '1px 6px', borderRadius: '4px' }}>
+                                        🎟️ {coupon}
+                                      </span>
+                                    )}
+                                    {details.contactType === 'rp' && (
+                                      <span style={{ fontSize: '0.64rem', fontWeight: 700, color: '#38bdf8', background: 'rgba(56,189,248,0.15)', padding: '1px 5px', borderRadius: '4px' }}>
+                                        RP {details.rpPhone ? `(${details.rpPhone})` : ''}
                                       </span>
                                     )}
                                   </div>

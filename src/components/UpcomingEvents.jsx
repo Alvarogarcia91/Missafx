@@ -5,6 +5,7 @@ import {
   fetchEvents,
   isVideoMedia,
   getEventStatus,
+  getEventCoupon,
   getCleanTicketUrl,
   getCleanTitle
 } from '../utils/supabaseClient';
@@ -22,12 +23,17 @@ export default function UpcomingEvents({ onOpenAdmin, onEventsChange }) {
     desc: 'Presentaciones en vivo, residencias y sesiones oficiales de Missafx. Selecciona cualquier flyer para verlo a pantalla completa o reservar tus accesos directos.',
     loading: 'CARGANDO FECHAS...',
     btnBook: 'Reservar // WhatsApp',
+    btnBookWithCoupon: 'Reservar con Cupón // WhatsApp',
     btnSoldOut: 'EVENTO AGOTADO',
     btnLastTickets: 'ÚLTIMOS BOLETOS // WhatsApp',
     badgeLive: 'LIVE SET',
     badgeSoldOut: '🔴 AGOTADO // SOLD OUT',
     badgeLastTickets: '⚡ ÚLTIMOS BOLETOS',
+    badgeCoupon: '🎟️ CUPÓN DISPONIBLE',
+    badgeBookWithCoupon: '🎟️ RESERVA CON CUPÓN',
+    promoCodeLabel: 'CÓDIGO PROMO:',
     lightboxBook: 'Reservar',
+    lightboxBookWithCoupon: 'Reservar con Cupón',
     lightboxSoldOut: 'Agotado',
     videoBadge: 'VIDEO MP4'
   };
@@ -198,6 +204,7 @@ export default function UpcomingEvents({ onOpenAdmin, onEventsChange }) {
           >
             {events.map((event) => {
               const status = getEventStatus(event);
+              const coupon = getEventCoupon(event);
               const isVideo = isVideoMedia(event.image_url);
               const cleanTitle = getCleanTitle(event.title);
               const cleanTicket = getCleanTicketUrl(event.ticket_url);
@@ -211,6 +218,8 @@ export default function UpcomingEvents({ onOpenAdmin, onEventsChange }) {
                       ? '1px solid rgba(239, 68, 68, 0.35)'
                       : status === 'last_tickets'
                       ? '1px solid rgba(245, 158, 11, 0.4)'
+                      : coupon
+                      ? '1px solid rgba(16, 185, 129, 0.45)'
                       : '1px solid rgba(255, 255, 255, 0.10)',
                     borderRadius: '16px',
                     overflow: 'hidden',
@@ -221,6 +230,8 @@ export default function UpcomingEvents({ onOpenAdmin, onEventsChange }) {
                       ? '0 12px 30px rgba(239, 68, 68, 0.15)'
                       : status === 'last_tickets'
                       ? '0 12px 30px rgba(245, 158, 11, 0.18)'
+                      : coupon
+                      ? '0 12px 30px rgba(16, 185, 129, 0.18)'
                       : '0 12px 30px rgba(0, 0, 0, 0.45)',
                     position: 'relative'
                   }}
@@ -229,12 +240,16 @@ export default function UpcomingEvents({ onOpenAdmin, onEventsChange }) {
                       ? 'rgba(239, 68, 68, 0.7)'
                       : status === 'last_tickets'
                       ? 'rgba(245, 158, 11, 0.8)'
+                      : coupon
+                      ? 'rgba(16, 185, 129, 0.8)'
                       : 'rgba(255, 0, 60, 0.5)';
                     e.currentTarget.style.transform = 'translateY(-6px)';
                     e.currentTarget.style.boxShadow = status === 'sold_out'
                       ? '0 18px 40px rgba(239, 68, 68, 0.3)'
                       : status === 'last_tickets'
                       ? '0 18px 40px rgba(245, 158, 11, 0.35)'
+                      : coupon
+                      ? '0 18px 40px rgba(16, 185, 129, 0.35)'
                       : '0 18px 40px rgba(255, 0, 60, 0.2)';
                   }}
                   onMouseLeave={(e) => {
@@ -242,9 +257,13 @@ export default function UpcomingEvents({ onOpenAdmin, onEventsChange }) {
                       ? 'rgba(239, 68, 68, 0.35)'
                       : status === 'last_tickets'
                       ? 'rgba(245, 158, 11, 0.4)'
+                      : coupon
+                      ? 'rgba(16, 185, 129, 0.45)'
                       : 'rgba(255, 255, 255, 0.10)';
                     e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 12px 30px rgba(0, 0, 0, 0.45)';
+                    e.currentTarget.style.boxShadow = coupon
+                      ? '0 12px 30px rgba(16, 185, 129, 0.18)'
+                      : '0 12px 30px rgba(0, 0, 0, 0.45)';
                   }}
                 >
                   {/* HUD Header Bar: Fecha y Lugar */}
@@ -307,6 +326,26 @@ export default function UpcomingEvents({ onOpenAdmin, onEventsChange }) {
                           }}
                         >
                           {eText.badgeLastTickets}
+                        </span>
+                      ) : coupon ? (
+                        <span
+                          style={{
+                            fontSize: '0.68rem',
+                            fontFamily: 'monospace',
+                            padding: '2px 8px',
+                            borderRadius: '4px',
+                            background: 'rgba(16, 185, 129, 0.2)',
+                            color: '#10b981',
+                            fontWeight: 800,
+                            border: '1px solid rgba(16, 185, 129, 0.5)',
+                            boxShadow: '0 0 10px rgba(16, 185, 129, 0.25)',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}
+                        >
+                          <Ticket size={11} />
+                          <span>{coupon}</span>
                         </span>
                       ) : (
                         <span
@@ -390,6 +429,33 @@ export default function UpcomingEvents({ onOpenAdmin, onEventsChange }) {
                         }}
                       >
                         {eText.badgeLastTickets}
+                      </div>
+                    )}
+
+                    {status !== 'sold_out' && coupon && (
+                      <div
+                        style={{
+                          position: 'absolute',
+                          top: status === 'last_tickets' ? '46px' : '14px',
+                          left: '14px',
+                          background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.95) 0%, rgba(5, 150, 105, 0.95) 100%)',
+                          backdropFilter: 'blur(8px)',
+                          color: '#FFFFFF',
+                          fontSize: '0.72rem',
+                          fontWeight: 900,
+                          fontFamily: 'monospace',
+                          padding: '4px 10px',
+                          borderRadius: '6px',
+                          letterSpacing: '0.08em',
+                          boxShadow: '0 4px 14px rgba(16, 185, 129, 0.6)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          zIndex: 3
+                        }}
+                      >
+                        <Ticket size={12} />
+                        <span>{eText.badgeBookWithCoupon || '🎟️ RESERVA CON CUPÓN'}: {coupon}</span>
                       </div>
                     )}
 
@@ -499,6 +565,41 @@ export default function UpcomingEvents({ onOpenAdmin, onEventsChange }) {
                       {cleanTitle}
                     </div>
 
+                    {/* Promo Coupon Callout Banner */}
+                    {coupon && status !== 'sold_out' && (
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '7px 10px',
+                          borderRadius: '6px',
+                          background: 'rgba(16, 185, 129, 0.10)',
+                          border: '1px solid rgba(16, 185, 129, 0.25)',
+                          fontSize: '0.72rem'
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#10b981', fontWeight: 800 }}>
+                          <Ticket size={13} />
+                          <span>{eText.promoCodeLabel || 'CÓDIGO PROMO:'}</span>
+                        </div>
+                        <span
+                          style={{
+                            background: 'rgba(16, 185, 129, 0.22)',
+                            color: '#34d399',
+                            fontFamily: 'monospace',
+                            fontWeight: 900,
+                            padding: '2px 8px',
+                            borderRadius: '4px',
+                            letterSpacing: '0.06em',
+                            border: '1px dashed rgba(16, 185, 129, 0.5)'
+                          }}
+                        >
+                          {coupon}
+                        </span>
+                      </div>
+                    )}
+
                     {/* Action Button */}
                     {status === 'sold_out' ? (
                       <a
@@ -526,6 +627,38 @@ export default function UpcomingEvents({ onOpenAdmin, onEventsChange }) {
                       >
                         <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#ef4444' }} />
                         <span>{eText.btnSoldOut}</span>
+                      </a>
+                    ) : coupon ? (
+                      <a
+                        href={cleanTicket}
+                        target="_blank"
+                        rel="noreferrer"
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '8px',
+                          padding: '10px 16px',
+                          borderRadius: '8px',
+                          background: 'linear-gradient(135deg, #059669 0%, #10b981 50%, #FF003C 100%)',
+                          color: '#FFFFFF',
+                          fontWeight: 800,
+                          fontSize: '0.84rem',
+                          textDecoration: 'none',
+                          letterSpacing: '0.05em',
+                          textTransform: 'uppercase',
+                          transition: 'all 0.2s ease',
+                          boxShadow: '0 4px 18px rgba(16, 185, 129, 0.4)'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.boxShadow = '0 6px 24px rgba(16, 185, 129, 0.6)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.boxShadow = '0 4px 18px rgba(16, 185, 129, 0.4)';
+                        }}
+                      >
+                        <WhatsAppIcon size={16} color="#FFFFFF" />
+                        <span>{eText.btnBookWithCoupon || 'Reservar con Cupón // WhatsApp'}</span>
                       </a>
                     ) : status === 'last_tickets' ? (
                       <a
@@ -699,6 +832,12 @@ export default function UpcomingEvents({ onOpenAdmin, onEventsChange }) {
                 <div style={{ fontSize: '0.80rem', color: '#94a3b8' }}>
                   {activeFlyer.venue}
                 </div>
+                {getEventCoupon(activeFlyer) && getEventStatus(activeFlyer) !== 'sold_out' && (
+                  <div style={{ fontSize: '0.74rem', color: '#10b981', fontWeight: 800, marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <Ticket size={12} />
+                    <span>{eText.promoCodeLabel || 'CÓDIGO PROMO:'} <strong style={{ color: '#34d399' }}>{getEventCoupon(activeFlyer)}</strong></span>
+                  </div>
+                )}
               </div>
 
               <a
@@ -708,19 +847,28 @@ export default function UpcomingEvents({ onOpenAdmin, onEventsChange }) {
                 style={{
                   padding: '10px 18px',
                   borderRadius: '8px',
-                  background: getEventStatus(activeFlyer) === 'sold_out' ? '#ef4444' : '#FF003C',
+                  background: getEventStatus(activeFlyer) === 'sold_out'
+                    ? '#ef4444'
+                    : getEventCoupon(activeFlyer)
+                    ? 'linear-gradient(135deg, #059669 0%, #10b981 60%, #FF003C 100%)'
+                    : '#FF003C',
                   color: '#FFFFFF',
                   fontWeight: 800,
                   fontSize: '0.84rem',
                   textDecoration: 'none',
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '6px'
+                  gap: '6px',
+                  boxShadow: getEventCoupon(activeFlyer) && getEventStatus(activeFlyer) !== 'sold_out'
+                    ? '0 4px 18px rgba(16, 185, 129, 0.4)'
+                    : 'none'
                 }}
               >
                 <span>
                   {getEventStatus(activeFlyer) === 'sold_out'
                     ? eText.lightboxSoldOut
+                    : getEventCoupon(activeFlyer)
+                    ? (eText.lightboxBookWithCoupon || 'Reservar con Cupón')
                     : eText.lightboxBook}
                 </span>
                 <ExternalLink size={14} />
