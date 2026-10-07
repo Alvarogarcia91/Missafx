@@ -112,6 +112,16 @@ export default function Hero() {
         video.muted = true;
       }
 
+      // Seek to custom start time
+      const startTime = currentMeta.startTime || 0;
+      const endTime = currentMeta.endTime || 0;
+
+      if (startTime > 0) {
+        try {
+          video.currentTime = startTime;
+        } catch (e) {}
+      }
+
       const playPromise = video.play();
       if (playPromise !== undefined) {
         playPromise.catch(() => {
@@ -120,6 +130,27 @@ export default function Hero() {
           video.play().catch(() => {});
         });
       }
+
+      const handleTimeUpdate = () => {
+        if (endTime > 0 && video.currentTime >= endTime) {
+          video.pause();
+          video.currentTime = endTime;
+        }
+      };
+
+      const handleEnded = () => {
+        video.pause();
+      };
+
+      video.addEventListener('timeupdate', handleTimeUpdate);
+      video.addEventListener('ended', handleEnded);
+
+      return () => {
+        video.removeEventListener('timeupdate', handleTimeUpdate);
+        video.removeEventListener('ended', handleEnded);
+        video.pause();
+        video.muted = true;
+      };
     }
 
     return () => {
@@ -128,7 +159,7 @@ export default function Hero() {
         video.muted = true;
       }
     };
-  }, [photoIndex, photos, isCurrentVideo, hasAudioConfig, userMuted]);
+  }, [photoIndex, photos, isCurrentVideo, hasAudioConfig, userMuted, currentMeta.startTime, currentMeta.endTime]);
 
   return (
     <section
@@ -496,7 +527,6 @@ export default function Hero() {
                       <video
                         src={currentMeta.cleanUrl}
                         autoPlay
-                        loop
                         muted
                         playsInline
                         style={{
@@ -570,7 +600,6 @@ export default function Hero() {
                     key={`hero-curr-${photoIndex}-${progressKey}`}
                     src={currentMeta.cleanUrl}
                     autoPlay
-                    loop
                     playsInline
                     muted={!hasAudioConfig || userMuted}
                     className={isTransitioning ? 'carousel-slide-enter' : (currentMeta.fit === 'contain' ? '' : 'carousel-ken-burns')}

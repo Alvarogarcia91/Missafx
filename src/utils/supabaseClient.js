@@ -112,9 +112,16 @@ export function checkIsVideo(file, url = '') {
   return false;
 }
 
+export function formatVideoTime(sec = 0) {
+  if (isNaN(sec) || sec < 0) return '00:00';
+  const m = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60);
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
+
 export function parseCarouselItemMeta(url) {
   if (!url || typeof url !== 'string') {
-    return { cleanUrl: '', hasAudio: false, isHidden: false, fit: 'cover', pos: 'center' };
+    return { cleanUrl: '', hasAudio: false, isHidden: false, fit: 'cover', pos: 'center', startTime: 0, endTime: 0 };
   }
   const parts = url.split('#');
   const cleanUrl = parts[0];
@@ -132,10 +139,22 @@ export function parseCarouselItemMeta(url) {
     pos = posMatch[1].toLowerCase();
   }
 
-  return { cleanUrl, hasAudio, isHidden, fit, pos };
+  let startTime = 0;
+  const startMatch = hash.match(/start=([0-9.]+)/i);
+  if (startMatch) {
+    startTime = Math.max(0, parseFloat(startMatch[1]));
+  }
+
+  let endTime = 0;
+  const endMatch = hash.match(/end=([0-9.]+)/i);
+  if (endMatch) {
+    endTime = Math.max(0, parseFloat(endMatch[1]));
+  }
+
+  return { cleanUrl, hasAudio, isHidden, fit, pos, startTime, endTime };
 }
 
-export function buildCarouselItemMetaUrl(url, { hasAudio = false, isHidden = false, fit = 'cover', pos = 'center' } = {}) {
+export function buildCarouselItemMetaUrl(url, { hasAudio = false, isHidden = false, fit = 'cover', pos = 'center', startTime = 0, endTime = 0 } = {}) {
   if (!url) return '';
   const clean = url.split('#')[0];
   const tags = [];
@@ -143,6 +162,8 @@ export function buildCarouselItemMetaUrl(url, { hasAudio = false, isHidden = fal
   if (isHidden) tags.push('hidden=true');
   if (fit && fit !== 'cover') tags.push(`fit=${fit}`);
   if (pos && pos !== 'center') tags.push(`pos=${pos}`);
+  if (startTime > 0) tags.push(`start=${Math.round(startTime * 10) / 10}`);
+  if (endTime > 0) tags.push(`end=${Math.round(endTime * 10) / 10}`);
   return tags.length > 0 ? `${clean}#${tags.join('&')}` : clean;
 }
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   X,
   Lock,
@@ -38,7 +38,9 @@ import {
   Settings,
   Download,
   Move,
-  Crosshair
+  Crosshair,
+  Scissors,
+  Clock
 } from 'lucide-react';
 import {
   fetchEvents,
@@ -68,6 +70,7 @@ import {
   saveCarouselRandom,
   resetCarouselPhotos,
   DEFAULT_CAROUSEL_PHOTOS,
+  formatVideoTime,
   parseCarouselItemMeta,
   getObjectPositionCss,
   getPosPercentY,
@@ -150,6 +153,17 @@ export default function EventAdminModal({ isOpen, onClose }) {
   const [framingEditIdx, setFramingEditIdx] = useState(null);
   const [framingEditFit, setFramingEditFit] = useState('cover');
   const [framingEditPos, setFramingEditPos] = useState('center');
+
+  // Video trimming state
+  const [carouselVideoDuration, setCarouselVideoDuration] = useState(0);
+  const [carouselStartTime, setCarouselStartTime] = useState(0);
+  const [carouselEndTime, setCarouselEndTime] = useState(0);
+  const uploaderVideoRef = useRef(null);
+
+  const [framingEditDuration, setFramingEditDuration] = useState(0);
+  const [framingEditStartTime, setFramingEditStartTime] = useState(0);
+  const [framingEditEndTime, setFramingEditEndTime] = useState(0);
+  const framingVideoRef = useRef(null);
 
   // General branding & texts configuration state
   const [generalConfig, setGeneralConfig] = useState({ ...DEFAULT_GENERAL_SETTINGS });
@@ -586,6 +600,9 @@ export default function EventAdminModal({ isOpen, onClose }) {
       setCarouselFile(file);
       const url = URL.createObjectURL(file);
       setCarouselPreview(url);
+      setCarouselStartTime(0);
+      setCarouselEndTime(0);
+      setCarouselVideoDuration(0);
     }
     e.target.value = '';
   };
@@ -609,7 +626,9 @@ export default function EventAdminModal({ isOpen, onClose }) {
         hasAudio: isVid && carouselAudio,
         isHidden: false,
         fit: carouselFit,
-        pos: carouselPos
+        pos: carouselPos,
+        startTime: isVid ? carouselStartTime : 0,
+        endTime: isVid ? carouselEndTime : 0
       });
       const updated = [...carouselPhotos, uploadedUrl];
       await saveCarouselPhotos(updated);
@@ -625,6 +644,9 @@ export default function EventAdminModal({ isOpen, onClose }) {
       setCarouselAudio(false);
       setCarouselFit('cover');
       setCarouselPos('center');
+      setCarouselStartTime(0);
+      setCarouselEndTime(0);
+      setCarouselVideoDuration(0);
 
       window.dispatchEvent(new CustomEvent('missafx-carousel-updated'));
     } catch (err) {
@@ -669,10 +691,12 @@ export default function EventAdminModal({ isOpen, onClose }) {
       return;
     }
     const item = carouselPhotos[index];
-    const fit = getCarouselItemFit(item);
-    const pos = getCarouselItemPos(item);
-    setFramingEditFit(fit);
-    setFramingEditPos(pos);
+    const meta = parseCarouselItemMeta(item);
+    setFramingEditFit(meta.fit);
+    setFramingEditPos(meta.pos);
+    setFramingEditStartTime(meta.startTime || 0);
+    setFramingEditEndTime(meta.endTime || 0);
+    setFramingEditDuration(0);
     setFramingEditIdx(index);
   };
 
@@ -684,7 +708,9 @@ export default function EventAdminModal({ isOpen, onClose }) {
         hasAudio: meta.hasAudio,
         isHidden: meta.isHidden,
         fit: framingEditFit,
-        pos: framingEditPos
+        pos: framingEditPos,
+        startTime: framingEditStartTime,
+        endTime: framingEditEndTime
       });
       const updated = [...carouselPhotos];
       updated[index] = updatedItem;
@@ -705,7 +731,9 @@ export default function EventAdminModal({ isOpen, onClose }) {
         hasAudio: !meta.hasAudio,
         isHidden: meta.isHidden,
         fit: meta.fit,
-        pos: meta.pos
+        pos: meta.pos,
+        startTime: meta.startTime,
+        endTime: meta.endTime
       });
       const updated = [...carouselPhotos];
       updated[index] = updatedItem;
@@ -734,7 +762,9 @@ export default function EventAdminModal({ isOpen, onClose }) {
         hasAudio: meta.hasAudio,
         isHidden: nextHidden,
         fit: meta.fit,
-        pos: meta.pos
+        pos: meta.pos,
+        startTime: meta.startTime,
+        endTime: meta.endTime
       });
       const updated = [...carouselPhotos];
       updated[index] = updatedItem;
@@ -2607,9 +2637,15 @@ export default function EventAdminModal({ isOpen, onClose }) {
                                   <video
                                     src={carouselPreview}
                                     autoPlay
-                                    loop
                                     muted
                                     playsInline
+                                    onTimeUpdate={(e) => {
+                                      if (carouselEndTime > 0 && e.target.currentTime >= carouselEndTime) {
+                                        e.target.pause();
+                                        e.target.currentTime = carouselEndTime;
+                                      }
+                                    }}
+                                    onEnded={(e) => e.target.pause()}
                                     style={{
                                       width: '100%',
                                       height: '100%',
@@ -2637,12 +2673,29 @@ export default function EventAdminModal({ isOpen, onClose }) {
                             {/* Crisp Foreground Media */}
                             {isCarouselVideo ? (
                               <video
+                                ref={uploaderVideoRef}
                                 key={carouselPreview + carouselFit + carouselPos}
                                 src={carouselPreview}
                                 autoPlay
-                                loop
                                 muted
                                 playsInline
+                                onLoadedMetadata={(e) => {
+                                  const dur = Math.round(e.target.duration * 10) / 10;
+                                  setCarouselVideoDuration(dur);
+                                  if (!carouselEndTime || carouselEndTime > dur) {
+                                    setCarouselEndTime(dur);
+                                  }
+                                  if (carouselStartTime > 0) {
+                                    try { e.target.currentTime = carouselStartTime; } catch (err) {}
+                                  }
+                                }}
+                                onTimeUpdate={(e) => {
+                                  if (carouselEndTime > 0 && e.target.currentTime >= carouselEndTime) {
+                                    e.target.pause();
+                                    e.target.currentTime = carouselEndTime;
+                                  }
+                                }}
+                                onEnded={(e) => e.target.pause()}
                                 style={{
                                   position: 'relative',
                                   width: '100%',
@@ -2971,6 +3024,190 @@ export default function EventAdminModal({ isOpen, onClose }) {
                           </div>
                         )}
 
+                        {/* Video Trimmer Controls for Carousel Upload */}
+                        {isCarouselVideo && (
+                          <div style={{ paddingTop: '10px', borderTop: '1px solid rgba(255, 255, 255, 0.08)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+                              <div style={{ fontSize: '0.78rem', fontWeight: 800, color: '#FFFFFF', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <Scissors size={15} color="#ec4899" />
+                                <span>RECORTE DE TIEMPO DEL VIDEO (SEGMENTO A MOSTRAR):</span>
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#94a3b8' }}>
+                                  DURACIÓN: {formatVideoTime(carouselVideoDuration)}
+                                </span>
+                                <span style={{
+                                  fontSize: '0.68rem',
+                                  fontWeight: 900,
+                                  color: '#ec4899',
+                                  background: 'rgba(236, 72, 153, 0.2)',
+                                  border: '1px solid rgba(236, 72, 153, 0.4)',
+                                  padding: '2px 8px',
+                                  borderRadius: '999px',
+                                  fontFamily: 'monospace'
+                                }}>
+                                  CLIP: {formatVideoTime(Math.max(0, (carouselEndTime || carouselVideoDuration) - carouselStartTime))}
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Sliders for Start and End */}
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                              {/* Start Slider */}
+                              <div style={{ background: 'rgba(255,255,255,0.02)', padding: '10px 12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                                  <span style={{ fontSize: '0.70rem', fontWeight: 800, color: '#e2e8f0', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                    <Clock size={12} color="#38bdf8" />
+                                    <span>INICIO DEL CLIP:</span>
+                                  </span>
+                                  <span style={{ fontSize: '0.74rem', fontWeight: 900, color: '#38bdf8', fontFamily: 'monospace' }}>
+                                    {formatVideoTime(carouselStartTime)}
+                                  </span>
+                                </div>
+                                <input
+                                  type="range"
+                                  min="0"
+                                  max={Math.max(0, (carouselEndTime || carouselVideoDuration) - 0.5)}
+                                  step="0.5"
+                                  value={carouselStartTime}
+                                  onChange={(e) => {
+                                    const val = parseFloat(e.target.value);
+                                    setCarouselStartTime(val);
+                                    if (uploaderVideoRef.current) {
+                                      uploaderVideoRef.current.currentTime = val;
+                                    }
+                                  }}
+                                  style={{ width: '100%', accentColor: '#38bdf8', cursor: 'pointer' }}
+                                />
+                              </div>
+
+                              {/* End Slider */}
+                              <div style={{ background: 'rgba(255,255,255,0.02)', padding: '10px 12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                                  <span style={{ fontSize: '0.70rem', fontWeight: 800, color: '#e2e8f0', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                    <Clock size={12} color="#ec4899" />
+                                    <span>FIN DEL CLIP:</span>
+                                  </span>
+                                  <span style={{ fontSize: '0.74rem', fontWeight: 900, color: '#ec4899', fontFamily: 'monospace' }}>
+                                    {formatVideoTime(carouselEndTime || carouselVideoDuration)}
+                                  </span>
+                                </div>
+                                <input
+                                  type="range"
+                                  min={Math.min(carouselVideoDuration || 60, carouselStartTime + 0.5)}
+                                  max={carouselVideoDuration || 60}
+                                  step="0.5"
+                                  value={carouselEndTime || carouselVideoDuration}
+                                  onChange={(e) => {
+                                    const val = parseFloat(e.target.value);
+                                    setCarouselEndTime(val);
+                                    if (uploaderVideoRef.current) {
+                                      uploaderVideoRef.current.currentTime = val;
+                                    }
+                                  }}
+                                  style={{ width: '100%', accentColor: '#ec4899', cursor: 'pointer' }}
+                                />
+                              </div>
+                            </div>
+
+                            {/* Quick Presets & Test Button */}
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', flexWrap: 'wrap' }}>
+                              <div style={{ display: 'flex', gap: '6px' }}>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setCarouselStartTime(0);
+                                    const ten = Math.min(10, carouselVideoDuration || 10);
+                                    setCarouselEndTime(ten);
+                                    if (uploaderVideoRef.current) {
+                                      uploaderVideoRef.current.currentTime = 0;
+                                    }
+                                  }}
+                                  style={{
+                                    padding: '5px 10px',
+                                    borderRadius: '6px',
+                                    background: 'rgba(255, 255, 255, 0.06)',
+                                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                                    color: '#cbd5e1',
+                                    fontSize: '0.70rem',
+                                    fontWeight: 800,
+                                    cursor: 'pointer'
+                                  }}
+                                >
+                                  ⏱️ PRIMEROS 10 SEG
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setCarouselStartTime(0);
+                                    setCarouselEndTime(carouselVideoDuration);
+                                    if (uploaderVideoRef.current) {
+                                      uploaderVideoRef.current.currentTime = 0;
+                                    }
+                                  }}
+                                  style={{
+                                    padding: '5px 10px',
+                                    borderRadius: '6px',
+                                    background: 'rgba(255, 255, 255, 0.06)',
+                                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                                    color: '#cbd5e1',
+                                    fontSize: '0.70rem',
+                                    fontWeight: 800,
+                                    cursor: 'pointer'
+                                  }}
+                                >
+                                  🎬 VIDEO COMPLETO
+                                </button>
+                              </div>
+
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (uploaderVideoRef.current) {
+                                    uploaderVideoRef.current.currentTime = carouselStartTime;
+                                    uploaderVideoRef.current.play();
+                                  }
+                                }}
+                                style={{
+                                  padding: '6px 12px',
+                                  borderRadius: '6px',
+                                  background: 'rgba(236, 72, 153, 0.2)',
+                                  border: '1px solid rgba(236, 72, 153, 0.5)',
+                                  color: '#ec4899',
+                                  fontSize: '0.72rem',
+                                  fontWeight: 800,
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '5px'
+                                }}
+                              >
+                                <Play size={12} fill="#ec4899" />
+                                <span>PROBAR RECORTE</span>
+                              </button>
+                            </div>
+
+                            {/* Freeze frame helper alert */}
+                            <div style={{
+                              fontSize: '0.70rem',
+                              color: '#94a3b8',
+                              background: 'rgba(236, 72, 153, 0.08)',
+                              padding: '8px 12px',
+                              borderRadius: '6px',
+                              border: '1px solid rgba(236, 72, 153, 0.2)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '8px'
+                            }}>
+                              <span style={{ fontSize: '1rem' }}>❄️</span>
+                              <div>
+                                <strong>Congelamiento automático:</strong> Si tu recorte dura menos de 10 seg ({Math.round(Math.max(0, (carouselEndTime || carouselVideoDuration) - carouselStartTime) * 10) / 10}s), se quedará congelado en el último fotograma hasta completar el turno de 10 seg del carrousel, igual que una foto.
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
                         {/* Audio configuration if video is selected */}
                         {isCarouselVideo && (
                           <div style={{ paddingTop: '8px', borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
@@ -3235,6 +3472,24 @@ export default function EventAdminModal({ isOpen, onClose }) {
                                     {isVid && (
                                       <span style={{ fontSize: '0.64rem', fontWeight: 800, color: '#38bdf8', background: 'rgba(56,189,248,0.2)', padding: '1px 6px', borderRadius: '4px' }}>
                                         MP4
+                                      </span>
+                                    )}
+
+                                    {isVid && (meta.startTime > 0 || meta.endTime > 0) && (
+                                      <span
+                                        style={{
+                                          fontSize: '0.64rem',
+                                          fontWeight: 800,
+                                          color: '#ec4899',
+                                          background: 'rgba(236, 72, 153, 0.18)',
+                                          padding: '1px 6px',
+                                          borderRadius: '4px',
+                                          border: '1px solid rgba(236, 72, 153, 0.35)',
+                                          fontFamily: 'monospace'
+                                        }}
+                                        title={`Recorte de video: desde ${formatVideoTime(meta.startTime)} hasta ${formatVideoTime(meta.endTime)}`}
+                                      >
+                                        ⏱️ {formatVideoTime(meta.startTime)}-{formatVideoTime(meta.endTime)}
                                       </span>
                                     )}
 
@@ -3507,7 +3762,20 @@ export default function EventAdminModal({ isOpen, onClose }) {
                                       {framingEditFit === 'contain' && (
                                         <div style={{ position: 'absolute', inset: -8, overflow: 'hidden', pointerEvents: 'none' }}>
                                           {isVid ? (
-                                            <video src={meta.cleanUrl} autoPlay loop muted playsInline style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'blur(16px) brightness(0.42) saturate(1.4)' }} />
+                                            <video
+                                              src={meta.cleanUrl}
+                                              autoPlay
+                                              muted
+                                              playsInline
+                                              onTimeUpdate={(e) => {
+                                                if (framingEditEndTime > 0 && e.target.currentTime >= framingEditEndTime) {
+                                                  e.target.pause();
+                                                  e.target.currentTime = framingEditEndTime;
+                                                }
+                                              }}
+                                              onEnded={(e) => e.target.pause()}
+                                              style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'blur(16px) brightness(0.42) saturate(1.4)' }}
+                                            />
                                           ) : (
                                             <img src={meta.cleanUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'blur(16px) brightness(0.42) saturate(1.4)' }} />
                                           )}
@@ -3515,11 +3783,29 @@ export default function EventAdminModal({ isOpen, onClose }) {
                                       )}
                                       {isVid ? (
                                         <video
+                                          ref={framingVideoRef}
+                                          key={meta.cleanUrl + framingEditFit + framingEditPos}
                                           src={meta.cleanUrl}
                                           autoPlay
-                                          loop
                                           muted
                                           playsInline
+                                          onLoadedMetadata={(e) => {
+                                            const dur = Math.round(e.target.duration * 10) / 10;
+                                            setFramingEditDuration(dur);
+                                            if (!framingEditEndTime || framingEditEndTime > dur) {
+                                              setFramingEditEndTime(dur);
+                                            }
+                                            if (framingEditStartTime > 0) {
+                                              try { e.target.currentTime = framingEditStartTime; } catch (err) {}
+                                            }
+                                          }}
+                                          onTimeUpdate={(e) => {
+                                            if (framingEditEndTime > 0 && e.target.currentTime >= framingEditEndTime) {
+                                              e.target.pause();
+                                              e.target.currentTime = framingEditEndTime;
+                                            }
+                                          }}
+                                          onEnded={(e) => e.target.pause()}
                                           style={{
                                             position: 'relative',
                                             width: '100%',
@@ -3732,6 +4018,159 @@ export default function EventAdminModal({ isOpen, onClose }) {
                                       ) : (
                                         <div style={{ fontSize: '0.70rem', color: '#c084fc', background: 'rgba(168, 85, 247, 0.12)', padding: '8px 10px', borderRadius: '6px', border: '1px solid rgba(168, 85, 247, 0.25)' }}>
                                           ✓ Modo Pantalla Completa: se muestra el archivo entero sin recortar nada, con fondo ambiental difuminado.
+                                        </div>
+                                      )}
+
+                                      {/* Video Trimmer Controls for existing item */}
+                                      {isVid && (
+                                        <div style={{ paddingTop: '8px', borderTop: '1px solid rgba(255, 255, 255, 0.08)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '6px' }}>
+                                            <label style={{ fontSize: '0.70rem', fontWeight: 800, color: '#e2e8f0', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                              <Scissors size={13} color="#ec4899" />
+                                              <span>RECORTE DE TIEMPO DEL VIDEO:</span>
+                                            </label>
+                                            <span style={{
+                                              fontSize: '0.64rem',
+                                              fontWeight: 900,
+                                              color: '#ec4899',
+                                              background: 'rgba(236, 72, 153, 0.2)',
+                                              border: '1px solid rgba(236, 72, 153, 0.4)',
+                                              padding: '1px 6px',
+                                              borderRadius: '999px',
+                                              fontFamily: 'monospace'
+                                            }}>
+                                              CLIP: {formatVideoTime(Math.max(0, (framingEditEndTime || framingEditDuration) - framingEditStartTime))}
+                                            </span>
+                                          </div>
+
+                                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                                            {/* Start slider */}
+                                            <div style={{ background: 'rgba(255,255,255,0.02)', padding: '6px 8px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.06)' }}>
+                                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                                                <span style={{ fontSize: '0.64rem', color: '#94a3b8', fontWeight: 700 }}>DESDE:</span>
+                                                <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#38bdf8', fontFamily: 'monospace' }}>
+                                                  {formatVideoTime(framingEditStartTime)}
+                                                </span>
+                                              </div>
+                                              <input
+                                                type="range"
+                                                min="0"
+                                                max={Math.max(0, (framingEditEndTime || framingEditDuration) - 0.5)}
+                                                step="0.5"
+                                                value={framingEditStartTime}
+                                                onChange={(e) => {
+                                                  const val = parseFloat(e.target.value);
+                                                  setFramingEditStartTime(val);
+                                                  if (framingVideoRef.current) {
+                                                    framingVideoRef.current.currentTime = val;
+                                                  }
+                                                }}
+                                                style={{ width: '100%', accentColor: '#38bdf8', cursor: 'pointer' }}
+                                              />
+                                            </div>
+
+                                            {/* End slider */}
+                                            <div style={{ background: 'rgba(255,255,255,0.02)', padding: '6px 8px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.06)' }}>
+                                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                                                <span style={{ fontSize: '0.64rem', color: '#94a3b8', fontWeight: 700 }}>HASTA:</span>
+                                                <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#ec4899', fontFamily: 'monospace' }}>
+                                                  {formatVideoTime(framingEditEndTime || framingEditDuration)}
+                                                </span>
+                                              </div>
+                                              <input
+                                                type="range"
+                                                min={Math.min(framingEditDuration || 60, framingEditStartTime + 0.5)}
+                                                max={framingEditDuration || 60}
+                                                step="0.5"
+                                                value={framingEditEndTime || framingEditDuration}
+                                                onChange={(e) => {
+                                                  const val = parseFloat(e.target.value);
+                                                  setFramingEditEndTime(val);
+                                                  if (framingVideoRef.current) {
+                                                    framingVideoRef.current.currentTime = val;
+                                                  }
+                                                }}
+                                                style={{ width: '100%', accentColor: '#ec4899', cursor: 'pointer' }}
+                                              />
+                                            </div>
+                                          </div>
+
+                                          {/* Buttons */}
+                                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px', flexWrap: 'wrap' }}>
+                                            <div style={{ display: 'flex', gap: '4px' }}>
+                                              <button
+                                                type="button"
+                                                onClick={() => {
+                                                  setFramingEditStartTime(0);
+                                                  const ten = Math.min(10, framingEditDuration || 10);
+                                                  setFramingEditEndTime(ten);
+                                                  if (framingVideoRef.current) {
+                                                    framingVideoRef.current.currentTime = 0;
+                                                  }
+                                                }}
+                                                style={{
+                                                  padding: '4px 8px',
+                                                  borderRadius: '4px',
+                                                  background: 'rgba(255, 255, 255, 0.06)',
+                                                  border: '1px solid rgba(255, 255, 255, 0.12)',
+                                                  color: '#cbd5e1',
+                                                  fontSize: '0.64rem',
+                                                  fontWeight: 800,
+                                                  cursor: 'pointer'
+                                                }}
+                                              >
+                                                ⏱️ 10 SEG
+                                              </button>
+                                              <button
+                                                type="button"
+                                                onClick={() => {
+                                                  setFramingEditStartTime(0);
+                                                  setFramingEditEndTime(framingEditDuration);
+                                                  if (framingVideoRef.current) {
+                                                    framingVideoRef.current.currentTime = 0;
+                                                  }
+                                                }}
+                                                style={{
+                                                  padding: '4px 8px',
+                                                  borderRadius: '4px',
+                                                  background: 'rgba(255, 255, 255, 0.06)',
+                                                  border: '1px solid rgba(255, 255, 255, 0.12)',
+                                                  color: '#cbd5e1',
+                                                  fontSize: '0.64rem',
+                                                  fontWeight: 800,
+                                                  cursor: 'pointer'
+                                                }}
+                                              >
+                                                🎬 COMPLETO
+                                              </button>
+                                            </div>
+
+                                            <button
+                                              type="button"
+                                              onClick={() => {
+                                                if (framingVideoRef.current) {
+                                                  framingVideoRef.current.currentTime = framingEditStartTime;
+                                                  framingVideoRef.current.play();
+                                                }
+                                              }}
+                                              style={{
+                                                padding: '4px 8px',
+                                                borderRadius: '4px',
+                                                background: 'rgba(236, 72, 153, 0.2)',
+                                                border: '1px solid rgba(236, 72, 153, 0.5)',
+                                                color: '#ec4899',
+                                                fontSize: '0.66rem',
+                                                fontWeight: 800,
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '4px'
+                                              }}
+                                            >
+                                              <Play size={10} fill="#ec4899" />
+                                              <span>PROBAR</span>
+                                            </button>
+                                          </div>
                                         </div>
                                       )}
 

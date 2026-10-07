@@ -186,7 +186,6 @@ export default function About() {
                       <video
                         src={currentMeta.cleanUrl}
                         autoPlay
-                        loop
                         muted
                         playsInline
                         style={{
@@ -259,9 +258,20 @@ export default function About() {
                     key={`about-curr-${photoIndex}-${progressKey}`}
                     src={currentMeta.cleanUrl}
                     autoPlay
-                    loop
                     muted
                     playsInline
+                    onLoadedMetadata={(e) => {
+                      if (currentMeta.startTime && currentMeta.startTime > 0) {
+                        try { e.target.currentTime = currentMeta.startTime; } catch (err) {}
+                      }
+                    }}
+                    onTimeUpdate={(e) => {
+                      if (currentMeta.endTime && currentMeta.endTime > 0 && e.target.currentTime >= currentMeta.endTime) {
+                        e.target.pause();
+                        e.target.currentTime = currentMeta.endTime;
+                      }
+                    }}
+                    onEnded={(e) => e.target.pause()}
                     className={isTransitioning ? 'carousel-slide-enter' : (currentMeta.fit === 'contain' ? '' : 'carousel-ken-burns')}
                     style={{
                       position: 'absolute',
