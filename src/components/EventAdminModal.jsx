@@ -148,11 +148,14 @@ export default function EventAdminModal({ isOpen, onClose }) {
   const [carouselStatus, setCarouselStatus] = useState('');
   const [carouselStatusMsg, setCarouselStatusMsg] = useState('');
   const [carouselAudio, setCarouselAudio] = useState(false);
+  const [carouselVolume, setCarouselVolume] = useState(50);
   const [carouselFit, setCarouselFit] = useState('cover'); // 'cover' | 'contain'
   const [carouselPos, setCarouselPos] = useState('center'); // 'top' | 'center' | 'bottom'
   const [framingEditIdx, setFramingEditIdx] = useState(null);
   const [framingEditFit, setFramingEditFit] = useState('cover');
   const [framingEditPos, setFramingEditPos] = useState('center');
+  const [framingEditAudio, setFramingEditAudio] = useState(false);
+  const [framingEditVolume, setFramingEditVolume] = useState(50);
 
   // Video trimming state
   const [carouselVideoDuration, setCarouselVideoDuration] = useState(0);
@@ -603,6 +606,8 @@ export default function EventAdminModal({ isOpen, onClose }) {
       setCarouselStartTime(0);
       setCarouselEndTime(0);
       setCarouselVideoDuration(0);
+      setCarouselAudio(false);
+      setCarouselVolume(50);
     }
     e.target.value = '';
   };
@@ -624,6 +629,7 @@ export default function EventAdminModal({ isOpen, onClose }) {
       let uploadedUrl = await uploadFlyerImage(carouselFile);
       uploadedUrl = buildCarouselItemMetaUrl(uploadedUrl, {
         hasAudio: isVid && carouselAudio,
+        volume: carouselVolume,
         isHidden: false,
         fit: carouselFit,
         pos: carouselPos,
@@ -642,6 +648,7 @@ export default function EventAdminModal({ isOpen, onClose }) {
       setCarouselFile(null);
       setCarouselPreview('');
       setCarouselAudio(false);
+      setCarouselVolume(50);
       setCarouselFit('cover');
       setCarouselPos('center');
       setCarouselStartTime(0);
@@ -697,6 +704,8 @@ export default function EventAdminModal({ isOpen, onClose }) {
     setFramingEditStartTime(meta.startTime || 0);
     setFramingEditEndTime(meta.endTime || 0);
     setFramingEditDuration(0);
+    setFramingEditAudio(meta.hasAudio);
+    setFramingEditVolume(meta.volume ?? 50);
     setFramingEditIdx(index);
   };
 
@@ -704,8 +713,10 @@ export default function EventAdminModal({ isOpen, onClose }) {
     try {
       const item = carouselPhotos[index];
       const meta = parseCarouselItemMeta(item);
+      const isVid = isVideoMedia(meta.cleanUrl);
       const updatedItem = buildCarouselItemMetaUrl(meta.cleanUrl, {
-        hasAudio: meta.hasAudio,
+        hasAudio: isVid ? framingEditAudio : false,
+        volume: framingEditVolume,
         isHidden: meta.isHidden,
         fit: framingEditFit,
         pos: framingEditPos,
@@ -729,6 +740,7 @@ export default function EventAdminModal({ isOpen, onClose }) {
       const meta = parseCarouselItemMeta(item);
       const updatedItem = buildCarouselItemMetaUrl(meta.cleanUrl, {
         hasAudio: !meta.hasAudio,
+        volume: meta.volume ?? 50,
         isHidden: meta.isHidden,
         fit: meta.fit,
         pos: meta.pos,
@@ -760,6 +772,7 @@ export default function EventAdminModal({ isOpen, onClose }) {
 
       const updatedItem = buildCarouselItemMetaUrl(meta.cleanUrl, {
         hasAudio: meta.hasAudio,
+        volume: meta.volume ?? 50,
         isHidden: nextHidden,
         fit: meta.fit,
         pos: meta.pos,
@@ -3278,8 +3291,8 @@ export default function EventAdminModal({ isOpen, onClose }) {
 
                         {/* Audio configuration if video is selected */}
                         {isCarouselVideo && (
-                          <div style={{ paddingTop: '8px', borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
-                            <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: '#FFFFFF', marginBottom: '8px' }}>
+                          <div style={{ paddingTop: '10px', borderTop: '1px solid rgba(255, 255, 255, 0.08)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                            <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: '#FFFFFF' }}>
                               🔊 CONFIGURACIÓN DE AUDIO DEL VIDEO EN CARROUSEL:
                             </label>
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
@@ -3324,13 +3337,81 @@ export default function EventAdminModal({ isOpen, onClose }) {
                                 }}
                               >
                                 <Volume2 size={15} />
-                                <span>🔊 CON AUDIO (50% VOL)</span>
+                                <span>🔊 CON AUDIO ({carouselVolume}%)</span>
                               </button>
                             </div>
-                            <div style={{ fontSize: '0.70rem', color: '#94a3b8', marginTop: '6px' }}>
+
+                            {/* Volume potency slider & presets when audio is enabled */}
+                            {carouselAudio && (
+                              <div
+                                style={{
+                                  background: 'rgba(34, 197, 94, 0.07)',
+                                  border: '1px solid rgba(34, 197, 94, 0.3)',
+                                  borderRadius: '8px',
+                                  padding: '10px 12px',
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  gap: '8px'
+                                }}
+                              >
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                  <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#4ade80', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                    <SlidersHorizontal size={13} color="#4ade80" />
+                                    POTENCIA DE VOLUMEN AL REPRODUCIR:
+                                  </span>
+                                  <span style={{ fontSize: '0.76rem', fontWeight: 900, color: '#22c55e', fontFamily: 'monospace' }}>
+                                    {carouselVolume}%
+                                  </span>
+                                </div>
+
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                  <Volume1 size={14} color="#94a3b8" />
+                                  <input
+                                    type="range"
+                                    min="5"
+                                    max="100"
+                                    step="5"
+                                    value={carouselVolume}
+                                    onChange={(e) => setCarouselVolume(parseInt(e.target.value, 10))}
+                                    style={{ flex: 1, accentColor: '#22c55e', cursor: 'pointer' }}
+                                  />
+                                  <Volume2 size={16} color="#22c55e" />
+                                </div>
+
+                                {/* Volume presets */}
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px' }}>
+                                  {[
+                                    { label: '25% SUAVE', val: 25 },
+                                    { label: '50% MEDIO', val: 50 },
+                                    { label: '75% FUERTE', val: 75 },
+                                    { label: '100% MAX', val: 100 }
+                                  ].map((p) => (
+                                    <button
+                                      key={p.val}
+                                      type="button"
+                                      onClick={() => setCarouselVolume(p.val)}
+                                      style={{
+                                        padding: '5px 4px',
+                                        borderRadius: '6px',
+                                        border: carouselVolume === p.val ? '1px solid #22c55e' : '1px solid rgba(255,255,255,0.1)',
+                                        background: carouselVolume === p.val ? 'rgba(34, 197, 94, 0.25)' : 'rgba(255,255,255,0.04)',
+                                        color: carouselVolume === p.val ? '#4ade80' : '#94a3b8',
+                                        fontSize: '0.66rem',
+                                        fontWeight: 800,
+                                        cursor: 'pointer'
+                                      }}
+                                    >
+                                      {p.label}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            <div style={{ fontSize: '0.70rem', color: '#94a3b8' }}>
                               {carouselAudio
-                                ? '✓ El video se reproducirá con audio al 50% de volumen de forma predeterminada cuando esté visible.'
-                                : '✓ El video se reproducirá en silencio como fondo animado continuo.'}
+                                ? `✓ En la web el video siempre iniciará en silencio (mute) por cortesía. Al activar sonido sonará a ${carouselVolume}% de potencia.`
+                                : '✓ El video se reproducirá en silencio como fondo visual animado continuo.'}
                             </div>
                           </div>
                         )}
@@ -3611,10 +3692,10 @@ export default function EventAdminModal({ isOpen, onClose }) {
                                           alignItems: 'center',
                                           gap: '3px'
                                         }}
-                                        title={hasAudio ? 'Clic para silenciar este video' : 'Clic para activar audio al 50%'}
+                                        title={hasAudio ? 'Clic para silenciar este video' : `Clic para activar audio al ${meta.volume || 50}%`}
                                       >
                                         {hasAudio ? <Volume2 size={11} /> : <VolumeX size={11} />}
-                                        <span>{hasAudio ? 'AUDIO 50%' : 'MUTE'}</span>
+                                        <span>{hasAudio ? `AUDIO ${meta.volume || 50}%` : 'MUTE'}</span>
                                       </button>
                                     )}
 
@@ -4303,6 +4384,124 @@ export default function EventAdminModal({ isOpen, onClose }) {
                                               <span>PROBAR</span>
                                             </button>
                                           </div>
+                                        </div>
+                                      )}
+
+                                      {/* Video Audio & Volume Potency in Framing Drawer */}
+                                      {isVid && (
+                                        <div style={{ paddingTop: '8px', borderTop: '1px solid rgba(255, 255, 255, 0.08)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                            <label style={{ fontSize: '0.70rem', fontWeight: 800, color: '#e2e8f0', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                              <Volume2 size={13} color="#22c55e" />
+                                              <span>AUDIO Y POTENCIA DE VOLUMEN:</span>
+                                            </label>
+                                            <span style={{ fontSize: '0.64rem', fontWeight: 900, color: framingEditAudio ? '#22c55e' : '#ef4444', fontFamily: 'monospace' }}>
+                                              {framingEditAudio ? `${framingEditVolume}% POTENCIA` : 'MUTE (SILENCIO)'}
+                                            </span>
+                                          </div>
+
+                                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
+                                            <button
+                                              type="button"
+                                              onClick={() => setFramingEditAudio(false)}
+                                              style={{
+                                                padding: '6px 8px',
+                                                borderRadius: '6px',
+                                                border: !framingEditAudio ? '2px solid #ef4444' : '1px solid rgba(255, 255, 255, 0.1)',
+                                                background: !framingEditAudio ? 'rgba(239, 68, 68, 0.2)' : 'rgba(255, 255, 255, 0.04)',
+                                                color: !framingEditAudio ? '#ef4444' : '#94a3b8',
+                                                fontWeight: 800,
+                                                fontSize: '0.68rem',
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                gap: '5px'
+                                              }}
+                                            >
+                                              <VolumeX size={12} />
+                                              <span>🔇 SIN AUDIO</span>
+                                            </button>
+
+                                            <button
+                                              type="button"
+                                              onClick={() => setFramingEditAudio(true)}
+                                              style={{
+                                                padding: '6px 8px',
+                                                borderRadius: '6px',
+                                                border: framingEditAudio ? '2px solid #22c55e' : '1px solid rgba(255, 255, 255, 0.1)',
+                                                background: framingEditAudio ? 'rgba(34, 197, 94, 0.2)' : 'rgba(255, 255, 255, 0.04)',
+                                                color: framingEditAudio ? '#22c55e' : '#94a3b8',
+                                                fontWeight: 800,
+                                                fontSize: '0.68rem',
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                gap: '5px'
+                                              }}
+                                            >
+                                              <Volume2 size={12} />
+                                              <span>🔊 CON AUDIO</span>
+                                            </button>
+                                          </div>
+
+                                          {framingEditAudio && (
+                                            <div
+                                              style={{
+                                                background: 'rgba(34, 197, 94, 0.06)',
+                                                border: '1px solid rgba(34, 197, 94, 0.25)',
+                                                borderRadius: '6px',
+                                                padding: '8px 10px',
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                gap: '6px'
+                                              }}
+                                            >
+                                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <Volume1 size={13} color="#94a3b8" />
+                                                <input
+                                                  type="range"
+                                                  min="5"
+                                                  max="100"
+                                                  step="5"
+                                                  value={framingEditVolume}
+                                                  onChange={(e) => setFramingEditVolume(parseInt(e.target.value, 10))}
+                                                  style={{ flex: 1, accentColor: '#22c55e', cursor: 'pointer' }}
+                                                />
+                                                <span style={{ fontSize: '0.70rem', fontWeight: 900, color: '#22c55e', width: '36px', textAlign: 'right', fontFamily: 'monospace' }}>
+                                                  {framingEditVolume}%
+                                                </span>
+                                              </div>
+
+                                              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '4px' }}>
+                                                {[
+                                                  { label: '25%', val: 25 },
+                                                  { label: '50%', val: 50 },
+                                                  { label: '75%', val: 75 },
+                                                  { label: '100%', val: 100 }
+                                                ].map((p) => (
+                                                  <button
+                                                    key={p.val}
+                                                    type="button"
+                                                    onClick={() => setFramingEditVolume(p.val)}
+                                                    style={{
+                                                      padding: '4px',
+                                                      borderRadius: '4px',
+                                                      border: framingEditVolume === p.val ? '1px solid #22c55e' : '1px solid rgba(255,255,255,0.08)',
+                                                      background: framingEditVolume === p.val ? 'rgba(34, 197, 94, 0.25)' : 'rgba(255,255,255,0.03)',
+                                                      color: framingEditVolume === p.val ? '#4ade80' : '#94a3b8',
+                                                      fontSize: '0.64rem',
+                                                      fontWeight: 800,
+                                                      cursor: 'pointer'
+                                                    }}
+                                                  >
+                                                    {p.label}
+                                                  </button>
+                                                ))}
+                                              </div>
+                                            </div>
+                                          )}
                                         </div>
                                       )}
 

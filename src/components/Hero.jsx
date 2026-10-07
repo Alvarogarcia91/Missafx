@@ -29,7 +29,8 @@ export default function Hero() {
   const [prevPhotoIndex, setPrevPhotoIndex] = useState(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [progressKey, setProgressKey] = useState(0);
-  const [userMuted, setUserMuted] = useState(false);
+  const [userMuted, setUserMuted] = useState(true); // Default to muted so video never sounds automatically
+  const [heroVolume, setHeroVolume] = useState(50);
 
   const videoRef = useRef(null);
   const queueManager = useRef(null);
@@ -101,12 +102,19 @@ export default function Hero() {
   }, [photos, isRandom, triggerHeroTransition]);
 
   useEffect(() => {
+    if (currentMeta && currentMeta.volume !== undefined) {
+      setHeroVolume(currentMeta.volume);
+    }
+  }, [photoIndex, currentMeta?.volume]);
+
+  useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
 
     if (isCurrentVideo) {
+      const activeVolume = typeof heroVolume === 'number' ? heroVolume / 100 : ((currentMeta.volume ?? 50) / 100);
+      video.volume = Math.max(0, Math.min(1, activeVolume));
       if (hasAudioConfig && !userMuted) {
-        video.volume = 0.5; // Default 50% volume as requested
         video.muted = false;
       } else {
         video.muted = true;
@@ -159,7 +167,7 @@ export default function Hero() {
         video.muted = true;
       }
     };
-  }, [photoIndex, photos, isCurrentVideo, hasAudioConfig, userMuted, currentMeta.startTime, currentMeta.endTime]);
+  }, [photoIndex, photos, isCurrentVideo, hasAudioConfig, userMuted, heroVolume, currentMeta.volume, currentMeta.startTime, currentMeta.endTime]);
 
   return (
     <section
@@ -637,56 +645,97 @@ export default function Hero() {
                   />
                 )}
 
-                {/* Floating mini audio toggle for videos */}
-                {isCurrentVideo && (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setUserMuted((prev) => {
-                        const next = !prev;
-                        if (videoRef.current) {
-                          videoRef.current.volume = 0.5;
-                          videoRef.current.muted = next;
-                          if (!next) videoRef.current.play().catch(() => {});
-                        }
-                        return next;
-                      });
-                    }}
+                {/* Floating audio toggle & volume potency controller for videos */}
+                {isCurrentVideo && hasAudioConfig && (
+                  <div
                     style={{
                       position: 'absolute',
                       top: '16px',
                       right: '16px',
                       zIndex: 10,
-                      background: 'rgba(0, 0, 0, 0.75)',
-                      backdropFilter: 'blur(8px)',
-                      border: '1px solid rgba(255, 255, 255, 0.25)',
-                      borderRadius: '20px',
+                      background: 'rgba(0, 0, 0, 0.78)',
+                      backdropFilter: 'blur(10px)',
+                      border: !userMuted ? '1px solid rgba(34, 197, 94, 0.45)' : '1px solid rgba(255, 255, 255, 0.22)',
+                      borderRadius: '24px',
                       padding: '5px 12px',
-                      color: '#FFFFFF',
-                      fontSize: '0.74rem',
-                      fontWeight: 800,
-                      cursor: 'pointer',
                       display: 'inline-flex',
                       alignItems: 'center',
-                      gap: '6px',
-                      boxShadow: '0 4px 15px rgba(0,0,0,0.5)',
-                      transition: 'all 0.2s ease'
+                      gap: '8px',
+                      boxShadow: !userMuted ? '0 4px 18px rgba(34, 197, 94, 0.25)' : '0 4px 15px rgba(0,0,0,0.5)',
+                      transition: 'all 0.25s ease'
                     }}
-                    title={hasAudioConfig && !userMuted ? 'Silenciar audio' : 'Activar audio (50%)'}
                   >
-                    {hasAudioConfig && !userMuted ? (
-                      <>
-                        <Volume2 size={14} color="#22c55e" />
-                        <span style={{ color: '#22c55e' }}>AUDIO 50%</span>
-                      </>
-                    ) : (
-                      <>
-                        <VolumeX size={14} color="#94a3b8" />
-                        <span style={{ color: '#94a3b8' }}>MUTE</span>
-                      </>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setUserMuted((prev) => {
+                          const next = !prev;
+                          if (videoRef.current) {
+                            videoRef.current.volume = (heroVolume || 50) / 100;
+                            videoRef.current.muted = next;
+                            if (!next) videoRef.current.play().catch(() => {});
+                          }
+                          return next;
+                        });
+                      }}
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        color: !userMuted ? '#22c55e' : '#94a3b8',
+                        fontSize: '0.74rem',
+                        fontWeight: 800,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        padding: 0
+                      }}
+                      title={userMuted ? 'Toca para activar audio' : 'Toca para silenciar'}
+                    >
+                      {!userMuted ? (
+                        <>
+                          <Volume2 size={15} color="#22c55e" />
+                          <span style={{ color: '#22c55e' }}>{heroVolume}%</span>
+                        </>
+                      ) : (
+                        <>
+                          <VolumeX size={15} color="#94a3b8" />
+                          <span style={{ color: '#94a3b8' }}>MUTE</span>
+                        </>
+                      )}
+                    </button>
+
+                    {!userMuted && (
+                      <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        value={heroVolume}
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          const vol = parseInt(e.target.value, 10);
+                          setHeroVolume(vol);
+                          if (videoRef.current) {
+                            videoRef.current.volume = vol / 100;
+                            if (vol === 0) {
+                              videoRef.current.muted = true;
+                              setUserMuted(true);
+                            } else {
+                              videoRef.current.muted = false;
+                            }
+                          }
+                        }}
+                        style={{
+                          width: '64px',
+                          accentColor: '#22c55e',
+                          cursor: 'pointer'
+                        }}
+                        title={`Potencia de volumen: ${heroVolume}%`}
+                      />
                     )}
-                  </button>
+                  </div>
                 )}
 
                 {/* Vignette Gradients */}

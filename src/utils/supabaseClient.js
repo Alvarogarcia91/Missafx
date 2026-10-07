@@ -121,7 +121,7 @@ export function formatVideoTime(sec = 0) {
 
 export function parseCarouselItemMeta(url) {
   if (!url || typeof url !== 'string') {
-    return { cleanUrl: '', hasAudio: false, isHidden: false, fit: 'cover', pos: 'center', startTime: 0, endTime: 0 };
+    return { cleanUrl: '', hasAudio: false, volume: 50, isHidden: false, fit: 'cover', pos: 'center', startTime: 0, endTime: 0 };
   }
   const parts = url.split('#');
   const cleanUrl = parts[0];
@@ -129,6 +129,12 @@ export function parseCarouselItemMeta(url) {
 
   const hasAudio = hash.includes('audio=true') || hash.includes('audio=1');
   const isHidden = hash.includes('hidden=true') || hash.includes('active=false');
+
+  let volume = 50;
+  const volMatch = hash.match(/vol(?:ume)?=([0-9]+)/i);
+  if (volMatch) {
+    volume = Math.max(0, Math.min(100, parseInt(volMatch[1], 10)));
+  }
 
   let fit = 'cover';
   if (hash.includes('fit=contain')) fit = 'contain';
@@ -151,14 +157,18 @@ export function parseCarouselItemMeta(url) {
     endTime = Math.max(0, parseFloat(endMatch[1]));
   }
 
-  return { cleanUrl, hasAudio, isHidden, fit, pos, startTime, endTime };
+  return { cleanUrl, hasAudio, volume, isHidden, fit, pos, startTime, endTime };
 }
 
-export function buildCarouselItemMetaUrl(url, { hasAudio = false, isHidden = false, fit = 'cover', pos = 'center', startTime = 0, endTime = 0 } = {}) {
+export function buildCarouselItemMetaUrl(url, { hasAudio = false, volume = 50, isHidden = false, fit = 'cover', pos = 'center', startTime = 0, endTime = 0 } = {}) {
   if (!url) return '';
   const clean = url.split('#')[0];
   const tags = [];
-  if (hasAudio) tags.push('audio=true');
+  if (hasAudio) {
+    tags.push('audio=true');
+    const safeVol = typeof volume === 'number' ? Math.max(0, Math.min(100, Math.round(volume))) : 50;
+    tags.push(`vol=${safeVol}`);
+  }
   if (isHidden) tags.push('hidden=true');
   if (fit && fit !== 'cover') tags.push(`fit=${fit}`);
   if (pos && pos !== 'center') tags.push(`pos=${pos}`);
@@ -227,6 +237,11 @@ export function getPosPercentX(pos) {
 export function getCarouselItemAudio(url) {
   if (!url) return false;
   return parseCarouselItemMeta(url).hasAudio;
+}
+
+export function getCarouselItemVolume(url) {
+  if (!url) return 50;
+  return parseCarouselItemMeta(url).volume ?? 50;
 }
 
 export function getCarouselItemHidden(url) {
