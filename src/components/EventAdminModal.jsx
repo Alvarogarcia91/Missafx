@@ -30,7 +30,11 @@ import {
   Volume2,
   VolumeX,
   Eye,
-  EyeOff
+  EyeOff,
+  Maximize2,
+  Crop,
+  SlidersHorizontal,
+  Check
 } from 'lucide-react';
 import {
   fetchEvents,
@@ -59,6 +63,10 @@ import {
   saveCarouselRandom,
   resetCarouselPhotos,
   DEFAULT_CAROUSEL_PHOTOS,
+  parseCarouselItemMeta,
+  getObjectPositionCss,
+  getCarouselItemFit,
+  getCarouselItemPos,
   getCarouselItemAudio,
   getCarouselItemHidden,
   buildCarouselItemMetaUrl,
@@ -124,6 +132,11 @@ export default function EventAdminModal({ isOpen, onClose }) {
   const [carouselStatus, setCarouselStatus] = useState('');
   const [carouselStatusMsg, setCarouselStatusMsg] = useState('');
   const [carouselAudio, setCarouselAudio] = useState(false);
+  const [carouselFit, setCarouselFit] = useState('cover'); // 'cover' | 'contain'
+  const [carouselPos, setCarouselPos] = useState('center'); // 'top' | 'center' | 'bottom'
+  const [framingEditIdx, setFramingEditIdx] = useState(null);
+  const [framingEditFit, setFramingEditFit] = useState('cover');
+  const [framingEditPos, setFramingEditPos] = useState('center');
 
   useEffect(() => {
     if (isOpen && isAuthenticated) {
@@ -441,9 +454,12 @@ export default function EventAdminModal({ isOpen, onClose }) {
     try {
       const isVid = checkIsVideo(carouselFile, carouselPreview);
       let uploadedUrl = await uploadFlyerImage(carouselFile);
-      if (isVid && carouselAudio) {
-        uploadedUrl = buildCarouselItemUrl(uploadedUrl, true);
-      }
+      uploadedUrl = buildCarouselItemMetaUrl(uploadedUrl, {
+        hasAudio: isVid && carouselAudio,
+        isHidden: false,
+        fit: carouselFit,
+        pos: carouselPos
+      });
       const updated = [...carouselPhotos, uploadedUrl];
       await saveCarouselPhotos(updated);
       setCarouselPhotos(updated);
@@ -456,6 +472,8 @@ export default function EventAdminModal({ isOpen, onClose }) {
       setCarouselFile(null);
       setCarouselPreview('');
       setCarouselAudio(false);
+      setCarouselFit('cover');
+      setCarouselPos('center');
 
       window.dispatchEvent(new CustomEvent('missafx-carousel-updated'));
     } catch (err) {
@@ -467,12 +485,50 @@ export default function EventAdminModal({ isOpen, onClose }) {
     }
   };
 
+  const handleOpenFramingEdit = (index) => {
+    if (framingEditIdx === index) {
+      setFramingEditIdx(null);
+      return;
+    }
+    const item = carouselPhotos[index];
+    const fit = getCarouselItemFit(item);
+    const pos = getCarouselItemPos(item);
+    setFramingEditFit(fit);
+    setFramingEditPos(pos);
+    setFramingEditIdx(index);
+  };
+
+  const handleSaveFramingEdit = async (index) => {
+    try {
+      const item = carouselPhotos[index];
+      const meta = parseCarouselItemMeta(item);
+      const updatedItem = buildCarouselItemMetaUrl(meta.cleanUrl, {
+        hasAudio: meta.hasAudio,
+        isHidden: meta.isHidden,
+        fit: framingEditFit,
+        pos: framingEditPos
+      });
+      const updated = [...carouselPhotos];
+      updated[index] = updatedItem;
+      await saveCarouselPhotos(updated);
+      setCarouselPhotos(updated);
+      setFramingEditIdx(null);
+      window.dispatchEvent(new CustomEvent('missafx-carousel-updated'));
+    } catch (err) {
+      alert('Error al guardar encuadre: ' + err.message);
+    }
+  };
+
   const handleToggleItemAudio = async (index) => {
     try {
       const item = carouselPhotos[index];
-      const currentlyHasAudio = getCarouselItemAudio(item);
-      const isHidden = getCarouselItemHidden(item);
-      const updatedItem = buildCarouselItemMetaUrl(item, { hasAudio: !currentlyHasAudio, isHidden });
+      const meta = parseCarouselItemMeta(item);
+      const updatedItem = buildCarouselItemMetaUrl(meta.cleanUrl, {
+        hasAudio: !meta.hasAudio,
+        isHidden: meta.isHidden,
+        fit: meta.fit,
+        pos: meta.pos
+      });
       const updated = [...carouselPhotos];
       updated[index] = updatedItem;
       await saveCarouselPhotos(updated);
@@ -486,18 +542,22 @@ export default function EventAdminModal({ isOpen, onClose }) {
   const handleToggleItemVisibility = async (index) => {
     try {
       const item = carouselPhotos[index];
-      const isHidden = getCarouselItemHidden(item);
-      const hasAudio = getCarouselItemAudio(item);
-      const nextHidden = !isHidden;
+      const meta = parseCarouselItemMeta(item);
+      const nextHidden = !meta.isHidden;
 
       // Prevent hiding all items (must keep at least 1 active)
       const activeCount = carouselPhotos.filter(p => !getCarouselItemHidden(p)).length;
-      if (!isHidden && activeCount <= 1) {
+      if (!meta.isHidden && activeCount <= 1) {
         alert('Debe haber al menos 1 foto o video activo en el carrousel para que la página siempre tenga contenido visual.');
         return;
       }
 
-      const updatedItem = buildCarouselItemMetaUrl(item, { hasAudio, isHidden: nextHidden });
+      const updatedItem = buildCarouselItemMetaUrl(meta.cleanUrl, {
+        hasAudio: meta.hasAudio,
+        isHidden: nextHidden,
+        fit: meta.fit,
+        pos: meta.pos
+      });
       const updated = [...carouselPhotos];
       updated[index] = updatedItem;
       await saveCarouselPhotos(updated);
@@ -509,14 +569,14 @@ export default function EventAdminModal({ isOpen, onClose }) {
   };
 
   const handleDeleteCarouselPhoto = async (index) => {
-    if (!window.confirm('¿Seguro que deseas eliminar esta foto del carrousel?')) return;
+    if (!window.confirm('¿Seguro que deseas eliminar este elemento del carrousel?')) return;
     try {
       const updated = carouselPhotos.filter((_, i) => i !== index);
       await saveCarouselPhotos(updated);
       setCarouselPhotos(updated);
       window.dispatchEvent(new CustomEvent('missafx-carousel-updated'));
     } catch (err) {
-      alert('Error al eliminar foto: ' + err.message);
+      alert('Error al eliminar: ' + err.message);
     }
   };
 
@@ -543,7 +603,7 @@ export default function EventAdminModal({ isOpen, onClose }) {
   };
 
   const handleResetCarousel = async () => {
-    if (!window.confirm('¿Restablecer el carrousel a las 9 fotos oficiales originales?')) return;
+    if (!window.confirm('¿Restablecer el carrousel a las fotos iniciales predeterminadas?')) return;
     try {
       const def = await resetCarouselPhotos();
       setCarouselPhotos(def);
@@ -2174,10 +2234,10 @@ export default function EventAdminModal({ isOpen, onClose }) {
                         alignItems: 'center',
                         gap: '6px'
                       }}
-                      title="Restablecer fotos oficiales"
+                      title="Restablecer carrousel predeterminado"
                     >
                       <RotateCcw size={13} />
-                      <span>Restablecer Originales</span>
+                      <span>Restablecer Predeterminado</span>
                     </button>
                   </div>
 
@@ -2311,52 +2371,143 @@ export default function EventAdminModal({ isOpen, onClose }) {
                           position: 'absolute',
                           inset: 0,
                           opacity: 0,
-                          cursor: 'pointer'
+                          cursor: 'pointer',
+                          zIndex: 10
                         }}
                       />
 
                       {carouselPreview ? (
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
-                          {isCarouselVideo ? (
-                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                          {/* Hero-scaled real aspect-ratio live preview card */}
+                          <div
+                            style={{
+                              position: 'relative',
+                              width: '230px',
+                              maxWidth: '100%',
+                              aspectRatio: '1/1.08',
+                              borderRadius: '16px',
+                              overflow: 'hidden',
+                              border: '2px solid rgba(255, 0, 60, 0.45)',
+                              boxShadow: '0 14px 35px rgba(0,0,0,0.7), 0 0 25px rgba(255,0,60,0.2)',
+                              background: '#09090d',
+                              marginBottom: '10px'
+                            }}
+                          >
+                            {/* Ambient blur backdrop for Cinema Fit */}
+                            {carouselFit === 'contain' && (
+                              <div style={{ position: 'absolute', inset: -15, overflow: 'hidden', pointerEvents: 'none' }}>
+                                {isCarouselVideo ? (
+                                  <video
+                                    src={carouselPreview}
+                                    autoPlay
+                                    loop
+                                    muted
+                                    playsInline
+                                    style={{
+                                      width: '100%',
+                                      height: '100%',
+                                      objectFit: 'cover',
+                                      filter: 'blur(22px) brightness(0.42) saturate(1.4)',
+                                      transform: 'scale(1.2)'
+                                    }}
+                                  />
+                                ) : (
+                                  <img
+                                    src={carouselPreview}
+                                    alt=""
+                                    style={{
+                                      width: '100%',
+                                      height: '100%',
+                                      objectFit: 'cover',
+                                      filter: 'blur(22px) brightness(0.42) saturate(1.4)',
+                                      transform: 'scale(1.2)'
+                                    }}
+                                  />
+                                )}
+                              </div>
+                            )}
+
+                            {/* Crisp Foreground Media */}
+                            {isCarouselVideo ? (
                               <video
-                                key={carouselPreview}
+                                key={carouselPreview + carouselFit + carouselPos}
                                 src={carouselPreview}
                                 autoPlay
                                 loop
                                 muted
                                 playsInline
                                 style={{
-                                  maxHeight: '160px',
-                                  maxWidth: '100%',
-                                  borderRadius: '8px',
-                                  border: '1px solid rgba(255, 0, 60, 0.4)',
+                                  position: 'relative',
+                                  width: '100%',
+                                  height: '100%',
+                                  objectFit: carouselFit,
+                                  objectPosition: getObjectPositionCss(carouselPos),
+                                  filter: carouselFit === 'contain' ? 'drop-shadow(0 8px 20px rgba(0,0,0,0.85))' : 'none',
                                   display: 'block',
-                                  background: '#000',
+                                  zIndex: 2,
                                   pointerEvents: 'none'
                                 }}
                               />
-                              <span style={{ fontSize: '0.72rem', color: '#38bdf8', fontWeight: 700 }}>
-                                🎥 {carouselFile?.name || 'Video detectado'}
-                              </span>
-                            </div>
-                          ) : (
-                            <img
-                              key={carouselPreview}
-                              src={carouselPreview}
-                              alt="Preview"
+                            ) : (
+                              <img
+                                key={carouselPreview + carouselFit + carouselPos}
+                                src={carouselPreview}
+                                alt="Preview"
+                                style={{
+                                  position: 'relative',
+                                  width: '100%',
+                                  height: '100%',
+                                  objectFit: carouselFit,
+                                  objectPosition: getObjectPositionCss(carouselPos),
+                                  filter: carouselFit === 'contain' ? 'drop-shadow(0 8px 20px rgba(0,0,0,0.85))' : 'none',
+                                  display: 'block',
+                                  zIndex: 2,
+                                  pointerEvents: 'none'
+                                }}
+                              />
+                            )}
+
+                            {/* Live Badge overlay */}
+                            <div
                               style={{
-                                maxHeight: '140px',
-                                maxWidth: '100%',
-                                borderRadius: '8px',
-                                border: '1px solid rgba(255, 255, 255, 0.2)',
-                                display: 'block',
-                                pointerEvents: 'none'
+                                position: 'absolute',
+                                top: '8px',
+                                left: '8px',
+                                zIndex: 10,
+                                background: 'rgba(0,0,0,0.8)',
+                                backdropFilter: 'blur(8px)',
+                                border: '1px solid rgba(255, 0, 60, 0.4)',
+                                color: '#FF003C',
+                                fontSize: '0.60rem',
+                                fontWeight: 900,
+                                padding: '2px 7px',
+                                borderRadius: '5px',
+                                letterSpacing: '0.05em'
                               }}
-                            />
-                          )}
+                            >
+                              PREVIEW HERO WEB
+                            </div>
+
+                            <div
+                              style={{
+                                position: 'absolute',
+                                bottom: '8px',
+                                right: '8px',
+                                zIndex: 10,
+                                background: carouselFit === 'contain' ? 'rgba(168, 85, 247, 0.9)' : 'rgba(56, 189, 248, 0.9)',
+                                color: '#fff',
+                                fontSize: '0.58rem',
+                                fontWeight: 800,
+                                padding: '2px 6px',
+                                borderRadius: '4px'
+                              }}
+                            >
+                              {carouselFit === 'contain' ? 'CINEMA FIT' : `COVER • ${carouselPos.toUpperCase()}`}
+                            </div>
+                          </div>
+
                           <span style={{ fontSize: '0.78rem', color: '#22c55e', fontWeight: 700 }}>
-                            ✓ {isCarouselVideo ? 'Video listo para carrousel' : 'Foto seleccionada'} (toca para cambiar)
+                            ✓ {isCarouselVideo ? 'Video listo' : 'Foto lista'} — Toca el recuadro para cambiar de archivo
                           </span>
                         </div>
                       ) : (
@@ -2372,70 +2523,208 @@ export default function EventAdminModal({ isOpen, onClose }) {
                       )}
                     </div>
 
-                    {/* Audio configuration if video is selected */}
-                    {carouselPreview && isCarouselVideo && (
+                    {/* Framing & Audio Controls when media is selected */}
+                    {carouselPreview && (
                       <div
                         style={{
-                          marginTop: '12px',
-                          padding: '12px 14px',
-                          borderRadius: '10px',
-                          background: 'rgba(255, 255, 255, 0.04)',
-                          border: '1px solid rgba(255, 255, 255, 0.1)'
+                          marginTop: '14px',
+                          padding: '14px 16px',
+                          borderRadius: '12px',
+                          background: 'rgba(255, 255, 255, 0.03)',
+                          border: '1px solid rgba(255, 255, 255, 0.1)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '12px'
                         }}
                       >
-                        <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: '#FFFFFF', marginBottom: '8px' }}>
-                          🔊 CONFIGURACIÓN DE AUDIO DEL VIDEO EN CARROUSEL:
-                        </label>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                          <button
-                            type="button"
-                            onClick={() => setCarouselAudio(false)}
-                            style={{
-                              padding: '10px 8px',
-                              borderRadius: '8px',
-                              border: !carouselAudio ? '2px solid #ef4444' : '1px solid rgba(255, 255, 255, 0.1)',
-                              background: !carouselAudio ? 'rgba(239, 68, 68, 0.18)' : 'rgba(255, 255, 255, 0.04)',
-                              color: !carouselAudio ? '#ef4444' : '#94a3b8',
-                              fontWeight: 800,
-                              fontSize: '0.76rem',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              gap: '6px'
-                            }}
-                          >
-                            <VolumeX size={15} />
-                            <span>🔇 SIN AUDIO (MUTE)</span>
-                          </button>
+                        {/* Mode Fit: Cover vs Cinema Fit */}
+                        <div>
+                          <div style={{ fontSize: '0.78rem', fontWeight: 800, color: '#FFFFFF', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <Maximize2 size={15} color="#c084fc" />
+                            <span>MODO DE ENCUADRE / VISUALIZACIÓN EN LA WEB:</span>
+                          </div>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                            <button
+                              type="button"
+                              onClick={() => setCarouselFit('cover')}
+                              style={{
+                                padding: '10px 8px',
+                                borderRadius: '8px',
+                                border: carouselFit === 'cover' ? '2px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.1)',
+                                background: carouselFit === 'cover' ? 'rgba(56, 189, 248, 0.18)' : 'rgba(255, 255, 255, 0.04)',
+                                color: carouselFit === 'cover' ? '#38bdf8' : '#94a3b8',
+                                fontWeight: 800,
+                                fontSize: '0.76rem',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '6px'
+                              }}
+                            >
+                              <Crop size={15} />
+                              <span>🖼️ LLENAR MARCO (COVER)</span>
+                            </button>
 
-                          <button
-                            type="button"
-                            onClick={() => setCarouselAudio(true)}
-                            style={{
-                              padding: '10px 8px',
-                              borderRadius: '8px',
-                              border: carouselAudio ? '2px solid #22c55e' : '1px solid rgba(255, 255, 255, 0.1)',
-                              background: carouselAudio ? 'rgba(34, 197, 94, 0.18)' : 'rgba(255, 255, 255, 0.04)',
-                              color: carouselAudio ? '#22c55e' : '#94a3b8',
-                              fontWeight: 800,
-                              fontSize: '0.76rem',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              gap: '6px'
-                            }}
-                          >
-                            <Volume2 size={15} />
-                            <span>🔊 CON AUDIO (50% VOL)</span>
-                          </button>
+                            <button
+                              type="button"
+                              onClick={() => setCarouselFit('contain')}
+                              style={{
+                                padding: '10px 8px',
+                                borderRadius: '8px',
+                                border: carouselFit === 'contain' ? '2px solid #c084fc' : '1px solid rgba(255, 255, 255, 0.1)',
+                                background: carouselFit === 'contain' ? 'rgba(168, 85, 247, 0.22)' : 'rgba(255, 255, 255, 0.04)',
+                                color: carouselFit === 'contain' ? '#c084fc' : '#94a3b8',
+                                fontWeight: 800,
+                                fontSize: '0.76rem',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '6px'
+                              }}
+                            >
+                              <Maximize2 size={15} />
+                              <span>📺 CINEMA FIT (100% COMPLETO)</span>
+                            </button>
+                          </div>
+                          <div style={{ fontSize: '0.70rem', color: '#94a3b8', marginTop: '6px' }}>
+                            {carouselFit === 'contain'
+                              ? '✓ Cinema Fit: El video o foto se muestra al 100% sin recortar nada, con fondo ambiental difuminado.'
+                              : '✓ Llenar Marco: Ocupa toda la tarjeta vertical. Abajo puedes elegir qué sección enfocar.'}
+                          </div>
                         </div>
-                        <div style={{ fontSize: '0.70rem', color: '#94a3b8', marginTop: '6px' }}>
-                          {carouselAudio
-                            ? '✓ El video se reproducirá con audio al 50% de volumen de forma predeterminada cuando esté visible.'
-                            : '✓ El video se reproducirá en silencio como fondo animado continuo.'}
-                        </div>
+
+                        {/* Focal point selector if Cover */}
+                        {carouselFit === 'cover' && (
+                          <div style={{ paddingTop: '8px', borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                            <div style={{ fontSize: '0.78rem', fontWeight: 800, color: '#FFFFFF', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <SlidersHorizontal size={15} color="#38bdf8" />
+                              <span>SECCIÓN / ENFOQUE VERTICAL:</span>
+                            </div>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+                              <button
+                                type="button"
+                                onClick={() => setCarouselPos('top')}
+                                style={{
+                                  padding: '9px 6px',
+                                  borderRadius: '8px',
+                                  border: carouselPos === 'top' ? '2px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.1)',
+                                  background: carouselPos === 'top' ? 'rgba(56, 189, 248, 0.2)' : 'rgba(255, 255, 255, 0.04)',
+                                  color: carouselPos === 'top' ? '#38bdf8' : '#94a3b8',
+                                  fontWeight: 800,
+                                  fontSize: '0.72rem',
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  gap: '4px'
+                                }}
+                              >
+                                👤 ARRIBA (ROSTRO)
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setCarouselPos('center')}
+                                style={{
+                                  padding: '9px 6px',
+                                  borderRadius: '8px',
+                                  border: carouselPos === 'center' ? '2px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.1)',
+                                  background: carouselPos === 'center' ? 'rgba(56, 189, 248, 0.2)' : 'rgba(255, 255, 255, 0.04)',
+                                  color: carouselPos === 'center' ? '#38bdf8' : '#94a3b8',
+                                  fontWeight: 800,
+                                  fontSize: '0.72rem',
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  gap: '4px'
+                                }}
+                              >
+                                🎯 CENTRO
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setCarouselPos('bottom')}
+                                style={{
+                                  padding: '9px 6px',
+                                  borderRadius: '8px',
+                                  border: carouselPos === 'bottom' ? '2px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.1)',
+                                  background: carouselPos === 'bottom' ? 'rgba(56, 189, 248, 0.2)' : 'rgba(255, 255, 255, 0.04)',
+                                  color: carouselPos === 'bottom' ? '#38bdf8' : '#94a3b8',
+                                  fontWeight: 800,
+                                  fontSize: '0.72rem',
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  gap: '4px'
+                                }}
+                              >
+                                🎛️ ABAJO (MIXER / DJ)
+                              </button>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Audio configuration if video is selected */}
+                        {isCarouselVideo && (
+                          <div style={{ paddingTop: '8px', borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                            <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: '#FFFFFF', marginBottom: '8px' }}>
+                              🔊 CONFIGURACIÓN DE AUDIO DEL VIDEO EN CARROUSEL:
+                            </label>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                              <button
+                                type="button"
+                                onClick={() => setCarouselAudio(false)}
+                                style={{
+                                  padding: '10px 8px',
+                                  borderRadius: '8px',
+                                  border: !carouselAudio ? '2px solid #ef4444' : '1px solid rgba(255, 255, 255, 0.1)',
+                                  background: !carouselAudio ? 'rgba(239, 68, 68, 0.18)' : 'rgba(255, 255, 255, 0.04)',
+                                  color: !carouselAudio ? '#ef4444' : '#94a3b8',
+                                  fontWeight: 800,
+                                  fontSize: '0.76rem',
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  gap: '6px'
+                                }}
+                              >
+                                <VolumeX size={15} />
+                                <span>🔇 SIN AUDIO (MUTE)</span>
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => setCarouselAudio(true)}
+                                style={{
+                                  padding: '10px 8px',
+                                  borderRadius: '8px',
+                                  border: carouselAudio ? '2px solid #22c55e' : '1px solid rgba(255, 255, 255, 0.1)',
+                                  background: carouselAudio ? 'rgba(34, 197, 94, 0.18)' : 'rgba(255, 255, 255, 0.04)',
+                                  color: carouselAudio ? '#22c55e' : '#94a3b8',
+                                  fontWeight: 800,
+                                  fontSize: '0.76rem',
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  gap: '6px'
+                                }}
+                              >
+                                <Volume2 size={15} />
+                                <span>🔊 CON AUDIO (50% VOL)</span>
+                              </button>
+                            </div>
+                            <div style={{ fontSize: '0.70rem', color: '#94a3b8', marginTop: '6px' }}>
+                              {carouselAudio
+                                ? '✓ El video se reproducirá con audio al 50% de volumen de forma predeterminada cuando esté visible.'
+                                : '✓ El video se reproducirá en silencio como fondo animado continuo.'}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
 
@@ -2523,17 +2812,18 @@ export default function EventAdminModal({ isOpen, onClose }) {
                     ) : (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                         {carouselPhotos.map((photoUrl, idx) => {
-                          const isVid = isVideoMedia(photoUrl);
-                          const hasAudio = getCarouselItemAudio(photoUrl);
-                          const isHidden = getCarouselItemHidden(photoUrl);
+                          const meta = parseCarouselItemMeta(photoUrl);
+                          const isVid = isVideoMedia(meta.cleanUrl);
+                          const hasAudio = meta.hasAudio;
+                          const isHidden = meta.isHidden;
+                          const fit = meta.fit;
+                          const pos = meta.pos;
+                          const isEditingFraming = framingEditIdx === idx;
 
                           return (
                             <div
                               key={photoUrl + idx}
                               style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '12px',
                                 background: isHidden ? 'rgba(255, 255, 255, 0.015)' : 'rgba(255, 255, 255, 0.03)',
                                 border: isHidden ? '1px dashed rgba(239, 68, 68, 0.35)' : '1px solid rgba(255, 255, 255, 0.08)',
                                 padding: '10px 14px',
@@ -2542,229 +2832,539 @@ export default function EventAdminModal({ isOpen, onClose }) {
                                 transition: 'all 0.2s ease'
                               }}
                             >
-                              {/* Position Number */}
-                              <span
-                                style={{
-                                  width: '26px',
-                                  height: '26px',
-                                  borderRadius: '50%',
-                                  background: isHidden ? 'rgba(255, 255, 255, 0.06)' : 'rgba(255, 0, 60, 0.15)',
-                                  color: isHidden ? '#94a3b8' : '#FF003C',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  fontSize: '0.74rem',
-                                  fontWeight: 900,
-                                  fontFamily: 'monospace'
-                                }}
-                              >
-                                {idx + 1}
-                              </span>
-
-                              {/* Thumbnail */}
-                              <div style={{ position: 'relative', width: '48px', height: '48px', flexShrink: 0 }}>
-                                {isVid ? (
-                                  <video
-                                    src={getCleanCarouselUrl(photoUrl)}
-                                    autoPlay
-                                    loop
-                                    muted
-                                    playsInline
-                                    style={{
-                                      width: '100%',
-                                      height: '100%',
-                                      objectFit: 'cover',
-                                      borderRadius: '6px',
-                                      border: isHidden ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(255, 255, 255, 0.1)',
-                                      filter: isHidden ? 'grayscale(0.85)' : 'none'
-                                    }}
-                                  />
-                                ) : (
-                                  <img
-                                    src={photoUrl}
-                                    alt=""
-                                    style={{
-                                      width: '100%',
-                                      height: '100%',
-                                      objectFit: 'cover',
-                                      borderRadius: '6px',
-                                      border: isHidden ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(255, 255, 255, 0.1)',
-                                      filter: isHidden ? 'grayscale(0.85)' : 'none'
-                                    }}
-                                  />
-                                )}
-                                {isHidden && (
-                                  <div
-                                    style={{
-                                      position: 'absolute',
-                                      inset: 0,
-                                      background: 'rgba(0,0,0,0.55)',
-                                      borderRadius: '6px',
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      justifyContent: 'center',
-                                      color: '#f87171'
-                                    }}
-                                    title="Pausado / Oculto de la web"
-                                  >
-                                    <EyeOff size={16} />
-                                  </div>
-                                )}
-                              </div>
-
-                              {/* Media path / url preview and badges */}
-                              <div style={{ flex: 1, minWidth: 0 }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '3px', flexWrap: 'wrap' }}>
-                                  <span style={{ fontSize: '0.80rem', color: isHidden ? '#94a3b8' : '#FFFFFF', fontWeight: 600 }}>
-                                    {isVid ? 'Video Subido' : (photoUrl.startsWith('http') ? 'Foto Subida' : photoUrl.replace('/gallery/', 'Oficial: '))}
-                                  </span>
-
-                                  {isVid && (
-                                    <span style={{ fontSize: '0.64rem', fontWeight: 800, color: '#38bdf8', background: 'rgba(56,189,248,0.2)', padding: '1px 6px', borderRadius: '4px' }}>
-                                      MP4
-                                    </span>
-                                  )}
-
-                                  {isVid && (
-                                    <button
-                                      type="button"
-                                      onClick={() => handleToggleItemAudio(idx)}
-                                      style={{
-                                        background: hasAudio ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.15)',
-                                        border: hasAudio ? '1px solid rgba(34, 197, 94, 0.4)' : '1px solid rgba(239, 68, 68, 0.3)',
-                                        color: hasAudio ? '#22c55e' : '#ef4444',
-                                        borderRadius: '4px',
-                                        padding: '1px 6px',
-                                        fontSize: '0.64rem',
-                                        fontWeight: 800,
-                                        cursor: 'pointer',
-                                        display: 'inline-flex',
-                                        alignItems: 'center',
-                                        gap: '3px'
-                                      }}
-                                      title={hasAudio ? 'Clic para silenciar este video' : 'Clic para activar audio al 50%'}
-                                    >
-                                      {hasAudio ? <Volume2 size={11} /> : <VolumeX size={11} />}
-                                      <span>{hasAudio ? 'AUDIO 50%' : 'MUTE'}</span>
-                                    </button>
-                                  )}
-
-                                  {/* Visibility status tag */}
-                                  <span
-                                    style={{
-                                      fontSize: '0.64rem',
-                                      fontWeight: 800,
-                                      padding: '1px 6px',
-                                      borderRadius: '4px',
-                                      background: isHidden ? 'rgba(239, 68, 68, 0.18)' : 'rgba(34, 197, 94, 0.18)',
-                                      color: isHidden ? '#f87171' : '#22c55e',
-                                      border: isHidden ? '1px solid rgba(239, 68, 68, 0.35)' : '1px solid rgba(34, 197, 94, 0.35)'
-                                    }}
-                                  >
-                                    {isHidden ? 'OCULTO EN WEB' : 'ACTIVO EN WEB'}
-                                  </span>
-                                </div>
-                                <div style={{ fontSize: '0.70rem', color: '#64748b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                  {getCleanCarouselUrl(photoUrl)}
-                                </div>
-                              </div>
-
-                              {/* Reorder, Visibility Toggle, and Delete Actions */}
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                                {/* Visibility Toggle button */}
-                                <button
-                                  type="button"
-                                  onClick={() => handleToggleItemVisibility(idx)}
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                {/* Position Number */}
+                                <span
                                   style={{
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: '5px',
-                                    padding: '5px 9px',
-                                    borderRadius: '6px',
-                                    fontSize: '0.72rem',
-                                    fontWeight: 800,
-                                    cursor: 'pointer',
-                                    background: isHidden ? 'rgba(255, 255, 255, 0.05)' : 'rgba(34, 197, 94, 0.16)',
-                                    border: isHidden ? '1px solid rgba(255, 255, 255, 0.15)' : '1px solid rgba(34, 197, 94, 0.4)',
-                                    color: isHidden ? '#94a3b8' : '#22c55e',
-                                    transition: 'all 0.2s ease'
-                                  }}
-                                  title={isHidden ? 'Toca para activar en el carrousel' : 'Toca para pausar u ocultar del carrousel'}
-                                >
-                                  {isHidden ? (
-                                    <>
-                                      <EyeOff size={13} color="#94a3b8" />
-                                      <span>MOSTRAR</span>
-                                    </>
-                                  ) : (
-                                    <>
-                                      <Eye size={13} color="#22c55e" />
-                                      <span>EN WEB</span>
-                                    </>
-                                  )}
-                                </button>
-
-                                <button
-                                  onClick={() => handleMoveCarouselPhoto(idx, -1)}
-                                  disabled={idx === 0}
-                                  style={{
-                                    width: '28px',
-                                    height: '28px',
-                                    borderRadius: '6px',
-                                    background: 'rgba(255, 255, 255, 0.06)',
-                                    border: '1px solid rgba(255, 255, 255, 0.12)',
-                                    color: idx === 0 ? '#475569' : '#FFFFFF',
-                                    cursor: idx === 0 ? 'not-allowed' : 'pointer',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center'
-                                  }}
-                                  title="Subir orden"
-                                >
-                                  <ArrowUp size={14} />
-                                </button>
-
-                                <button
-                                  onClick={() => handleMoveCarouselPhoto(idx, 1)}
-                                  disabled={idx === carouselPhotos.length - 1}
-                                  style={{
-                                    width: '28px',
-                                    height: '28px',
-                                    borderRadius: '6px',
-                                    background: 'rgba(255, 255, 255, 0.06)',
-                                    border: '1px solid rgba(255, 255, 255, 0.12)',
-                                    color: idx === carouselPhotos.length - 1 ? '#475569' : '#FFFFFF',
-                                    cursor: idx === carouselPhotos.length - 1 ? 'not-allowed' : 'pointer',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center'
-                                  }}
-                                  title="Bajar orden"
-                                >
-                                  <ArrowDown size={14} />
-                                </button>
-
-                                <button
-                                  onClick={() => handleDeleteCarouselPhoto(idx)}
-                                  disabled={carouselPhotos.length <= 1}
-                                  style={{
-                                    width: '28px',
-                                    height: '28px',
-                                    borderRadius: '6px',
-                                    background: 'rgba(239, 68, 68, 0.15)',
-                                    border: '1px solid rgba(239, 68, 68, 0.3)',
-                                    color: carouselPhotos.length <= 1 ? '#475569' : '#ef4444',
-                                    cursor: carouselPhotos.length <= 1 ? 'not-allowed' : 'pointer',
+                                    width: '26px',
+                                    height: '26px',
+                                    borderRadius: '50%',
+                                    background: isHidden ? 'rgba(255, 255, 255, 0.06)' : 'rgba(255, 0, 60, 0.15)',
+                                    color: isHidden ? '#94a3b8' : '#FF003C',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    marginLeft: '2px'
+                                    fontSize: '0.74rem',
+                                    fontWeight: 900,
+                                    fontFamily: 'monospace',
+                                    flexShrink: 0
                                   }}
-                                  title="Eliminar del carrousel"
                                 >
-                                  <Trash2 size={13} />
-                                </button>
+                                  {idx + 1}
+                                </span>
+
+                                {/* Thumbnail */}
+                                <div style={{ position: 'relative', width: '48px', height: '48px', flexShrink: 0, borderRadius: '6px', overflow: 'hidden' }}>
+                                  {fit === 'contain' && (
+                                    <div style={{ position: 'absolute', inset: -5, overflow: 'hidden' }}>
+                                      {isVid ? (
+                                        <video src={meta.cleanUrl} autoPlay loop muted playsInline style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'blur(8px) brightness(0.5)' }} />
+                                      ) : (
+                                        <img src={meta.cleanUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'blur(8px) brightness(0.5)' }} />
+                                      )}
+                                    </div>
+                                  )}
+
+                                  {isVid ? (
+                                    <video
+                                      src={meta.cleanUrl}
+                                      autoPlay
+                                      loop
+                                      muted
+                                      playsInline
+                                      style={{
+                                        position: 'relative',
+                                        width: '100%',
+                                        height: '100%',
+                                        objectFit: fit,
+                                        objectPosition: getObjectPositionCss(pos),
+                                        borderRadius: '6px',
+                                        border: isHidden ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(255, 255, 255, 0.1)',
+                                        filter: isHidden ? 'grayscale(0.85)' : 'none',
+                                        zIndex: 1
+                                      }}
+                                    />
+                                  ) : (
+                                    <img
+                                      src={meta.cleanUrl}
+                                      alt=""
+                                      style={{
+                                        position: 'relative',
+                                        width: '100%',
+                                        height: '100%',
+                                        objectFit: fit,
+                                        objectPosition: getObjectPositionCss(pos),
+                                        borderRadius: '6px',
+                                        border: isHidden ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(255, 255, 255, 0.1)',
+                                        filter: isHidden ? 'grayscale(0.85)' : 'none',
+                                        zIndex: 1
+                                      }}
+                                    />
+                                  )}
+                                  {isHidden && (
+                                    <div
+                                      style={{
+                                        position: 'absolute',
+                                        inset: 0,
+                                        background: 'rgba(0,0,0,0.55)',
+                                        borderRadius: '6px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        color: '#f87171',
+                                        zIndex: 2
+                                      }}
+                                      title="Pausado / Oculto de la web"
+                                    >
+                                      <EyeOff size={16} />
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* Media title, framing badges, and audio status */}
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '3px', flexWrap: 'wrap' }}>
+                                    <span style={{ fontSize: '0.80rem', color: isHidden ? '#94a3b8' : '#FFFFFF', fontWeight: 700 }}>
+                                      {isVid ? `Video #${idx + 1}` : `Foto #${idx + 1}`}
+                                    </span>
+
+                                    {isVid && (
+                                      <span style={{ fontSize: '0.64rem', fontWeight: 800, color: '#38bdf8', background: 'rgba(56,189,248,0.2)', padding: '1px 6px', borderRadius: '4px' }}>
+                                        MP4
+                                      </span>
+                                    )}
+
+                                    {/* Framing mode badge */}
+                                    {fit === 'contain' ? (
+                                      <span
+                                        style={{
+                                          fontSize: '0.64rem',
+                                          fontWeight: 800,
+                                          color: '#c084fc',
+                                          background: 'rgba(168, 85, 247, 0.2)',
+                                          padding: '1px 6px',
+                                          borderRadius: '4px',
+                                          border: '1px solid rgba(168, 85, 247, 0.35)'
+                                        }}
+                                        title="Cinema Fit: Pantalla completa sin cortes"
+                                      >
+                                        📺 CINEMA FIT
+                                      </span>
+                                    ) : (
+                                      <span
+                                        style={{
+                                          fontSize: '0.64rem',
+                                          fontWeight: 800,
+                                          color: '#38bdf8',
+                                          background: 'rgba(56, 189, 248, 0.18)',
+                                          padding: '1px 6px',
+                                          borderRadius: '4px',
+                                          border: '1px solid rgba(56, 189, 248, 0.35)'
+                                        }}
+                                        title={`Llenar marco con enfoque en ${pos}`}
+                                      >
+                                        {pos === 'top' ? '👤 ROSTRO' : pos === 'bottom' ? '🎛️ MIXER' : '🎯 CENTRO'}
+                                      </span>
+                                    )}
+
+                                    {isVid && (
+                                      <button
+                                        type="button"
+                                        onClick={() => handleToggleItemAudio(idx)}
+                                        style={{
+                                          background: hasAudio ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.15)',
+                                          border: hasAudio ? '1px solid rgba(34, 197, 94, 0.4)' : '1px solid rgba(239, 68, 68, 0.3)',
+                                          color: hasAudio ? '#22c55e' : '#ef4444',
+                                          borderRadius: '4px',
+                                          padding: '1px 6px',
+                                          fontSize: '0.64rem',
+                                          fontWeight: 800,
+                                          cursor: 'pointer',
+                                          display: 'inline-flex',
+                                          alignItems: 'center',
+                                          gap: '3px'
+                                        }}
+                                        title={hasAudio ? 'Clic para silenciar este video' : 'Clic para activar audio al 50%'}
+                                      >
+                                        {hasAudio ? <Volume2 size={11} /> : <VolumeX size={11} />}
+                                        <span>{hasAudio ? 'AUDIO 50%' : 'MUTE'}</span>
+                                      </button>
+                                    )}
+
+                                    {/* Visibility status tag */}
+                                    <span
+                                      style={{
+                                        fontSize: '0.64rem',
+                                        fontWeight: 800,
+                                        padding: '1px 6px',
+                                        borderRadius: '4px',
+                                        background: isHidden ? 'rgba(239, 68, 68, 0.18)' : 'rgba(34, 197, 94, 0.18)',
+                                        color: isHidden ? '#f87171' : '#22c55e',
+                                        border: isHidden ? '1px solid rgba(239, 68, 68, 0.35)' : '1px solid rgba(34, 197, 94, 0.35)'
+                                      }}
+                                    >
+                                      {isHidden ? 'OCULTO EN WEB' : 'ACTIVO EN WEB'}
+                                    </span>
+                                  </div>
+                                  <div style={{ fontSize: '0.70rem', color: '#64748b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                    {meta.cleanUrl}
+                                  </div>
+                                </div>
+
+                                {/* Reorder, Framing, Visibility Toggle, and Delete Actions */}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                  {/* Framing edit button */}
+                                  <button
+                                    type="button"
+                                    onClick={() => handleOpenFramingEdit(idx)}
+                                    style={{
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '4px',
+                                      padding: '5px 8px',
+                                      borderRadius: '6px',
+                                      fontSize: '0.72rem',
+                                      fontWeight: 800,
+                                      cursor: 'pointer',
+                                      background: isEditingFraming ? 'rgba(168, 85, 247, 0.28)' : 'rgba(255, 255, 255, 0.06)',
+                                      border: isEditingFraming ? '1px solid #c084fc' : '1px solid rgba(255, 255, 255, 0.15)',
+                                      color: isEditingFraming ? '#c084fc' : '#e2e8f0',
+                                      transition: 'all 0.2s ease'
+                                    }}
+                                    title="Ajustar encuadre / fit / punto de enfoque"
+                                  >
+                                    <SlidersHorizontal size={13} />
+                                    <span>ENCUADRE</span>
+                                  </button>
+
+                                  {/* Visibility Toggle button */}
+                                  <button
+                                    type="button"
+                                    onClick={() => handleToggleItemVisibility(idx)}
+                                    style={{
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '5px',
+                                      padding: '5px 9px',
+                                      borderRadius: '6px',
+                                      fontSize: '0.72rem',
+                                      fontWeight: 800,
+                                      cursor: 'pointer',
+                                      background: isHidden ? 'rgba(255, 255, 255, 0.05)' : 'rgba(34, 197, 94, 0.16)',
+                                      border: isHidden ? '1px solid rgba(255, 255, 255, 0.15)' : '1px solid rgba(34, 197, 94, 0.4)',
+                                      color: isHidden ? '#94a3b8' : '#22c55e',
+                                      transition: 'all 0.2s ease'
+                                    }}
+                                    title={isHidden ? 'Toca para activar en el carrousel' : 'Toca para pausar u ocultar del carrousel'}
+                                  >
+                                    {isHidden ? (
+                                      <>
+                                        <EyeOff size={13} color="#94a3b8" />
+                                        <span>MOSTRAR</span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Eye size={13} color="#22c55e" />
+                                        <span>EN WEB</span>
+                                      </>
+                                    )}
+                                  </button>
+
+                                  <button
+                                    onClick={() => handleMoveCarouselPhoto(idx, -1)}
+                                    disabled={idx === 0}
+                                    style={{
+                                      width: '28px',
+                                      height: '28px',
+                                      borderRadius: '6px',
+                                      background: 'rgba(255, 255, 255, 0.06)',
+                                      border: '1px solid rgba(255, 255, 255, 0.12)',
+                                      color: idx === 0 ? '#475569' : '#FFFFFF',
+                                      cursor: idx === 0 ? 'not-allowed' : 'pointer',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center'
+                                    }}
+                                    title="Subir orden"
+                                  >
+                                    <ArrowUp size={14} />
+                                  </button>
+
+                                  <button
+                                    onClick={() => handleMoveCarouselPhoto(idx, 1)}
+                                    disabled={idx === carouselPhotos.length - 1}
+                                    style={{
+                                      width: '28px',
+                                      height: '28px',
+                                      borderRadius: '6px',
+                                      background: 'rgba(255, 255, 255, 0.06)',
+                                      border: '1px solid rgba(255, 255, 255, 0.12)',
+                                      color: idx === carouselPhotos.length - 1 ? '#475569' : '#FFFFFF',
+                                      cursor: idx === carouselPhotos.length - 1 ? 'not-allowed' : 'pointer',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center'
+                                    }}
+                                    title="Bajar orden"
+                                  >
+                                    <ArrowDown size={14} />
+                                  </button>
+
+                                  <button
+                                    onClick={() => handleDeleteCarouselPhoto(idx)}
+                                    disabled={carouselPhotos.length <= 1}
+                                    style={{
+                                      width: '28px',
+                                      height: '28px',
+                                      borderRadius: '6px',
+                                      background: 'rgba(239, 68, 68, 0.15)',
+                                      border: '1px solid rgba(239, 68, 68, 0.3)',
+                                      color: carouselPhotos.length <= 1 ? '#475569' : '#ef4444',
+                                      cursor: carouselPhotos.length <= 1 ? 'not-allowed' : 'pointer',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      marginLeft: '2px'
+                                    }}
+                                    title="Eliminar del carrousel"
+                                  >
+                                    <Trash2 size={13} />
+                                  </button>
+                                </div>
                               </div>
+
+                              {/* Inline Framing Editor Panel */}
+                              {isEditingFraming && (
+                                <div
+                                  style={{
+                                    marginTop: '12px',
+                                    padding: '14px 16px',
+                                    background: 'rgba(168, 85, 247, 0.08)',
+                                    border: '1px solid rgba(168, 85, 247, 0.35)',
+                                    borderRadius: '10px',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: '12px'
+                                  }}
+                                >
+                                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                    <div style={{ fontSize: '0.80rem', fontWeight: 800, color: '#e9d5ff', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                      <SlidersHorizontal size={15} color="#c084fc" />
+                                      <span>AJUSTAR ENCUADRE DE {isVid ? `VIDEO #${idx + 1}` : `FOTO #${idx + 1}`}</span>
+                                    </div>
+                                    <span style={{ fontSize: '0.70rem', color: '#94a3b8' }}>
+                                      Visualización en vivo
+                                    </span>
+                                  </div>
+
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+                                    {/* Mini live preview card matching Hero aspect ratio */}
+                                    <div
+                                      style={{
+                                        position: 'relative',
+                                        width: '130px',
+                                        height: '140px',
+                                        borderRadius: '10px',
+                                        overflow: 'hidden',
+                                        background: '#09090d',
+                                        border: '1px solid rgba(168, 85, 247, 0.5)',
+                                        boxShadow: '0 8px 20px rgba(0,0,0,0.5)',
+                                        flexShrink: 0
+                                      }}
+                                    >
+                                      {framingEditFit === 'contain' && (
+                                        <div style={{ position: 'absolute', inset: -8, overflow: 'hidden', pointerEvents: 'none' }}>
+                                          {isVid ? (
+                                            <video src={meta.cleanUrl} autoPlay loop muted playsInline style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'blur(16px) brightness(0.42) saturate(1.4)' }} />
+                                          ) : (
+                                            <img src={meta.cleanUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'blur(16px) brightness(0.42) saturate(1.4)' }} />
+                                          )}
+                                        </div>
+                                      )}
+                                      {isVid ? (
+                                        <video
+                                          src={meta.cleanUrl}
+                                          autoPlay
+                                          loop
+                                          muted
+                                          playsInline
+                                          style={{
+                                            position: 'relative',
+                                            width: '100%',
+                                            height: '100%',
+                                            objectFit: framingEditFit,
+                                            objectPosition: getObjectPositionCss(framingEditPos),
+                                            zIndex: 2,
+                                            filter: framingEditFit === 'contain' ? 'drop-shadow(0 4px 12px rgba(0,0,0,0.85))' : 'none'
+                                          }}
+                                        />
+                                      ) : (
+                                        <img
+                                          src={meta.cleanUrl}
+                                          alt=""
+                                          style={{
+                                            position: 'relative',
+                                            width: '100%',
+                                            height: '100%',
+                                            objectFit: framingEditFit,
+                                            objectPosition: getObjectPositionCss(framingEditPos),
+                                            zIndex: 2,
+                                            filter: framingEditFit === 'contain' ? 'drop-shadow(0 4px 12px rgba(0,0,0,0.85))' : 'none'
+                                          }}
+                                        />
+                                      )}
+                                      <div style={{ position: 'absolute', bottom: '4px', right: '4px', zIndex: 5, background: 'rgba(0,0,0,0.75)', color: '#fff', fontSize: '0.55rem', padding: '1px 5px', borderRadius: '3px', fontWeight: 800 }}>
+                                        PREVIEW
+                                      </div>
+                                    </div>
+
+                                    {/* Controls */}
+                                    <div style={{ flex: 1, minWidth: '220px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                      {/* Mode selector */}
+                                      <div>
+                                        <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 800, color: '#e2e8f0', marginBottom: '6px' }}>
+                                          MODO DE ENCUADRE:
+                                        </label>
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
+                                          <button
+                                            type="button"
+                                            onClick={() => setFramingEditFit('cover')}
+                                            style={{
+                                              padding: '7px 8px',
+                                              borderRadius: '6px',
+                                              border: framingEditFit === 'cover' ? '2px solid #38bdf8' : '1px solid rgba(255,255,255,0.1)',
+                                              background: framingEditFit === 'cover' ? 'rgba(56, 189, 248, 0.2)' : 'rgba(255,255,255,0.04)',
+                                              color: framingEditFit === 'cover' ? '#38bdf8' : '#94a3b8',
+                                              fontWeight: 800,
+                                              fontSize: '0.70rem',
+                                              cursor: 'pointer'
+                                            }}
+                                          >
+                                            🖼️ LLENAR MARCO
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() => setFramingEditFit('contain')}
+                                            style={{
+                                              padding: '7px 8px',
+                                              borderRadius: '6px',
+                                              border: framingEditFit === 'contain' ? '2px solid #c084fc' : '1px solid rgba(255,255,255,0.1)',
+                                              background: framingEditFit === 'contain' ? 'rgba(168, 85, 247, 0.25)' : 'rgba(255,255,255,0.04)',
+                                              color: framingEditFit === 'contain' ? '#c084fc' : '#94a3b8',
+                                              fontWeight: 800,
+                                              fontSize: '0.70rem',
+                                              cursor: 'pointer'
+                                            }}
+                                          >
+                                            📺 CINEMA FIT
+                                          </button>
+                                        </div>
+                                      </div>
+
+                                      {/* Position selector if cover */}
+                                      {framingEditFit === 'cover' && (
+                                        <div>
+                                          <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 800, color: '#e2e8f0', marginBottom: '6px' }}>
+                                            ENFOQUE VERTICAL:
+                                          </label>
+                                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px' }}>
+                                            <button
+                                              type="button"
+                                              onClick={() => setFramingEditPos('top')}
+                                              style={{
+                                                padding: '6px 4px',
+                                                borderRadius: '6px',
+                                                border: framingEditPos === 'top' ? '2px solid #38bdf8' : '1px solid rgba(255,255,255,0.1)',
+                                                background: framingEditPos === 'top' ? 'rgba(56, 189, 248, 0.2)' : 'rgba(255,255,255,0.04)',
+                                                color: framingEditPos === 'top' ? '#38bdf8' : '#94a3b8',
+                                                fontWeight: 800,
+                                                fontSize: '0.68rem',
+                                                cursor: 'pointer'
+                                              }}
+                                            >
+                                              👤 ROSTRO
+                                            </button>
+                                            <button
+                                              type="button"
+                                              onClick={() => setFramingEditPos('center')}
+                                              style={{
+                                                padding: '6px 4px',
+                                                borderRadius: '6px',
+                                                border: framingEditPos === 'center' ? '2px solid #38bdf8' : '1px solid rgba(255,255,255,0.1)',
+                                                background: framingEditPos === 'center' ? 'rgba(56, 189, 248, 0.2)' : 'rgba(255,255,255,0.04)',
+                                                color: framingEditPos === 'center' ? '#38bdf8' : '#94a3b8',
+                                                fontWeight: 800,
+                                                fontSize: '0.68rem',
+                                                cursor: 'pointer'
+                                              }}
+                                            >
+                                              🎯 CENTRO
+                                            </button>
+                                            <button
+                                              type="button"
+                                              onClick={() => setFramingEditPos('bottom')}
+                                              style={{
+                                                padding: '6px 4px',
+                                                borderRadius: '6px',
+                                                border: framingEditPos === 'bottom' ? '2px solid #38bdf8' : '1px solid rgba(255,255,255,0.1)',
+                                                background: framingEditPos === 'bottom' ? 'rgba(56, 189, 248, 0.2)' : 'rgba(255,255,255,0.04)',
+                                                color: framingEditPos === 'bottom' ? '#38bdf8' : '#94a3b8',
+                                                fontWeight: 800,
+                                                fontSize: '0.68rem',
+                                                cursor: 'pointer'
+                                              }}
+                                            >
+                                              🎛️ MIXER
+                                            </button>
+                                          </div>
+                                        </div>
+                                      )}
+
+                                      {/* Action buttons */}
+                                      <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+                                        <button
+                                          type="button"
+                                          onClick={() => handleSaveFramingEdit(idx)}
+                                          style={{
+                                            flex: 1,
+                                            padding: '8px 12px',
+                                            borderRadius: '6px',
+                                            border: 'none',
+                                            background: '#22c55e',
+                                            color: '#FFFFFF',
+                                            fontWeight: 800,
+                                            fontSize: '0.74rem',
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            gap: '6px'
+                                          }}
+                                        >
+                                          <Check size={14} />
+                                          <span>GUARDAR ENCUADRE</span>
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => setFramingEditIdx(null)}
+                                          style={{
+                                            padding: '8px 12px',
+                                            borderRadius: '6px',
+                                            border: '1px solid rgba(255, 255, 255, 0.2)',
+                                            background: 'rgba(255, 255, 255, 0.06)',
+                                            color: '#94a3b8',
+                                            fontWeight: 800,
+                                            fontSize: '0.74rem',
+                                            cursor: 'pointer'
+                                          }}
+                                        >
+                                          CANCELAR
+                                        </button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           );
                         })}

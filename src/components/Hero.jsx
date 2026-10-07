@@ -7,7 +7,8 @@ import {
   fetchCarouselData,
   DEFAULT_CAROUSEL_PHOTOS,
   isVideoMedia,
-  getCarouselItemAudio,
+  parseCarouselItemMeta,
+  getObjectPositionCss,
   getCleanCarouselUrl
 } from '../utils/supabaseClient';
 
@@ -29,8 +30,13 @@ export default function Hero() {
   currentIdxRef.current = photoIndex;
 
   const currentItem = photos[photoIndex % photos.length] || photos[0];
-  const isCurrentVideo = isVideoMedia(currentItem);
-  const hasAudioConfig = getCarouselItemAudio(currentItem);
+  const currentMeta = parseCarouselItemMeta(currentItem);
+  const isCurrentVideo = isVideoMedia(currentMeta.cleanUrl);
+  const hasAudioConfig = currentMeta.hasAudio;
+
+  const prevItem = prevPhotoIndex !== null && photos[prevPhotoIndex] ? photos[prevPhotoIndex] : null;
+  const prevMeta = prevItem ? parseCarouselItemMeta(prevItem) : null;
+  const isPrevVideo = prevMeta ? isVideoMedia(prevMeta.cleanUrl) : false;
 
   const loadPhotos = async () => {
     try {
@@ -476,12 +482,46 @@ export default function Hero() {
                 {/* Laser scanline that sweeps across during transition */}
                 {isTransitioning && <div className="carousel-laser-scan" />}
 
+                {/* Cinema Fit Mode: Ambient Blur Backdrop */}
+                {currentMeta.fit === 'contain' && (
+                  <div style={{ position: 'absolute', inset: -15, overflow: 'hidden', pointerEvents: 'none', zIndex: 1 }}>
+                    {isCurrentVideo ? (
+                      <video
+                        src={currentMeta.cleanUrl}
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                          filter: 'blur(28px) brightness(0.42) saturate(1.4)',
+                          transform: 'scale(1.2)'
+                        }}
+                      />
+                    ) : (
+                      <img
+                        src={currentMeta.cleanUrl}
+                        alt=""
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                          filter: 'blur(28px) brightness(0.42) saturate(1.4)',
+                          transform: 'scale(1.2)'
+                        }}
+                      />
+                    )}
+                  </div>
+                )}
+
                 {/* PREVIOUS SLIDE (glitch exit animation) */}
-                {prevPhotoIndex !== null && isTransitioning && photos[prevPhotoIndex] && (
-                  isVideoMedia(photos[prevPhotoIndex]) ? (
+                {prevPhotoIndex !== null && isTransitioning && prevMeta && (
+                  isPrevVideo ? (
                     <video
                       key={`hero-prev-${prevPhotoIndex}`}
-                      src={getCleanCarouselUrl(photos[prevPhotoIndex])}
+                      src={prevMeta.cleanUrl}
                       autoPlay
                       loop
                       muted
@@ -492,14 +532,15 @@ export default function Hero() {
                         inset: 0,
                         width: '100%',
                         height: '100%',
-                        objectFit: 'cover',
-                        objectPosition: 'center 20%'
+                        objectFit: prevMeta.fit,
+                        objectPosition: getObjectPositionCss(prevMeta.pos),
+                        zIndex: 2
                       }}
                     />
                   ) : (
                     <img
                       key={`hero-prev-${prevPhotoIndex}`}
-                      src={photos[prevPhotoIndex]}
+                      src={prevMeta.cleanUrl}
                       alt="DJ Missa en vivo"
                       className="carousel-slide-exit"
                       style={{
@@ -507,8 +548,9 @@ export default function Hero() {
                         inset: 0,
                         width: '100%',
                         height: '100%',
-                        objectFit: 'cover',
-                        objectPosition: 'center 20%'
+                        objectFit: prevMeta.fit,
+                        objectPosition: getObjectPositionCss(prevMeta.pos),
+                        zIndex: 2
                       }}
                     />
                   )
@@ -519,36 +561,42 @@ export default function Hero() {
                   <video
                     ref={videoRef}
                     key={`hero-curr-${photoIndex}-${progressKey}`}
-                    src={getCleanCarouselUrl(currentItem)}
+                    src={currentMeta.cleanUrl}
                     autoPlay
                     loop
                     playsInline
                     muted={!hasAudioConfig || userMuted}
-                    className={isTransitioning ? 'carousel-slide-enter' : 'carousel-ken-burns'}
+                    className={isTransitioning ? 'carousel-slide-enter' : (currentMeta.fit === 'contain' ? '' : 'carousel-ken-burns')}
                     style={{
                       position: 'absolute',
                       inset: 0,
                       width: '100%',
                       height: '100%',
-                      objectFit: 'cover',
-                      objectPosition: 'center 20%',
-                      filter: 'contrast(1.08) brightness(0.95)'
+                      objectFit: currentMeta.fit,
+                      objectPosition: getObjectPositionCss(currentMeta.pos),
+                      filter: currentMeta.fit === 'contain'
+                        ? 'contrast(1.06) brightness(0.98) drop-shadow(0 15px 35px rgba(0,0,0,0.9))'
+                        : 'contrast(1.08) brightness(0.95)',
+                      zIndex: 3
                     }}
                   />
                 ) : (
                   <img
                     key={`hero-curr-${photoIndex}-${progressKey}`}
-                    src={currentItem}
+                    src={currentMeta.cleanUrl}
                     alt="DJ Missa en vivo"
-                    className={isTransitioning ? 'carousel-slide-enter' : 'carousel-ken-burns'}
+                    className={isTransitioning ? 'carousel-slide-enter' : (currentMeta.fit === 'contain' ? '' : 'carousel-ken-burns')}
                     style={{
                       position: 'absolute',
                       inset: 0,
                       width: '100%',
                       height: '100%',
-                      objectFit: 'cover',
-                      objectPosition: 'center 20%',
-                      filter: 'contrast(1.08) brightness(0.95)'
+                      objectFit: currentMeta.fit,
+                      objectPosition: getObjectPositionCss(currentMeta.pos),
+                      filter: currentMeta.fit === 'contain'
+                        ? 'contrast(1.06) brightness(0.98) drop-shadow(0 15px 35px rgba(0,0,0,0.9))'
+                        : 'contrast(1.08) brightness(0.95)',
+                      zIndex: 3
                     }}
                   />
                 )}

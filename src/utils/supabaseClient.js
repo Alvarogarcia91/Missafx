@@ -112,29 +112,72 @@ export function checkIsVideo(file, url = '') {
   return false;
 }
 
-export function getCarouselItemAudio(url) {
-  if (!url) return false;
-  return url.includes('audio=true') || url.includes('audio=1');
+export function parseCarouselItemMeta(url) {
+  if (!url || typeof url !== 'string') {
+    return { cleanUrl: '', hasAudio: false, isHidden: false, fit: 'cover', pos: 'center' };
+  }
+  const parts = url.split('#');
+  const cleanUrl = parts[0];
+  const hash = parts.slice(1).join('#');
+
+  const hasAudio = hash.includes('audio=true') || hash.includes('audio=1');
+  const isHidden = hash.includes('hidden=true') || hash.includes('active=false');
+
+  let fit = 'cover';
+  if (hash.includes('fit=contain')) fit = 'contain';
+
+  let pos = 'center';
+  const posMatch = hash.match(/pos=(top|center|bottom|left|right)/i);
+  if (posMatch) {
+    pos = posMatch[1].toLowerCase();
+  }
+
+  return { cleanUrl, hasAudio, isHidden, fit, pos };
 }
 
-export function getCarouselItemHidden(url) {
-  if (!url) return false;
-  return url.includes('hidden=true') || url.includes('active=false');
-}
-
-export function buildCarouselItemMetaUrl(url, { hasAudio = false, isHidden = false } = {}) {
+export function buildCarouselItemMetaUrl(url, { hasAudio = false, isHidden = false, fit = 'cover', pos = 'center' } = {}) {
   if (!url) return '';
   const clean = url.split('#')[0];
   const tags = [];
   if (hasAudio) tags.push('audio=true');
   if (isHidden) tags.push('hidden=true');
+  if (fit && fit !== 'cover') tags.push(`fit=${fit}`);
+  if (pos && pos !== 'center') tags.push(`pos=${pos}`);
   return tags.length > 0 ? `${clean}#${tags.join('&')}` : clean;
+}
+
+export function getObjectPositionCss(pos) {
+  if (pos === 'top') return 'center top';
+  if (pos === 'bottom') return 'center bottom';
+  if (pos === 'left') return 'left center';
+  if (pos === 'right') return 'right center';
+  return 'center center';
+}
+
+export function getCarouselItemAudio(url) {
+  if (!url) return false;
+  return parseCarouselItemMeta(url).hasAudio;
+}
+
+export function getCarouselItemHidden(url) {
+  if (!url) return false;
+  return parseCarouselItemMeta(url).isHidden;
+}
+
+export function getCarouselItemFit(url) {
+  if (!url) return 'cover';
+  return parseCarouselItemMeta(url).fit;
+}
+
+export function getCarouselItemPos(url) {
+  if (!url) return 'center';
+  return parseCarouselItemMeta(url).pos;
 }
 
 export function buildCarouselItemUrl(url, hasAudio = false) {
   if (!url) return '';
-  const isHidden = getCarouselItemHidden(url);
-  return buildCarouselItemMetaUrl(url, { hasAudio, isHidden });
+  const meta = parseCarouselItemMeta(url);
+  return buildCarouselItemMetaUrl(url, { ...meta, hasAudio });
 }
 
 export function getCleanCarouselUrl(url) {
@@ -630,15 +673,15 @@ export async function deleteSetRecord(id) {
 }
 
 export const DEFAULT_CAROUSEL_PHOTOS = [
-  '/gallery/missa-01.jpg',
-  '/gallery/missa-02.jpg',
-  '/gallery/missa-03.png',
-  '/gallery/missa-04.jpg',
-  '/gallery/missa-05.jpg',
-  '/gallery/missa-06.jpg',
-  '/gallery/missa-07.jpg',
-  '/gallery/missa-08.jpg',
-  '/gallery/missa-09.jpg'
+  'https://vkmdafhbofuppkcfidjc.supabase.co/storage/v1/object/public/flyers/gallery_missa-01.jpg',
+  'https://vkmdafhbofuppkcfidjc.supabase.co/storage/v1/object/public/flyers/gallery_missa-02.jpg',
+  'https://vkmdafhbofuppkcfidjc.supabase.co/storage/v1/object/public/flyers/gallery_missa-03.png',
+  'https://vkmdafhbofuppkcfidjc.supabase.co/storage/v1/object/public/flyers/gallery_missa-04.jpg',
+  'https://vkmdafhbofuppkcfidjc.supabase.co/storage/v1/object/public/flyers/gallery_missa-05.jpg',
+  'https://vkmdafhbofuppkcfidjc.supabase.co/storage/v1/object/public/flyers/gallery_missa-06.jpg',
+  'https://vkmdafhbofuppkcfidjc.supabase.co/storage/v1/object/public/flyers/gallery_missa-07.jpg',
+  'https://vkmdafhbofuppkcfidjc.supabase.co/storage/v1/object/public/flyers/gallery_missa-08.jpg',
+  'https://vkmdafhbofuppkcfidjc.supabase.co/storage/v1/object/public/flyers/gallery_missa-09.jpg'
 ];
 
 export function getStoredCarouselRandom() {

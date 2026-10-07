@@ -3,7 +3,14 @@ import { Sliders, Headphones } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { WhatsAppIcon } from './SocialIcons';
 import { PhotoQueueManager } from '../utils/shuffleQueue';
-import { fetchCarouselData, DEFAULT_CAROUSEL_PHOTOS, isVideoMedia, getCleanCarouselUrl } from '../utils/supabaseClient';
+import {
+  fetchCarouselData,
+  DEFAULT_CAROUSEL_PHOTOS,
+  isVideoMedia,
+  parseCarouselItemMeta,
+  getObjectPositionCss,
+  getCleanCarouselUrl
+} from '../utils/supabaseClient';
 
 export default function About() {
   const { t } = useLanguage();
@@ -19,6 +26,14 @@ export default function About() {
   const queueManager = useRef(null);
   const currentIdxRef = useRef(3);
   currentIdxRef.current = photoIndex;
+
+  const currentItem = photos[photoIndex % photos.length] || photos[0];
+  const currentMeta = parseCarouselItemMeta(currentItem);
+  const isCurrentVideo = isVideoMedia(currentMeta.cleanUrl);
+
+  const prevItem = prevPhotoIndex !== null && photos[prevPhotoIndex] ? photos[prevPhotoIndex] : null;
+  const prevMeta = prevItem ? parseCarouselItemMeta(prevItem) : null;
+  const isPrevVideo = prevMeta ? isVideoMedia(prevMeta.cleanUrl) : false;
 
   const loadPhotos = async () => {
     try {
@@ -161,12 +176,46 @@ export default function About() {
                 {/* Laser scanline that sweeps across during transition */}
                 {isTransitioning && <div className="carousel-laser-scan" />}
 
+                {/* Cinema Fit Mode: Ambient Blur Backdrop */}
+                {currentMeta.fit === 'contain' && (
+                  <div style={{ position: 'absolute', inset: -15, overflow: 'hidden', pointerEvents: 'none', zIndex: 1 }}>
+                    {isCurrentVideo ? (
+                      <video
+                        src={currentMeta.cleanUrl}
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                          filter: 'blur(28px) brightness(0.42) saturate(1.4)',
+                          transform: 'scale(1.2)'
+                        }}
+                      />
+                    ) : (
+                      <img
+                        src={currentMeta.cleanUrl}
+                        alt=""
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                          filter: 'blur(28px) brightness(0.42) saturate(1.4)',
+                          transform: 'scale(1.2)'
+                        }}
+                      />
+                    )}
+                  </div>
+                )}
+
                 {/* PREVIOUS SLIDE (glitch exit animation) */}
-                {prevPhotoIndex !== null && isTransitioning && photos[prevPhotoIndex] && (
-                  isVideoMedia(photos[prevPhotoIndex]) ? (
+                {prevPhotoIndex !== null && isTransitioning && prevMeta && (
+                  isPrevVideo ? (
                     <video
                       key={`about-prev-${prevPhotoIndex}`}
-                      src={getCleanCarouselUrl(photos[prevPhotoIndex])}
+                      src={prevMeta.cleanUrl}
                       autoPlay
                       loop
                       muted
@@ -177,14 +226,15 @@ export default function About() {
                         inset: 0,
                         width: '100%',
                         height: '100%',
-                        objectFit: 'cover',
-                        objectPosition: 'center 20%'
+                        objectFit: prevMeta.fit,
+                        objectPosition: getObjectPositionCss(prevMeta.pos),
+                        zIndex: 2
                       }}
                     />
                   ) : (
                     <img
                       key={`about-prev-${prevPhotoIndex}`}
-                      src={photos[prevPhotoIndex]}
+                      src={prevMeta.cleanUrl}
                       alt="DJ Missa"
                       className="carousel-slide-exit"
                       style={{
@@ -192,47 +242,54 @@ export default function About() {
                         inset: 0,
                         width: '100%',
                         height: '100%',
-                        objectFit: 'cover',
-                        objectPosition: 'center 20%'
+                        objectFit: prevMeta.fit,
+                        objectPosition: getObjectPositionCss(prevMeta.pos),
+                        zIndex: 2
                       }}
                     />
                   )
                 )}
 
                 {/* CURRENT ACTIVE SLIDE */}
-                {isVideoMedia(photos[photoIndex % photos.length] || photos[0]) ? (
+                {isCurrentVideo ? (
                   <video
                     key={`about-curr-${photoIndex}-${progressKey}`}
-                    src={getCleanCarouselUrl(photos[photoIndex % photos.length] || photos[0])}
+                    src={currentMeta.cleanUrl}
                     autoPlay
                     loop
                     muted
                     playsInline
-                    className={isTransitioning ? 'carousel-slide-enter' : 'carousel-ken-burns'}
+                    className={isTransitioning ? 'carousel-slide-enter' : (currentMeta.fit === 'contain' ? '' : 'carousel-ken-burns')}
                     style={{
                       position: 'absolute',
                       inset: 0,
                       width: '100%',
                       height: '100%',
-                      objectFit: 'cover',
-                      objectPosition: 'center 20%',
-                      filter: 'contrast(1.08) brightness(0.96)'
+                      objectFit: currentMeta.fit,
+                      objectPosition: getObjectPositionCss(currentMeta.pos),
+                      filter: currentMeta.fit === 'contain'
+                        ? 'contrast(1.06) brightness(0.98) drop-shadow(0 15px 30px rgba(0,0,0,0.85))'
+                        : 'contrast(1.08) brightness(0.96)',
+                      zIndex: 3
                     }}
                   />
                 ) : (
                   <img
                     key={`about-curr-${photoIndex}-${progressKey}`}
-                    src={photos[photoIndex % photos.length] || photos[0]}
+                    src={currentMeta.cleanUrl}
                     alt="DJ Missa"
-                    className={isTransitioning ? 'carousel-slide-enter' : 'carousel-ken-burns'}
+                    className={isTransitioning ? 'carousel-slide-enter' : (currentMeta.fit === 'contain' ? '' : 'carousel-ken-burns')}
                     style={{
                       position: 'absolute',
                       inset: 0,
                       width: '100%',
                       height: '100%',
-                      objectFit: 'cover',
-                      objectPosition: 'center 20%',
-                      filter: 'contrast(1.08) brightness(0.96)'
+                      objectFit: currentMeta.fit,
+                      objectPosition: getObjectPositionCss(currentMeta.pos),
+                      filter: currentMeta.fit === 'contain'
+                        ? 'contrast(1.06) brightness(0.98) drop-shadow(0 15px 30px rgba(0,0,0,0.85))'
+                        : 'contrast(1.08) brightness(0.96)',
+                      zIndex: 3
                     }}
                   />
                 )}
