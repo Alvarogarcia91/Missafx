@@ -35,7 +35,7 @@ export default function Hero() {
   const [userMuted, setUserMuted] = useState(true); // Default to muted so video never sounds automatically
   const [heroVolume, setHeroVolume] = useState(50);
   const [lastVideoIndex, setLastVideoIndex] = useState(null);
-  const [isMediaLoading, setIsMediaLoading] = useState(false);
+  const [isVideoBuffering, setIsVideoBuffering] = useState(false);
 
   const videoRef = useRef(null);
   const queueManager = useRef(null);
@@ -85,6 +85,7 @@ export default function Hero() {
         videoRef.current.pause();
       } catch (e) {}
     }
+    setIsVideoBuffering(false);
 
     setPhotoIndex((currentIdx) => {
       if (nextIdx === currentIdx) return currentIdx;
@@ -138,14 +139,13 @@ export default function Hero() {
     }
   }, [photoIndex, isCurrentVideo]);
 
-  // Preload upcoming slides and manage smooth loading state
+  // Preload upcoming slides
   useEffect(() => {
-    setIsMediaLoading(true);
     if (!photos || photos.length === 0) return;
     const next1 = photos[(photoIndex + 1) % photos.length];
     const next2 = photos[(photoIndex + 2) % photos.length];
     preloadCarouselMedia([next1, next2]);
-  }, [photos, photoIndex, progressKey]);
+  }, [photos, photoIndex]);
 
   const handleReplayVideo = (e) => {
     if (e) e.stopPropagation();
@@ -711,11 +711,11 @@ export default function Hero() {
                     preload="auto"
                     muted={!hasAudioConfig || userMuted}
                     loop={!currentMeta.endTime || currentMeta.endTime <= 0}
-                    onCanPlay={() => setIsMediaLoading(false)}
-                    onPlaying={() => setIsMediaLoading(false)}
-                    onLoadedData={() => setIsMediaLoading(false)}
-                    onWaiting={() => setIsMediaLoading(true)}
-                    onError={() => setIsMediaLoading(false)}
+                    onCanPlay={() => setIsVideoBuffering(false)}
+                    onPlaying={() => setIsVideoBuffering(false)}
+                    onLoadedData={() => setIsVideoBuffering(false)}
+                    onWaiting={() => setIsVideoBuffering(true)}
+                    onError={() => setIsVideoBuffering(false)}
                     className={isTransitioning ? 'carousel-slide-enter' : (currentMeta.fit === 'contain' ? '' : 'carousel-ken-burns')}
                     style={{
                       position: 'absolute',
@@ -737,9 +737,7 @@ export default function Hero() {
                     alt="DJ Missa en vivo"
                     loading="eager"
                     decoding="async"
-                    onLoad={() => setIsMediaLoading(false)}
                     onError={(e) => {
-                      setIsMediaLoading(false);
                       e.currentTarget.onerror = null;
                       e.currentTarget.src = DEFAULT_CAROUSEL_PHOTOS[0];
                     }}
@@ -759,8 +757,8 @@ export default function Hero() {
                   />
                 )}
 
-                {/* Subtle Cyber Loading Spinner Overlay */}
-                {isMediaLoading && (
+                {/* Subtle Cyber Loading Spinner Overlay ONLY for Videos when buffering */}
+                {isCurrentVideo && isVideoBuffering && (
                   <div
                     style={{
                       position: 'absolute',
@@ -770,9 +768,9 @@ export default function Hero() {
                       justifyContent: 'center',
                       zIndex: 4,
                       pointerEvents: 'none',
-                      background: 'rgba(6, 6, 8, 0.45)',
-                      backdropFilter: 'blur(3px)',
-                      transition: 'opacity 0.25s ease'
+                      background: 'rgba(6, 6, 8, 0.35)',
+                      backdropFilter: 'blur(2px)',
+                      transition: 'opacity 0.2s ease'
                     }}
                   >
                     <div
