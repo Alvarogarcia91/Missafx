@@ -127,7 +127,7 @@ export function parseCarouselItemMeta(url) {
   if (hash.includes('fit=contain')) fit = 'contain';
 
   let pos = 'center';
-  const posMatch = hash.match(/pos=(top|center|bottom|left|right)/i);
+  const posMatch = hash.match(/pos=([a-zA-Z0-9_%-]+)/i);
   if (posMatch) {
     pos = posMatch[1].toLowerCase();
   }
@@ -147,11 +147,60 @@ export function buildCarouselItemMetaUrl(url, { hasAudio = false, isHidden = fal
 }
 
 export function getObjectPositionCss(pos) {
-  if (pos === 'top') return 'center top';
-  if (pos === 'bottom') return 'center bottom';
-  if (pos === 'left') return 'left center';
-  if (pos === 'right') return 'right center';
+  if (!pos) return 'center center';
+  const s = String(pos).trim().toLowerCase();
+  if (s === 'top') return 'center top';
+  if (s === 'bottom') return 'center bottom';
+  if (s === 'center') return 'center center';
+  if (s === 'left') return 'left center';
+  if (s === 'right') return 'right center';
+
+  // Support numeric percentage, e.g. "35" or "35%" -> "center 35%"
+  if (/^\d+(%)?$/.test(s)) {
+    const num = Math.max(0, Math.min(100, parseInt(s, 10)));
+    return `center ${num}%`;
+  }
+
+  // Support "x_y" format, e.g. "50_35" -> "50% 35%"
+  if (/^\d+_\d+$/.test(s)) {
+    const [x, y] = s.split('_');
+    const xNum = Math.max(0, Math.min(100, parseInt(x, 10)));
+    const yNum = Math.max(0, Math.min(100, parseInt(y, 10)));
+    return `${xNum}% ${yNum}%`;
+  }
+
+  if (s.includes('%') || s.includes('px')) {
+    return s;
+  }
+
   return 'center center';
+}
+
+export function getPosPercentY(pos) {
+  if (!pos || pos === 'center') return 50;
+  if (pos === 'top') return 0;
+  if (pos === 'bottom') return 100;
+  const s = String(pos).trim().toLowerCase();
+  if (/^\d+(%)?$/.test(s)) {
+    return Math.max(0, Math.min(100, parseInt(s, 10)));
+  }
+  if (/^\d+_\d+$/.test(s)) {
+    const [, y] = s.split('_');
+    return Math.max(0, Math.min(100, parseInt(y, 10)));
+  }
+  return 50;
+}
+
+export function getPosPercentX(pos) {
+  if (!pos || pos === 'center' || pos === 'top' || pos === 'bottom') return 50;
+  if (pos === 'left') return 0;
+  if (pos === 'right') return 100;
+  const s = String(pos).trim().toLowerCase();
+  if (/^\d+_\d+$/.test(s)) {
+    const [x] = s.split('_');
+    return Math.max(0, Math.min(100, parseInt(x, 10)));
+  }
+  return 50;
 }
 
 export function getCarouselItemAudio(url) {

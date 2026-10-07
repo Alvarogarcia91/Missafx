@@ -36,7 +36,9 @@ import {
   SlidersHorizontal,
   Check,
   Settings,
-  Download
+  Download,
+  Move,
+  Crosshair
 } from 'lucide-react';
 import {
   fetchEvents,
@@ -68,6 +70,8 @@ import {
   DEFAULT_CAROUSEL_PHOTOS,
   parseCarouselItemMeta,
   getObjectPositionCss,
+  getPosPercentY,
+  getPosPercentX,
   getCarouselItemFit,
   getCarouselItemPos,
   getCarouselItemAudio,
@@ -630,6 +634,33 @@ export default function EventAdminModal({ isOpen, onClose }) {
     } finally {
       setUploadingCarousel(false);
     }
+  };
+
+  const handlePreviewDrag = (e, setPosFn) => {
+    const target = e.currentTarget;
+    const rect = target.getBoundingClientRect();
+
+    const updateCoords = (clientX, clientY) => {
+      const rawX = Math.round(((clientX - rect.left) / rect.width) * 100);
+      const rawY = Math.round(((clientY - rect.top) / rect.height) * 100);
+      const clampedX = Math.max(0, Math.min(100, rawX));
+      const clampedY = Math.max(0, Math.min(100, rawY));
+      setPosFn(`${clampedX}_${clampedY}`);
+    };
+
+    updateCoords(e.clientX, e.clientY);
+
+    const onPointerMove = (moveEv) => {
+      updateCoords(moveEv.clientX, moveEv.clientY);
+    };
+
+    const onPointerUp = () => {
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('pointerup', onPointerUp);
+    };
+
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', onPointerUp);
   };
 
   const handleOpenFramingEdit = (index) => {
@@ -2533,26 +2564,29 @@ export default function EventAdminModal({ isOpen, onClose }) {
                         overflow: 'hidden'
                       }}
                     >
-                      <input
-                        type="file"
-                        accept="image/png, image/jpeg, image/webp, image/*, video/mp4, video/webm, video/quicktime, video/*"
-                        onChange={handleCarouselFileChange}
-                        style={{
-                          position: 'absolute',
-                          inset: 0,
-                          opacity: 0,
-                          cursor: 'pointer',
-                          zIndex: 10
-                        }}
-                      />
+                      {!carouselPreview && (
+                        <input
+                          type="file"
+                          accept="image/png, image/jpeg, image/webp, image/*, video/mp4, video/webm, video/quicktime, video/*"
+                          onChange={handleCarouselFileChange}
+                          style={{
+                            position: 'absolute',
+                            inset: 0,
+                            opacity: 0,
+                            cursor: 'pointer',
+                            zIndex: 10
+                          }}
+                        />
+                      )}
 
                       {carouselPreview ? (
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                          {/* Hero-scaled real aspect-ratio live preview card */}
+                          {/* Hero-scaled real aspect-ratio live preview card with Pointer Drag */}
                           <div
+                            onPointerDown={carouselFit === 'cover' ? (e) => handlePreviewDrag(e, setCarouselPos) : undefined}
                             style={{
                               position: 'relative',
-                              width: '230px',
+                              width: '240px',
                               maxWidth: '100%',
                               aspectRatio: '1/1.08',
                               borderRadius: '16px',
@@ -2560,7 +2594,10 @@ export default function EventAdminModal({ isOpen, onClose }) {
                               border: '2px solid rgba(255, 0, 60, 0.45)',
                               boxShadow: '0 14px 35px rgba(0,0,0,0.7), 0 0 25px rgba(255,0,60,0.2)',
                               background: '#09090d',
-                              marginBottom: '10px'
+                              marginBottom: '8px',
+                              cursor: carouselFit === 'cover' ? 'crosshair' : 'default',
+                              userSelect: 'none',
+                              touchAction: 'none'
                             }}
                           >
                             {/* Ambient blur backdrop for Cinema Fit */}
@@ -2637,6 +2674,57 @@ export default function EventAdminModal({ isOpen, onClose }) {
                               />
                             )}
 
+                            {/* Interactive Reticle Target for Cover focus point */}
+                            {carouselFit === 'cover' && (
+                              <>
+                                <div
+                                  style={{
+                                    position: 'absolute',
+                                    left: `${getPosPercentX(carouselPos)}%`,
+                                    top: `${getPosPercentY(carouselPos)}%`,
+                                    transform: 'translate(-50%, -50%)',
+                                    width: '32px',
+                                    height: '32px',
+                                    borderRadius: '50%',
+                                    border: '2px solid #FF003C',
+                                    background: 'rgba(255, 0, 60, 0.25)',
+                                    boxShadow: '0 0 14px rgba(255, 0, 60, 0.95), inset 0 0 8px rgba(255, 0, 60, 0.6)',
+                                    pointerEvents: 'none',
+                                    zIndex: 10,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                  }}
+                                >
+                                  <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#FFFFFF' }} />
+                                </div>
+
+                                <div
+                                  style={{
+                                    position: 'absolute',
+                                    top: '8px',
+                                    right: '8px',
+                                    zIndex: 10,
+                                    background: 'rgba(0,0,0,0.8)',
+                                    backdropFilter: 'blur(6px)',
+                                    border: '1px solid rgba(255, 0, 60, 0.5)',
+                                    borderRadius: '6px',
+                                    padding: '3px 8px',
+                                    fontSize: '0.62rem',
+                                    fontWeight: 800,
+                                    color: '#FFFFFF',
+                                    pointerEvents: 'none',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '5px'
+                                  }}
+                                >
+                                  <Move size={11} color="#FF003C" />
+                                  <span>ARRASTRA AQUÍ ({getPosPercentY(carouselPos)}%)</span>
+                                </div>
+                              </>
+                            )}
+
                             {/* Live Badge overlay */}
                             <div
                               style={{
@@ -2672,13 +2760,38 @@ export default function EventAdminModal({ isOpen, onClose }) {
                                 borderRadius: '4px'
                               }}
                             >
-                              {carouselFit === 'contain' ? 'CINEMA FIT' : `COVER • ${carouselPos.toUpperCase()}`}
+                              {carouselFit === 'contain' ? 'FIT SCREEN' : `CROP • ${getPosPercentY(carouselPos)}%`}
                             </div>
                           </div>
 
-                          <span style={{ fontSize: '0.78rem', color: '#22c55e', fontWeight: 700 }}>
-                            ✓ {isCarouselVideo ? 'Video listo' : 'Foto lista'} — Toca el recuadro para cambiar de archivo
-                          </span>
+                          <label
+                            htmlFor="carousel-media-change-file"
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              padding: '7px 14px',
+                              borderRadius: '8px',
+                              background: 'rgba(255, 255, 255, 0.08)',
+                              border: '1px solid rgba(255, 255, 255, 0.2)',
+                              color: '#cbd5e1',
+                              fontSize: '0.74rem',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              marginTop: '6px',
+                              transition: 'all 0.2s ease'
+                            }}
+                          >
+                            <input
+                              id="carousel-media-change-file"
+                              type="file"
+                              accept="image/png, image/jpeg, image/webp, image/*, video/mp4, video/webm, video/quicktime, video/*"
+                              onChange={handleCarouselFileChange}
+                              style={{ display: 'none' }}
+                            />
+                            <Upload size={13} color="#FF003C" />
+                            <span>SELECCIONAR OTRO ARCHIVO</span>
+                          </label>
                         </div>
                       ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
@@ -2711,7 +2824,7 @@ export default function EventAdminModal({ isOpen, onClose }) {
                         <div>
                           <div style={{ fontSize: '0.78rem', fontWeight: 800, color: '#FFFFFF', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                             <Maximize2 size={15} color="#c084fc" />
-                            <span>MODO DE ENCUADRE / VISUALIZACIÓN EN LA WEB:</span>
+                            <span>MODO DE ENCUADRE / VISUALIZACIÓN:</span>
                           </div>
                           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                             <button
@@ -2733,7 +2846,7 @@ export default function EventAdminModal({ isOpen, onClose }) {
                               }}
                             >
                               <Crop size={15} />
-                              <span>🖼️ LLENAR MARCO (COVER)</span>
+                              <span>🖼️ LLENAR MARCO (CROP)</span>
                             </button>
 
                             <button
@@ -2755,84 +2868,105 @@ export default function EventAdminModal({ isOpen, onClose }) {
                               }}
                             >
                               <Maximize2 size={15} />
-                              <span>📺 CINEMA FIT (100% COMPLETO)</span>
+                              <span>📐 AJUSTAR COMPLETO (FIT SCREEN)</span>
                             </button>
                           </div>
                           <div style={{ fontSize: '0.70rem', color: '#94a3b8', marginTop: '6px' }}>
                             {carouselFit === 'contain'
-                              ? '✓ Cinema Fit: El video o foto se muestra al 100% sin recortar nada, con fondo ambiental difuminado.'
-                              : '✓ Llenar Marco: Ocupa toda la tarjeta vertical. Abajo puedes elegir qué sección enfocar.'}
+                              ? '✓ Fit Screen: El contenido se muestra 100% completo sin recortar nada, con fondo ambiental difuminado.'
+                              : '✓ Llenar Marco: Llena todo el marco vertical del Hero. Usa el slider o arrastra con el dedo/mouse sobre el preview para colocar el enfoque exacto.'}
                           </div>
                         </div>
 
-                        {/* Focal point selector if Cover */}
+                        {/* Interactive Drag & Slider Controls if Cover */}
                         {carouselFit === 'cover' && (
-                          <div style={{ paddingTop: '8px', borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
-                            <div style={{ fontSize: '0.78rem', fontWeight: 800, color: '#FFFFFF', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                              <SlidersHorizontal size={15} color="#38bdf8" />
-                              <span>SECCIÓN / ENFOQUE VERTICAL:</span>
+                          <div style={{ paddingTop: '10px', borderTop: '1px solid rgba(255, 255, 255, 0.08)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                              <div style={{ fontSize: '0.78rem', fontWeight: 800, color: '#FFFFFF', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <SlidersHorizontal size={15} color="#38bdf8" />
+                                <span>ENFOQUE VERTICAL (SLIDER O DRAG):</span>
+                              </div>
+                              <span style={{ fontSize: '0.78rem', fontWeight: 900, color: '#38bdf8', fontFamily: 'monospace' }}>
+                                {getPosPercentY(carouselPos)}%
+                              </span>
                             </div>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
-                              <button
-                                type="button"
-                                onClick={() => setCarouselPos('top')}
+
+                            {/* Range slider */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                              <span style={{ fontSize: '0.68rem', color: '#94a3b8', fontWeight: 700 }}>ARRIBA</span>
+                              <input
+                                type="range"
+                                min="0"
+                                max="100"
+                                value={getPosPercentY(carouselPos)}
+                                onChange={(e) => setCarouselPos(`${getPosPercentX(carouselPos)}_${e.target.value}`)}
                                 style={{
-                                  padding: '9px 6px',
-                                  borderRadius: '8px',
-                                  border: carouselPos === 'top' ? '2px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.1)',
-                                  background: carouselPos === 'top' ? 'rgba(56, 189, 248, 0.2)' : 'rgba(255, 255, 255, 0.04)',
-                                  color: carouselPos === 'top' ? '#38bdf8' : '#94a3b8',
-                                  fontWeight: 800,
-                                  fontSize: '0.72rem',
-                                  cursor: 'pointer',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  gap: '4px'
+                                  flex: 1,
+                                  accentColor: '#FF003C',
+                                  cursor: 'pointer'
                                 }}
-                              >
-                                👤 ARRIBA (ROSTRO)
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => setCarouselPos('center')}
-                                style={{
-                                  padding: '9px 6px',
-                                  borderRadius: '8px',
-                                  border: carouselPos === 'center' ? '2px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.1)',
-                                  background: carouselPos === 'center' ? 'rgba(56, 189, 248, 0.2)' : 'rgba(255, 255, 255, 0.04)',
-                                  color: carouselPos === 'center' ? '#38bdf8' : '#94a3b8',
-                                  fontWeight: 800,
-                                  fontSize: '0.72rem',
-                                  cursor: 'pointer',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  gap: '4px'
-                                }}
-                              >
-                                🎯 CENTRO
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => setCarouselPos('bottom')}
-                                style={{
-                                  padding: '9px 6px',
-                                  borderRadius: '8px',
-                                  border: carouselPos === 'bottom' ? '2px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.1)',
-                                  background: carouselPos === 'bottom' ? 'rgba(56, 189, 248, 0.2)' : 'rgba(255, 255, 255, 0.04)',
-                                  color: carouselPos === 'bottom' ? '#38bdf8' : '#94a3b8',
-                                  fontWeight: 800,
-                                  fontSize: '0.72rem',
-                                  cursor: 'pointer',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  gap: '4px'
-                                }}
-                              >
-                                🎛️ ABAJO (MIXER / DJ)
-                              </button>
+                              />
+                              <span style={{ fontSize: '0.68rem', color: '#94a3b8', fontWeight: 700 }}>ABAJO</span>
+                            </div>
+
+                            {/* Quick buttons */}
+                            <div>
+                              <div style={{ fontSize: '0.68rem', color: '#64748b', fontWeight: 700, marginBottom: '6px' }}>
+                                BOTONES DE ENCUADRE RÁPIDO:
+                              </div>
+                              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+                                <button
+                                  type="button"
+                                  onClick={() => setCarouselPos(`${getPosPercentX(carouselPos)}_15`)}
+                                  style={{
+                                    padding: '8px 6px',
+                                    borderRadius: '8px',
+                                    border: getPosPercentY(carouselPos) <= 25 ? '2px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.1)',
+                                    background: getPosPercentY(carouselPos) <= 25 ? 'rgba(56, 189, 248, 0.2)' : 'rgba(255, 255, 255, 0.04)',
+                                    color: getPosPercentY(carouselPos) <= 25 ? '#38bdf8' : '#94a3b8',
+                                    fontWeight: 800,
+                                    fontSize: '0.72rem',
+                                    cursor: 'pointer'
+                                  }}
+                                >
+                                  ⬆️ ARRIBA
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setCarouselPos('50_50')}
+                                  style={{
+                                    padding: '8px 6px',
+                                    borderRadius: '8px',
+                                    border: getPosPercentY(carouselPos) > 25 && getPosPercentY(carouselPos) < 75 ? '2px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.1)',
+                                    background: getPosPercentY(carouselPos) > 25 && getPosPercentY(carouselPos) < 75 ? 'rgba(56, 189, 248, 0.2)' : 'rgba(255, 255, 255, 0.04)',
+                                    color: getPosPercentY(carouselPos) > 25 && getPosPercentY(carouselPos) < 75 ? '#38bdf8' : '#94a3b8',
+                                    fontWeight: 800,
+                                    fontSize: '0.72rem',
+                                    cursor: 'pointer'
+                                  }}
+                                >
+                                  🎯 CENTRO
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setCarouselPos(`${getPosPercentX(carouselPos)}_85`)}
+                                  style={{
+                                    padding: '8px 6px',
+                                    borderRadius: '8px',
+                                    border: getPosPercentY(carouselPos) >= 75 ? '2px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.1)',
+                                    background: getPosPercentY(carouselPos) >= 75 ? 'rgba(56, 189, 248, 0.2)' : 'rgba(255, 255, 255, 0.04)',
+                                    color: getPosPercentY(carouselPos) >= 75 ? '#38bdf8' : '#94a3b8',
+                                    fontWeight: 800,
+                                    fontSize: '0.72rem',
+                                    cursor: 'pointer'
+                                  }}
+                                >
+                                  ⬇️ ABAJO
+                                </button>
+                              </div>
+                            </div>
+                            <div style={{ fontSize: '0.68rem', color: '#94a3b8' }}>
+                              💡 <strong>Control con Drag:</strong> Arrastra con el dedo o mouse directamente sobre la vista previa arriba para mover el punto de enfoque con total libertad.
                             </div>
                           </div>
                         )}
@@ -3131,9 +3265,9 @@ export default function EventAdminModal({ isOpen, onClose }) {
                                           borderRadius: '4px',
                                           border: '1px solid rgba(56, 189, 248, 0.35)'
                                         }}
-                                        title={`Llenar marco con enfoque en ${pos}`}
+                                        title={`Llenar marco (Crop al ${getPosPercentY(pos)}%)`}
                                       >
-                                        {pos === 'top' ? '👤 ROSTRO' : pos === 'bottom' ? '🎛️ MIXER' : '🎯 CENTRO'}
+                                        {`🖼️ CROP ${getPosPercentY(pos)}%`}
                                       </span>
                                     )}
 
@@ -3354,6 +3488,7 @@ export default function EventAdminModal({ isOpen, onClose }) {
                                   <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
                                     {/* Mini live preview card matching Hero aspect ratio */}
                                     <div
+                                      onPointerDown={framingEditFit === 'cover' ? (e) => handlePreviewDrag(e, setFramingEditPos) : undefined}
                                       style={{
                                         position: 'relative',
                                         width: '130px',
@@ -3361,9 +3496,12 @@ export default function EventAdminModal({ isOpen, onClose }) {
                                         borderRadius: '10px',
                                         overflow: 'hidden',
                                         background: '#09090d',
-                                        border: '1px solid rgba(168, 85, 247, 0.5)',
-                                        boxShadow: '0 8px 20px rgba(0,0,0,0.5)',
-                                        flexShrink: 0
+                                        border: '2px solid rgba(168, 85, 247, 0.6)',
+                                        boxShadow: '0 8px 24px rgba(0,0,0,0.6)',
+                                        flexShrink: 0,
+                                        cursor: framingEditFit === 'cover' ? 'crosshair' : 'default',
+                                        userSelect: 'none',
+                                        touchAction: 'none'
                                       }}
                                     >
                                       {framingEditFit === 'contain' && (
@@ -3389,6 +3527,7 @@ export default function EventAdminModal({ isOpen, onClose }) {
                                             objectFit: framingEditFit,
                                             objectPosition: getObjectPositionCss(framingEditPos),
                                             zIndex: 2,
+                                            pointerEvents: 'none',
                                             filter: framingEditFit === 'contain' ? 'drop-shadow(0 4px 12px rgba(0,0,0,0.85))' : 'none'
                                           }}
                                         />
@@ -3403,10 +3542,63 @@ export default function EventAdminModal({ isOpen, onClose }) {
                                             objectFit: framingEditFit,
                                             objectPosition: getObjectPositionCss(framingEditPos),
                                             zIndex: 2,
+                                            pointerEvents: 'none',
                                             filter: framingEditFit === 'contain' ? 'drop-shadow(0 4px 12px rgba(0,0,0,0.85))' : 'none'
                                           }}
                                         />
                                       )}
+
+                                      {/* Interactive Crosshair Reticle for Cover mode */}
+                                      {framingEditFit === 'cover' && (
+                                        <>
+                                          <div
+                                            style={{
+                                              position: 'absolute',
+                                              left: `${getPosPercentX(framingEditPos)}%`,
+                                              top: `${getPosPercentY(framingEditPos)}%`,
+                                              transform: 'translate(-50%, -50%)',
+                                              width: '28px',
+                                              height: '28px',
+                                              borderRadius: '50%',
+                                              border: '2px solid #FF003C',
+                                              background: 'rgba(255, 0, 60, 0.25)',
+                                              boxShadow: '0 0 12px rgba(255, 0, 60, 0.95), inset 0 0 6px rgba(255, 0, 60, 0.6)',
+                                              pointerEvents: 'none',
+                                              zIndex: 10,
+                                              display: 'flex',
+                                              alignItems: 'center',
+                                              justifyContent: 'center'
+                                            }}
+                                          >
+                                            <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#FFFFFF' }} />
+                                          </div>
+
+                                          <div
+                                            style={{
+                                              position: 'absolute',
+                                              top: '4px',
+                                              right: '4px',
+                                              zIndex: 10,
+                                              background: 'rgba(0,0,0,0.8)',
+                                              backdropFilter: 'blur(4px)',
+                                              border: '1px solid rgba(255, 0, 60, 0.5)',
+                                              borderRadius: '4px',
+                                              padding: '2px 5px',
+                                              fontSize: '0.55rem',
+                                              fontWeight: 800,
+                                              color: '#FFFFFF',
+                                              pointerEvents: 'none',
+                                              display: 'flex',
+                                              alignItems: 'center',
+                                              gap: '3px'
+                                            }}
+                                          >
+                                            <Move size={9} color="#FF003C" />
+                                            <span>{getPosPercentY(framingEditPos)}%</span>
+                                          </div>
+                                        </>
+                                      )}
+
                                       <div style={{ position: 'absolute', bottom: '4px', right: '4px', zIndex: 5, background: 'rgba(0,0,0,0.75)', color: '#fff', fontSize: '0.55rem', padding: '1px 5px', borderRadius: '3px', fontWeight: 800 }}>
                                         PREVIEW
                                       </div>
@@ -3434,7 +3626,7 @@ export default function EventAdminModal({ isOpen, onClose }) {
                                               cursor: 'pointer'
                                             }}
                                           >
-                                            🖼️ LLENAR MARCO
+                                            🖼️ LLENAR MARCO (CROP)
                                           </button>
                                           <button
                                             type="button"
@@ -3450,43 +3642,65 @@ export default function EventAdminModal({ isOpen, onClose }) {
                                               cursor: 'pointer'
                                             }}
                                           >
-                                            📺 CINEMA FIT
+                                            📐 AJUSTAR COMPLETO (FIT SCREEN)
                                           </button>
                                         </div>
                                       </div>
 
-                                      {/* Position selector if cover */}
-                                      {framingEditFit === 'cover' && (
-                                        <div>
-                                          <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 800, color: '#e2e8f0', marginBottom: '6px' }}>
-                                            ENFOQUE VERTICAL:
-                                          </label>
+                                      {/* Position slider and buttons if cover */}
+                                      {framingEditFit === 'cover' ? (
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                            <label style={{ fontSize: '0.70rem', fontWeight: 800, color: '#e2e8f0', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                              <SlidersHorizontal size={13} color="#38bdf8" />
+                                              <span>ENFOQUE VERTICAL (SLIDER O DRAG):</span>
+                                            </label>
+                                            <span style={{ fontSize: '0.74rem', fontWeight: 900, color: '#38bdf8', fontFamily: 'monospace' }}>
+                                              {getPosPercentY(framingEditPos)}%
+                                            </span>
+                                          </div>
+
+                                          {/* Slider */}
+                                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            <span style={{ fontSize: '0.64rem', color: '#94a3b8', fontWeight: 700 }}>ARRIBA</span>
+                                            <input
+                                              type="range"
+                                              min="0"
+                                              max="100"
+                                              value={getPosPercentY(framingEditPos)}
+                                              onChange={(e) => setFramingEditPos(`${getPosPercentX(framingEditPos)}_${e.target.value}`)}
+                                              style={{ flex: 1, accentColor: '#FF003C', cursor: 'pointer' }}
+                                            />
+                                            <span style={{ fontSize: '0.64rem', color: '#94a3b8', fontWeight: 700 }}>ABAJO</span>
+                                          </div>
+
+                                          {/* Quick buttons */}
                                           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px' }}>
                                             <button
                                               type="button"
-                                              onClick={() => setFramingEditPos('top')}
+                                              onClick={() => setFramingEditPos(`${getPosPercentX(framingEditPos)}_15`)}
                                               style={{
                                                 padding: '6px 4px',
                                                 borderRadius: '6px',
-                                                border: framingEditPos === 'top' ? '2px solid #38bdf8' : '1px solid rgba(255,255,255,0.1)',
-                                                background: framingEditPos === 'top' ? 'rgba(56, 189, 248, 0.2)' : 'rgba(255,255,255,0.04)',
-                                                color: framingEditPos === 'top' ? '#38bdf8' : '#94a3b8',
+                                                border: getPosPercentY(framingEditPos) <= 25 ? '2px solid #38bdf8' : '1px solid rgba(255,255,255,0.1)',
+                                                background: getPosPercentY(framingEditPos) <= 25 ? 'rgba(56, 189, 248, 0.2)' : 'rgba(255,255,255,0.04)',
+                                                color: getPosPercentY(framingEditPos) <= 25 ? '#38bdf8' : '#94a3b8',
                                                 fontWeight: 800,
                                                 fontSize: '0.68rem',
                                                 cursor: 'pointer'
                                               }}
                                             >
-                                              👤 ROSTRO
+                                              ⬆️ ARRIBA
                                             </button>
                                             <button
                                               type="button"
-                                              onClick={() => setFramingEditPos('center')}
+                                              onClick={() => setFramingEditPos('50_50')}
                                               style={{
                                                 padding: '6px 4px',
                                                 borderRadius: '6px',
-                                                border: framingEditPos === 'center' ? '2px solid #38bdf8' : '1px solid rgba(255,255,255,0.1)',
-                                                background: framingEditPos === 'center' ? 'rgba(56, 189, 248, 0.2)' : 'rgba(255,255,255,0.04)',
-                                                color: framingEditPos === 'center' ? '#38bdf8' : '#94a3b8',
+                                                border: getPosPercentY(framingEditPos) > 25 && getPosPercentY(framingEditPos) < 75 ? '2px solid #38bdf8' : '1px solid rgba(255,255,255,0.1)',
+                                                background: getPosPercentY(framingEditPos) > 25 && getPosPercentY(framingEditPos) < 75 ? 'rgba(56, 189, 248, 0.2)' : 'rgba(255,255,255,0.04)',
+                                                color: getPosPercentY(framingEditPos) > 25 && getPosPercentY(framingEditPos) < 75 ? '#38bdf8' : '#94a3b8',
                                                 fontWeight: 800,
                                                 fontSize: '0.68rem',
                                                 cursor: 'pointer'
@@ -3496,21 +3710,28 @@ export default function EventAdminModal({ isOpen, onClose }) {
                                             </button>
                                             <button
                                               type="button"
-                                              onClick={() => setFramingEditPos('bottom')}
+                                              onClick={() => setFramingEditPos(`${getPosPercentX(framingEditPos)}_85`)}
                                               style={{
                                                 padding: '6px 4px',
                                                 borderRadius: '6px',
-                                                border: framingEditPos === 'bottom' ? '2px solid #38bdf8' : '1px solid rgba(255,255,255,0.1)',
-                                                background: framingEditPos === 'bottom' ? 'rgba(56, 189, 248, 0.2)' : 'rgba(255,255,255,0.04)',
-                                                color: framingEditPos === 'bottom' ? '#38bdf8' : '#94a3b8',
+                                                border: getPosPercentY(framingEditPos) >= 75 ? '2px solid #38bdf8' : '1px solid rgba(255,255,255,0.1)',
+                                                background: getPosPercentY(framingEditPos) >= 75 ? 'rgba(56, 189, 248, 0.2)' : 'rgba(255,255,255,0.04)',
+                                                color: getPosPercentY(framingEditPos) >= 75 ? '#38bdf8' : '#94a3b8',
                                                 fontWeight: 800,
                                                 fontSize: '0.68rem',
                                                 cursor: 'pointer'
                                               }}
                                             >
-                                              🎛️ MIXER
+                                              ⬇️ ABAJO
                                             </button>
                                           </div>
+                                          <div style={{ fontSize: '0.64rem', color: '#94a3b8' }}>
+                                            💡 Arrastra directamente sobre la foto a la izquierda para posicionar el enfoque exacto.
+                                          </div>
+                                        </div>
+                                      ) : (
+                                        <div style={{ fontSize: '0.70rem', color: '#c084fc', background: 'rgba(168, 85, 247, 0.12)', padding: '8px 10px', borderRadius: '6px', border: '1px solid rgba(168, 85, 247, 0.25)' }}>
+                                          ✓ Modo Pantalla Completa: se muestra el archivo entero sin recortar nada, con fondo ambiental difuminado.
                                         </div>
                                       )}
 
